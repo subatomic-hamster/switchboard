@@ -88,6 +88,17 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    and put the `https://...` address in `PUBLIC_BASE_URL`. AgentPhone posts every turn of the
    call to it. Only the signed and token-protected routes are served through it; the dashboard
    stays local.
+   **Done once on 19 November, on your say:** I installed `cloudflared` with winget, opened a
+   quick tunnel and saved its address in `PUBLIC_BASE_URL`. Checked from outside: health,
+   the assistant routes and the bot routes answer (401 without a key, 200 with the bot
+   token); the dashboard, the approvals list with the word, freeze, the event stream and
+   connector management all answer 403. A quick tunnel lasts only while it runs and gets a
+   new address next time, so this step repeats, and steps 7 and 11 with it.
+   **Found while doing it:** the AgentPhone settings are no longer in `.env`
+   (`AGENTPHONE_API_KEY`, `AGENTPHONE_AGENT_ID`, `AGENTPHONE_NUMBER_ID`, `CALL_PROVIDER`).
+   I did not remove them and git never touched the file. If you rotated the key, add the new
+   one and `CALL_PROVIDER=agentphone`, then run `agentphone_setup --write-env` to save the
+   two ids again. Until then the webhook cannot be registered and calls stay in dry run.
 6. ~~Switch your AgentPhone agent to webhook mode.~~ **Done on 19 November, on your say.** I ran
    `uv run python -m scripts.agentphone_setup --set-webhook-mode` and read the agent back: its
    `voiceMode` is `webhook`. AgentPhone clears the hosted prompt and greeting when it switches.
