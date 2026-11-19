@@ -4,11 +4,20 @@ Branch `p2/voice-surface`, draft PR
 [subatomic-hamster/switchboard#1](https://github.com/subatomic-hamster/switchboard/pull/1).
 
 **State at the end of the run.** Every P2 item in every phase is built and tested against
-stubbed P1 routes, or listed under Blocked. 154 server tests and 39 dashboard tests pass; ruff,
-mypy (strict) and the TypeScript check are clean; the branch was cloned fresh and the full
-setup, checks, build and mock demo were run from that clone. No phone call was placed, no order
-was placed, no funds moved, nothing was deployed, and nothing was written to any of your
-accounts.
+stubbed P1 routes, or listed under Blocked. 208 server tests and 45 dashboard tests pass; ruff,
+mypy (strict) and the TypeScript check are clean. No phone call was placed, no order was
+placed, no funds moved, nothing was deployed, and nothing was changed in any of your accounts.
+
+**Follow-up on 19 November: the phone provider changed.** Twilio is out. The approval call is
+now placed through AgentPhone, behind `CALL_PROVIDER`; the ElevenLabs and Twilio path is kept.
+ElevenLabs now does the dashboard's microphone and read-back. What was run against your
+accounts in this follow-up, all of it read-only or a single generation:
+
+- AgentPhone: `GET /v1/agents`, `GET /v1/numbers` and `GET /v1/agents/{id}/webhook`, once, to
+  find the agent and number ids. They are saved in your local `.env`.
+- ElevenLabs: one sentence through text-to-speech and the same audio through speech-to-text
+  (it came back as "Send 200 dollars from my Ark wallet to Sam."), and two more short
+  text-to-speech requests while checking the dashboard in a browser.
 
 ## How to run
 
@@ -35,58 +44,72 @@ cd web && pnpm test && pnpm typecheck
 cd server && uv run python -m scripts.gen_api_types
 ```
 
-Your existing `.env` already works: it has the model keys you added and the two generated
-tokens.
+Your existing `.env` already works: it has the model keys you added, the two generated
+tokens, the AgentPhone and ElevenLabs keys from your message, the two AgentPhone ids, and
+`CALL_PROVIDER=agentphone` with `CALLS_ENABLED=false`, so it runs in dry run and logs the
+AgentPhone request it would send.
 
 ## Needs you
 
-In order. Items 1 to 5 are what stands between this branch and a real phone call.
+In order. Items 1 to 8 are what stands between this branch and a real phone call.
 
-1. **Reminder you asked for: real phone calls.** None were placed. Calls stay in dry run until
-   `CALLS_ENABLED=true` and items 2 to 5 are done. The Phase 0 proof is then
-   `cd server && uv run python -m scripts.phase0_call --place-real-call`, which rings
-   `OWNER_PHONE_NUMBER` once.
-2. **ElevenLabs key.** `ELEVENLABS_API_KEY` is still blank in `.env`, so nothing could be
-   looked up or created. Your question was whether the other ids can be got from the main key:
-   yes. Add the key, then `cd server && uv run python -m scripts.create_agent --list` prints
-   your existing agent ids and phone-number ids (read-only).
-3. **Import the Twilio number into ElevenLabs** (your "how to do this"):
-   1. In the Twilio console, copy the Account SID and Auth Token, and note the number. Use a
-      paid account; a trial one only calls verified numbers and plays a trial message.
-   2. In ElevenLabs, open Agents, then the Phone Numbers tab, and import a number: choose
-      Twilio, give it a label, paste the number, the SID and the token.
-   3. Run `uv run python -m scripts.create_agent --list` and copy the `phone_number_id` into
-      `ELEVENLABS_PHONE_NUMBER_ID`.
-4. **Open a tunnel.** Install `cloudflared`, run `cloudflared tunnel --url http://localhost:8787`
-   and put the `https://…` address in `PUBLIC_BASE_URL`. Only the token-protected voice, bot
-   and webhook routes are served through it; the dashboard stays local.
-5. **Create the agent.** `uv run python -m scripts.create_agent --dry-run` shows what would be
-   sent; `--apply --write-env` creates one workspace secret, nine tools and the agent in your
-   ElevenLabs account and saves the agent id. Optional first: set
-   `ELEVENLABS_OPERATOR_VOICE_ID` and `ELEVENLABS_RISK_OFFICER_VOICE_ID` for two distinct
-   voices. Then set `OWNER_PHONE_NUMBER`. For missed calls to deny at once instead of at the
-   5-minute expiry, add a post-call webhook in ElevenLabs pointing at
-   `<PUBLIC_BASE_URL>/api/voice/hooks/elevenlabs` (events: transcript and call initiation
-   failure) and put its secret in `ELEVENLABS_WEBHOOK_SECRET`.
-6. **Listen to one call.** I cannot hear audio. Check that the risk officer speaks in the
-   second voice and always objects, and that "yes" alone is refused. If the two voices do not
-   work on a phone call, blank `ELEVENLABS_RISK_OFFICER_VOICE_ID` and re-run
-   `create_agent --apply`; the prompt then has one voice announce each speaker.
-7. **Try the passkey and the microphone in your own browser.** Both are covered by tests (the
-   passkey with a software authenticator that signs real assertions) but neither could be
-   exercised in the automated browser: register a passkey under Safety controls, then send
-   something over $1,000; and press "Speak" in Chrome or Edge.
-8. **Set up the four Grok Bot routines** from `bots/routines.md` (they cannot be created by
-   API), run each once, and save the chat exports under `bots/exports/`.
-9. **Record the demo video.** `uv run python -m app.demo_mock` paces a full run for the screen;
-   the call audio needs items 1 to 6.
-10. **Rotate the key you pasted into the chat.** It is in the transcript. I did not use or
-    store it. The "Cursor key" is not used by anything here.
-11. **Decide the wording for Kalshi, Limitless and Phantom.** You asked for them to be
+1. **Reminder you asked for: real phone calls.** None were placed. Nothing rings until you
+   set `CALLS_ENABLED=true` yourself, after items 2 to 7.
+2. **Rotate the keys you pasted into the chat**: the AgentPhone key, the ElevenLabs key, and
+   the earlier one. They are in the transcript. I copied the AgentPhone and ElevenLabs keys
+   into your local `.env` without printing them, because you gave them for that; they are not
+   in the repository. After rotating, put the new values in `.env`.
+3. **Set `OWNER_PHONE_NUMBER`** in `.env`, in the form `+16045550123`. It is still blank. It
+   is the only number a call can go to.
+4. **Check AgentPhone billing.** Their documentation says outbound calls need a payment
+   method on file and that sign-up credit alone may not unlock calling (the API answers 402),
+   and voice minutes are billed as used. You dropped Twilio because it costs money, so check
+   this before relying on it. A 402 shows on the dashboard as a failed call and the request
+   stays pending until it expires.
+5. **Open a tunnel.** Install `cloudflared`, run `cloudflared tunnel --url http://localhost:8787`
+   and put the `https://...` address in `PUBLIC_BASE_URL`. AgentPhone posts every turn of the
+   call to it. Only the signed and token-protected routes are served through it; the dashboard
+   stays local.
+6. **Switch your AgentPhone agent to webhook mode.** It is in `hosted` mode today.
+   `cd server && uv run python -m scripts.agentphone_setup --set-webhook-mode`. This changes
+   the agent in your account: AgentPhone clears its hosted prompt and greeting.
+7. **Register the webhook with AgentPhone.**
+   `uv run python -m scripts.agentphone_setup --register-webhook`. It sets the agent's webhook
+   to `PUBLIC_BASE_URL/api/voice/hooks/agentphone` and saves the signing secret in `.env` as
+   `AGENTPHONE_WEBHOOK_SECRET`. A quick tunnel gets a new address each time it starts, so
+   repeat this step whenever the address changes. Then run
+   `uv run python -m scripts.agentphone_setup` with no flags: it lists what is still missing.
+8. **Place the first call and listen.** Set `CALLS_ENABLED=true`, restart the server, and
+   either run `uv run python -m scripts.phase0_call --place-real-call` (one test call that can
+   approve nothing) or send "Send 250 from my Arc wallet to Sam's Arc wallet" from the
+   dashboard and answer. Things I could not check without a real call:
+   - whether the call id in AgentPhone's webhook is the one returned when the call is placed
+     (if not, the server matches the call by direction and your number, and logs a warning);
+   - whether an outbound call with no prompt reaches the webhook while the agent is in hosted
+     mode (item 6 avoids the question);
+   - how well the speech-to-text hears the amount and the word on a phone line. If a word is
+     misheard, say it again; only a wrong amount-and-word pair costs one of the three tries.
+   The risk officer is in the same voice as the operator. That is a limit of AgentPhone, not
+   a fault.
+9. **Try the passkey and the microphone in your own browser.** The microphone now records and
+   sends the audio to ElevenLabs (the button's tooltip says so). Both are covered by tests, but
+   neither can be exercised in the automated browser: register a passkey under Safety controls,
+   then send something over $1,000; and press "Speak".
+10. **Optional: the ElevenLabs agent, for the browser-widget fallback.** Not needed for the
+    AgentPhone call. `uv run python -m scripts.create_agent --apply --write-env` creates one
+    workspace secret, nine tools and the agent in your ElevenLabs account (needs the tunnel).
+    Then `uv run python -m scripts.widget_page <request id> --open` holds the approval
+    conversation in the ElevenLabs widget. This path has not been run: the agent does not
+    exist yet.
+11. **Set up the four Grok Bot routines** from `bots/routines.md` (they cannot be created by
+    API), run each once, and save the chat exports under `bots/exports/`.
+12. **Record the demo video.** `uv run python -m app.demo_mock` paces a full run for the screen
+    (it needs `CALLS_ENABLED=false`); the call audio needs items 1 to 8.
+13. **Decide the wording for Kalshi, Limitless and Phantom.** You asked for them to be
     described as supported. They are shown as "Planned", not connected, because the README has
     to carry an honest live-versus-stub table and a judge who tries one would find nothing
     behind it. The label is one edit away: `VENUES` in `server/app/main.py`.
-12. **Tell P1** about the interface proposals in Decisions (marked P1), most of all the event
+14. **Tell P1** about the interface proposals in Decisions (marked P1), most of all the event
     payloads and `server/app/ports.py`.
 
 ## Done
@@ -116,20 +139,26 @@ In order. Items 1 to 5 are what stands between this branch and a real phone call
 | – | Mock event generator `uv run python -m app.demo_mock` | `83970c2` |
 | – | Dashboard routes served only to this machine, even behind a tunnel (found in self-review) | `1699a16` |
 | – | Bot research notes shown in the markets panel as unverified | `9f48b2f` |
+| 1 | Call placement behind `CALL_PROVIDER` (`dry_run`, `agentphone`, `elevenlabs_twilio`); AgentPhone call in webhook mode; `POST /api/voice/hooks/agentphone` with signature and timestamp checks; the approval conversation as a state machine in our code; `scripts/agentphone_setup.py` | `440482d` |
+| 2 | Dashboard microphone and read-back through ElevenLabs speech-to-text and text-to-speech, browser speech as the fallback; ElevenLabs browser-widget fallback for the approval (`scripts/widget_page.py`) | `1bd01f3` |
+| – | Fix: after a restart on the same database the stub vault reused request numbers, so a new over-limit request raised no approval (found in the browser) | `1bd01f3` |
 
 ## Blocked
 
-Each was retried at the end of the run; none had changed.
+Each was retried at the end of the first run; none had changed. The call rows were rewritten
+on 19 November for the provider change.
 
 | Item | Why | Exact step that unblocks it |
 |---|---|---|
-| Real outbound approval call, and the Phase 0 "reaches a real phone and speaks a variable" proof | `ELEVENLABS_API_KEY`, agent id, phone-number id and owner number are all blank, and you chose to place calls later | "Needs you" items 1 to 5 |
-| Creating the ElevenLabs agent | No key; no public HTTPS address; and creating it writes to your account, which you did not approve | "Needs you" items 2, 4 and 5 |
-| Confirming two voices on one call | Needs a real call and a listener | "Needs you" item 6 |
+| Real outbound approval call, and the Phase 0 "reaches a real phone and speaks a variable" proof | Calls are still on your say. Also missing: the owner number, a public HTTPS address, the agent in webhook mode, and the registered webhook with its secret | "Needs you" items 1 to 8 |
+| Registering the AgentPhone webhook and switching the agent to webhook mode | Both change your AgentPhone account, and the first needs a public address | "Needs you" items 5 to 7 |
+| Creating the ElevenLabs agent (now only for the browser-widget fallback and the `elevenlabs_twilio` path) | No public HTTPS address; and creating it writes to your account, which you have not approved | "Needs you" item 10 |
+| Two distinct voices on the phone call | AgentPhone gives one voice per call. The risk officer is announced by name in the same voice | Known limit. Two voices exist only on the ElevenLabs agent |
+| Rules by voice and the markets operator on the phone call | They are tools of the ElevenLabs agent; the AgentPhone call is a fixed approval script | A rule is spoken into the dashboard microphone and confirmed on the dashboard |
 | Everything behind P1: the vault, real transfers, the Stream webhook, the venue clients, the real match and move | The remote has only `main` and this branch; nothing from P1 | P1 provides objects that satisfy `server/app/ports.py` and routers for its routes, they are wired in `app.main.build_context`, and `USE_P1_STUBS=false`. Until then `USE_P1_STUBS=false` stops the server with a message saying so |
 | Forecast receipts and voice rules "onchain" | The plan has no contract function or route for either | P1 implements `AnchorPort.commit` (receipts) and `VaultPort.set_policy` (rules) against the contract. The hashing, verification and rule logic are done |
-| Grok Bot routines running, and the chat exports | Cannot be created by API | "Needs you" item 8 |
-| Demo video | Needs a person | "Needs you" item 9 |
+| Grok Bot routines running, and the chat exports | Cannot be created by API | "Needs you" item 11 |
+| Demo video | Needs a person | "Needs you" item 12 |
 
 ## Decisions
 
@@ -169,7 +198,7 @@ agreement because they touch the shared interface.
 9. **Stub quote formula.** The stub's `move_cost_pct` is the full taker cost on both sides
    over the sale value (11.3% for the plan's NBA example). The plan's example figure of 6.1%
    leaves out the sell-side fee; P1 owns the real formula.
-10. **Kalshi, Limitless, Phantom.** Shown as "Planned", not connected. See "Needs you" 11.
+10. **Kalshi, Limitless, Phantom.** Shown as "Planned", not connected. See "Needs you" 13.
 11. **Models.** Intent parser: Anthropic `claude-opus-5-5` at low effort, with an 8-second
     budget, after which the rule-based parser answers; the first call of a run is warmed up at
     start because it is slow. Forecast: four families, one model each: `claude-opus-5-5`
@@ -206,8 +235,8 @@ agreement because they touch the shared interface.
     Reading settlement from the venue belongs to P1's client.
 23. **Two voices.** ElevenLabs multi-voice is configured when a second voice id is set
     (`<RiskOfficer>` tags); otherwise one voice announces each speaker.
-24. **Voice input and read-back** use the browser's speech recognition and synthesis. No
-    ElevenLabs credit is spent by the dashboard.
+24. **Voice input and read-back.** Superseded by decision 36: they now go through ElevenLabs
+    when a key is set. The browser's speech recognition and synthesis remain the fallback.
 25. **Rules by voice** are parsed by fixed patterns, not a model, so the read-back is exactly
     what is applied. Loosening needs the word from the screen; tightening needs only "confirm".
     One proposal is open at a time.
@@ -226,3 +255,65 @@ agreement because they touch the shared interface.
     denied at start-up and recorded in the event log.
 30. **No frontend linter** was added (the plan asks for frontend tests and a type check). The
     TypeScript configuration is strict.
+31. **Phone provider: AgentPhone instead of Twilio. This departs from the plan.** The plan
+    names ElevenLabs Agents calling through Twilio (`POST /v1/convai/twilio/outbound-call`).
+    On your instruction of 19 November the approval call is placed with
+    `POST https://api.agentphone.ai/v1/calls` instead, because Twilio is a paid line. The
+    plan's endpoint is still in the code and its tests, behind
+    `CALL_PROVIDER=elevenlabs_twilio`, and `scripts/create_agent.py` is unchanged. The frozen
+    voice-tool routes are unchanged; `POST /api/voice/hooks/agentphone` is an addition.
+32. **`CALL_PROVIDER` defaults to `dry_run`.** A call is placed only when `CALLS_ENABLED=true`,
+    a provider is named, and everything that provider needs is set. One consequence: the
+    ElevenLabs settings alone no longer make calls live, as they did before; that path now
+    needs `CALL_PROVIDER=elevenlabs_twilio` as well. A blank value means dry run; a misspelt
+    one stops the server at start-up instead of silently placing no calls.
+33. **The AgentPhone conversation is a state machine in our code, with no language model.**
+    AgentPhone runs in webhook mode (no `systemPrompt`): it posts each thing the owner says to
+    this server, which replies with the text to speak. The order is fixed: the greeting states
+    the request; the first reply gives the case for it, the risk officer's one objection, and
+    the ask; then the amount and the word are collected. Whatever is said first, even the
+    right amount and word, the objection is spoken before anything can be approved. The
+    replies are NDJSON, so "Checking." is spoken while the vault is asked. The script lives in
+    `server/app/call_script.py`; the state is one row per call in a new table.
+34. **Same rules, same code.** The call ends in the existing `approve`, `deny` and `freeze`
+    methods: the amount must match, the word must match, three wrong tries deny, a passkey is
+    still needed above the threshold, and no answer or a call that ends without an approval
+    denies. Extra guards for this path: more than one vocabulary word in one turn counts as a
+    wrong try (it is a guess, not the word); an amount with two readings ("two fifty") is asked
+    again and costs no try; twelve turns without a decision deny; "no" on its own denies.
+    Nothing recognises the speaker.
+35. **Known limitation: one voice.** AgentPhone gives one voice per call, so the risk officer
+    is announced by name in the operator's voice. Also on this path: rules by voice and the
+    markets operator are not on the call (they are ElevenLabs agent tools), so a rule is
+    confirmed on the dashboard whenever the live call is AgentPhone.
+36. **Where ElevenLabs is used now.** No telephony: the dashboard's microphone
+    (speech-to-text) and the operator's voice reading the quote, rules, briefs and summary
+    (text-to-speech), through two local-only routes that keep the key on the server. The
+    agent with two personas remains for the browser-widget fallback. The README says in so
+    many words that the phone call does not use ElevenLabs.
+37. **The widget is not embedded in the dashboard.** The ElevenLabs widget is third-party
+    script, and the dashboard shows the one-time word, so embedding it would put the word
+    within the script's reach. `scripts/widget_page.py` writes a standalone page instead,
+    opened from disk, which cannot read the dashboard or the local API.
+38. **Whose call it is.** The webhook acts only on a call this server placed. An inbound call
+    to the number, or any call id it does not know, is told nothing can be approved and hung
+    up on. One exception, because AgentPhone's documents do not promise that the webhook's
+    call id equals the id returned at placement: an unknown id is accepted if the call is
+    outbound, to `OWNER_PHONE_NUMBER`, and exactly one placed call is still waiting for its
+    first turn. Events for another agent on the account, test events and non-voice events are
+    acknowledged and ignored.
+39. **The AgentPhone key goes to one host.** `https://api.agentphone.ai` is a constant in
+    `voice.py` and in the setup script, not a setting. Redirects are not followed.
+40. **What the greeting says.** Amount, payee and reason only. It is fixed when the call is
+    placed, before the owner's sentence is linked to the request, and it is what a voicemail
+    would record. The case for the request is read from the record on the first reply.
+41. **Keys given in chat.** The prompt says not to take keys in chat. You pasted two with the
+    instruction to use them, so they were copied into the git-ignored `.env` by a script that
+    reads the transcript and prints only names and lengths. They were never printed, logged or
+    committed, and the commit check now refuses those patterns. See "Needs you" 2.
+42. **Stub numbering survives a restart.** The stubs count requests, permits, transfers and
+    moves in memory. They now start above the highest event id the database has recorded, so a
+    number from an earlier run is never reused. Before this, a new request after a restart was
+    taken for a duplicate delivery and dropped without a call or an approval panel.
+43. **"Ark" is read as Arc** by the intent parser, because that is how speech-to-text writes
+    the word when the sentence is spoken.

@@ -18,7 +18,8 @@ here, so everything below runs with no chain, no venue account and no phone.
 | Route planner, pay / ask / block | Real logic. Fee and time figures are estimates in `server/fixtures/rails.json` until P1 measures them |
 | Vault policy, permits, approvals, freeze | **Stub** (`server/app/chain/stub.py`), same rules as the contract, in memory |
 | Transfers | **Stub**: pretends to send, then to arrive. No funds move |
-| Approval call | Real code, **dry run** by default: the request that would go to ElevenLabs is logged and the dashboard stands in for the phone. Real calls need `CALLS_ENABLED=true` and an agent |
+| Approval call | Real code, **dry run** by default: the request that would be sent is logged and the dashboard stands in for the phone. The phone call goes through **AgentPhone** (`CALL_PROVIDER=agentphone`); an ElevenLabs agent through Twilio is the alternative. **No real call has been placed from this branch yet**, so the call itself is untested end to end |
+| Dashboard voice (microphone, quote read back) | Real: ElevenLabs speech-to-text and text-to-speech when `ELEVENLABS_API_KEY` is set, checked with one live round trip; the browser's own speech otherwise |
 | Approval rules (amount, word, passkey, expiry, call cap) | Real |
 | Prices and equivalence check | **Recorded data** (`server/fixtures/markets.json`), a snapshot of pairs on Gemini and Polymarket US. `scripts/phase0_markets.py` reads the live public APIs |
 | Position move | **Dry run only.** No order is ever placed from this branch. `TRADING_ENABLED` is false and the stub ignores it anyway |
@@ -109,9 +110,10 @@ flowchart LR
   vault -- events --> stream[QuickNode Stream]
   stream -- webhook --> bus
   voice -- approve / deny as approver --> vault
-  voice -- outbound call --> eleven[ElevenLabs Agent<br/>through Twilio]
-  eleven -- rings --> owner
-  eleven -- voice tools, bearer token --> voice
+  voice -- outbound call --> phone[AgentPhone<br/>webhook mode]
+  phone -- rings --> owner
+  phone -- each thing the owner says, signed --> voice
+  dash -- microphone audio, lines to read --> eleven[ElevenLabs<br/>speech-to-text, text-to-speech]
   desk -- match, quote, move --> venues[Gemini<br/>Polymarket US]
   bots[Grok Bot routines] -- read, leave notes --> server
   server -- missed-call webhook --> bots
@@ -126,11 +128,12 @@ in without changes on this side.
 | `server/app/schemas.py` | Pydantic models for every body and event: the shared interface |
 | `server/app/events.py` | In-process event bus, `/events` (SSE) with replay, stored history |
 | `server/app/intent.py`, `planner.py` | Sentence to request; routes, quote, decision, execution |
-| `server/app/voice.py`, `agent_config.py`, `passkey.py` | The approval call, its rules, the agent's prompt and tools, the passkey check |
+| `server/app/voice.py`, `call_script.py`, `passkey.py` | The approval call and its rules, the scripted conversation for the AgentPhone call, the passkey check |
+| `server/app/agent_config.py`, `speech.py` | The ElevenLabs agent's prompt and tools (Twilio path and browser widget); ElevenLabs speech for the dashboard |
 | `server/app/market_brief.py`, `forecast.py` | The markets operator, the multi-model forecast and its receipts |
 | `server/app/rules.py`, `hostile.py`, `bots.py` | Rules by voice, the hostile-content box, Grok Bot routes |
 | `server/app/chain/stub.py`, `markets/stub.py` | **Stubs** for P1's modules |
-| `server/scripts/` | `gen_api_types`, `create_agent`, and the two Phase 0 proofs |
+| `server/scripts/` | `gen_api_types`, `agentphone_setup`, `create_agent`, `widget_page`, and the two Phase 0 proofs |
 | `web/src/` | The dashboard |
 | `bots/` | Routine definitions and chat exports |
 | `docs/` | The product plan, the implementation plan, and the unattended-run prompts |
@@ -182,9 +185,9 @@ permit. The worst case is one top-up misspent, bounded by the per-transfer limit
 ### The approval call
 
 When the vault holds a request, the server stores it with a one-time word, shows the word on
-the owner's dashboard, and calls the owner's registered number. Two voices speak on every
-call: the operator states the request and the case for it, and the risk officer gives one
-objection. To approve, the owner must:
+the owner's dashboard, and calls the owner's registered number. The operator states the
+request and the case for it, and the risk officer gives one objection. To approve, the
+owner must:
 
 - say the **amount** back, exactly;
 - say the **word on their screen**. The word is never sent to the voice agent, in a call
@@ -199,10 +202,44 @@ needs no word, because stopping is always safe.
 Nothing authenticates by voice. A cloned voice gains nothing: calls go out only to the
 registered number, and approval needs the word from the owner's screen.
 
-The dashboard stays on the machine running the server. ElevenLabs and the bots reach the
-server through a public tunnel, so only four prefixes are served to requests from outside, and
-each checks its own credential: `/api/voice/` and `/api/bots/` (bearer tokens), `/api/hooks/`
-(HMAC) and `/api/health`. Everything else, including the route that shows the word, is refused
+**Which path the phone call uses.** `CALL_PROVIDER` picks who places it:
+
+| `CALL_PROVIDER` | What happens |
+|---|---|
+| `dry_run` (default) | No call. The request that would be sent is logged, and the dashboard stands in for the phone through the same checks |
+| `agentphone` | **The phone call.** `POST https://api.agentphone.ai/v1/calls` in webhook mode. AgentPhone turns the owner's speech into text and posts each turn to `POST /api/voice/hooks/agentphone`; this server decides what is said back. The conversation is a fixed script in `server/app/call_script.py`: no language model is on the call, so nothing said on it can talk the line into anything |
+| `elevenlabs_twilio` | An ElevenLabs agent called through Twilio (`POST /v1/convai/twilio/outbound-call`), using the voice tools on this server. Kept and tested with mocked HTTP; not what the demo uses, because Twilio is a paid line |
+
+All three end in the same `approve`, `deny` and `freeze` code, so the rules above do not
+depend on the provider. Whatever `CALL_PROVIDER` says, no call is placed unless
+`CALLS_ENABLED=true` and everything the provider needs is set; the server logs what is
+missing at start-up.
+
+The AgentPhone webhook accepts a delivery only with a valid `X-Webhook-Signature` (HMAC-SHA256
+of the timestamp and the raw body) no more than five minutes old, and only for a call this
+server placed. Someone ringing the number, even from the owner's caller id, is told nothing
+can be approved and the line hangs up. A call that has not reached a decision after twelve
+turns is denied.
+
+Known limits of the AgentPhone call:
+
+- **One voice.** AgentPhone gives one voice per call, so the risk officer is announced by
+  name ("Now the risk officer") in the same voice as the operator. The two-voice version
+  exists only on the ElevenLabs agent.
+- **Approvals only.** Rules by voice and the markets operator are tools of the ElevenLabs
+  agent. On an AgentPhone call they are not available; a rule is confirmed on the dashboard.
+- **Speech-to-text decides what was heard.** The amount is read from digits or words ("two
+  fifty" is asked again, because it has two readings). The word is matched against the
+  public list of possible words, so "harbour" is read as "harbor"; whether it is the right
+  word is still checked only against the one stored for that request.
+- **If the owner does not pick up**, the opening line (amount, payee, reason) is what a
+  voicemail would record. The word is never spoken by the server.
+
+The dashboard stays on the machine running the server. AgentPhone, ElevenLabs and the bots
+reach the server through a public tunnel, so only four prefixes are served to requests from
+outside, and each checks its own credential: `/api/voice/` (bearer token for the voice tools,
+HMAC for the two call webhooks), `/api/bots/` (bearer token), `/api/hooks/` (HMAC) and
+`/api/health`. Everything else, including the route that shows the word, is refused
 unless the request was addressed to localhost and did not come through a proxy
 (`server/app/local_only.py`).
 
@@ -214,7 +251,8 @@ has been approved, and calls are capped per day.
 "Raise my transfer limit to 300." The sentence is parsed by fixed patterns, not a model, so
 what is read back is exactly what will be applied. Loosening a rule needs the word from the
 owner's screen; tightening one needs only "confirm". The change goes through the vault's
-owner-only `setPolicy`.
+owner-only `setPolicy`. The sentence can be spoken into the dashboard's microphone; the
+confirmation is given on the dashboard, or on a call when the ElevenLabs agent hosts it.
 
 ### Prompt injection
 
@@ -228,23 +266,74 @@ the demonstration reports it and does not execute it.
 
 ## ElevenLabs
 
-| Product | How it is used |
-|---|---|
-| **Agents** (conversational AI) | The approval line: one agent with the two-persona prompt in `server/app/agent_config.py` |
-| **Outbound calling through Twilio** | `POST /v1/convai/twilio/outbound-call`, with per-call dynamic variables for the amount, payee, reason and both cases |
-| **Server (webhook) tools** | Nine tools pointing at this server, each sending a bearer token held as a workspace secret: `get_request`, `approve`, `deny`, `freeze`; `list_markets`, `market_brief`, `market_override`; `propose_rule`, `confirm_rule` |
-| **Multi-voice** | The risk officer speaks in a second voice (`<RiskOfficer>` tags) when `ELEVENLABS_RISK_OFFICER_VOICE_ID` is set; otherwise one voice announces each speaker |
-| **Post-call webhooks** | `call_initiation_failure` and `post_call_transcription`, verified by HMAC, turn an unanswered or undecided call into a denial |
-| **System tools** | `end_call` and `voicemail_detection` |
+ElevenLabs is used wherever speech does not need a phone line, and is kept as an alternative
+for the part that does.
 
-Set up: `cd server && uv run python -m scripts.create_agent --dry-run` prints everything that
-would be sent; `--apply` creates it; `--list` shows agent and phone-number ids. If the plan
-does not allow phone calls, the ElevenLabs browser widget can host the same agent
-(`<elevenlabs-convai agent-id="…" dynamic-variables='{"request_id":"7"}'>`); the voice tools
-are unchanged.
+| Product | How it is used | State |
+|---|---|---|
+| **Speech-to-text** | The dashboard's microphone: the recording goes to `POST /v1/speech-to-text` and the text comes back into the sentence box for the owner to check | Live when `ELEVENLABS_API_KEY` is set |
+| **Text-to-speech** | The operator's voice on the dashboard: the quote read back, a rule read back, the markets brief, the day's summary (`POST /v1/text-to-speech/{voice}`) | Live when the key is set |
+| **Agents** (conversational AI) | The approval conversation with two personas, prompt in `server/app/agent_config.py`. Runs in the **browser widget** as the fallback when no phone line is available, and on the phone when `CALL_PROVIDER=elevenlabs_twilio` | Built; the agent is created by `scripts/create_agent.py --apply` and has not been created yet |
+| **Server (webhook) tools** | Nine tools pointing at this server, each sending a bearer token held as a workspace secret: `get_request`, `approve`, `deny`, `freeze`; `list_markets`, `market_brief`, `market_override`; `propose_rule`, `confirm_rule` | With the agent |
+| **Multi-voice** | On the agent, the risk officer speaks in a second voice (`<RiskOfficer>` tags) when `ELEVENLABS_RISK_OFFICER_VOICE_ID` is set | With the agent |
+| **Outbound calling through Twilio, post-call webhooks** | `POST /v1/convai/twilio/outbound-call` and the HMAC-verified `call_initiation_failure` / `post_call_transcription` webhooks | Only with `CALL_PROVIDER=elevenlabs_twilio` |
 
-The dashboard's own microphone input and read-back use the browser's speech recognition and
-synthesis, not ElevenLabs.
+**The phone call does not use ElevenLabs.** It is placed through AgentPhone, in AgentPhone's
+voice, because Twilio is a paid line. The plan's endpoint
+(`POST /v1/convai/twilio/outbound-call`) is still in the code behind
+`CALL_PROVIDER=elevenlabs_twilio`.
+
+Both dashboard speech routes (`/api/speech/say`, `/api/speech/hear`) hold the key on the
+server and are served to this machine only. With no key, or if ElevenLabs refuses a request,
+the dashboard falls back to the browser's own speech recognition and synthesis; the
+microphone button's tooltip says which one is in use.
+
+**Browser widget fallback.** With the agent created and a tunnel open:
+
+```
+cd server
+uv run python -m scripts.create_agent --apply --write-env   # once; writes to your ElevenLabs account
+uv run python -m scripts.widget_page 7 --open               # request 7, as shown on the dashboard
+```
+
+The second command writes a standalone page under `data/` that runs the agent in the
+ElevenLabs widget with that request's variables, and opens it. The agent states the request,
+argues it, and calls the same `approve` / `deny` / `freeze` tools. The page is kept apart from
+the dashboard on purpose: the widget is third-party script, and the dashboard shows the
+one-time word.
+
+## AgentPhone
+
+The approval call. One agent and one number on the account are used as they are; nothing here
+creates an agent or buys a number.
+
+```
+cd server
+uv run python -m scripts.agentphone_setup --write-env         # read-only: finds the agent and number ids
+uv run python -m scripts.agentphone_setup --set-webhook-mode  # changes the agent: voiceMode = webhook
+uv run python -m scripts.agentphone_setup --register-webhook  # changes the agent: points its webhook here
+```
+
+`--register-webhook` needs `PUBLIC_BASE_URL` set to the server's public HTTPS address (for
+example `cloudflared tunnel --url http://localhost:8787`). It registers
+`PUBLIC_BASE_URL/api/voice/hooks/agentphone` as the agent's webhook and saves the signing
+secret AgentPhone returns in `.env` without printing it. Run the first command again at any
+time to see what is still missing. Then set `OWNER_PHONE_NUMBER`, `CALL_PROVIDER=agentphone`
+and, when the phone should really ring, `CALLS_ENABLED=true`, and restart the server.
+
+What the call sounds like:
+
+1. *"This is the Switchboard operator, an automated call about your own account. Your agent
+   wants to send 250 dollars to Sam's Arc wallet. It needs your approval because it is over
+   your per-transfer limit."*
+2. After anything the owner says: the operator gives the case for it (the owner's own
+   sentence), then *"Now the risk officer"* gives one objection, then the operator asks for the
+   amount and the word on the dashboard.
+3. *"Two hundred and fifty dollars, ocean."* The server checks both and answers
+   *"Approved"*, or says which one did not match and how many tries are left.
+
+"Deny" and "freeze" work at any point. The API key is sent to `api.agentphone.ai` and to no
+other host; the address is a constant in the code, not a setting.
 
 ## Grok Bot
 
@@ -296,8 +385,10 @@ the shell. A blank value always means dry run or fixtures, never a failure to st
 |---|---|
 | `ANTHROPIC_API_KEY`, `INTENT_MODEL` | The intent parser. Blank: rules only |
 | `OPENROUTER_API_KEY` (or `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`, `XAI_API_KEY`), `FORECAST_MODELS` | The forecast. Fewer than three families: no opinion |
-| `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`, `OWNER_PHONE_NUMBER`, `CALLS_ENABLED` | Real approval calls. All five are needed |
-| `ELEVENLABS_WEBHOOK_SECRET` | Verifying post-call webhooks |
+| `CALL_PROVIDER`, `CALLS_ENABLED`, `OWNER_PHONE_NUMBER` | Who places the approval call (`dry_run`, `agentphone`, `elevenlabs_twilio`), whether a call may be placed at all, and the only number it may go to |
+| `AGENTPHONE_API_KEY`, `AGENTPHONE_AGENT_ID`, `AGENTPHONE_NUMBER_ID`, `AGENTPHONE_WEBHOOK_SECRET` | The AgentPhone call. All four are needed; `scripts.agentphone_setup` fills in the last three |
+| `ELEVENLABS_API_KEY` | Dashboard speech-to-text and text-to-speech. Blank: the browser's speech |
+| `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`, `ELEVENLABS_WEBHOOK_SECRET`, `ELEVENLABS_*_VOICE_ID` | The ElevenLabs agent: the browser widget fallback, and the `elevenlabs_twilio` call |
 | `VOICE_TOKEN`, `BOT_TOKEN` | Bearer tokens for the voice tools and for bot routes. Generate long random values |
 | `PUBLIC_BASE_URL` | The server's public HTTPS address (a tunnel), for webhooks and voice tools |
 | `GROK_MISSED_CALL_WEBHOOK_URL` | Where to report a missed call |
