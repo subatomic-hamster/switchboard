@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from app.passkey import Passkeys
     from app.planner import Planner
     from app.rules import Rules
+    from app.speech import Speech
     from app.voice import Approvals
 
 log = logging.getLogger("switchboard")
@@ -79,12 +80,14 @@ class AppContext:
     rules: Rules = field(init=False)
     hostile: HostileLab = field(init=False)
     bots: Bots = field(init=False)
+    speech: Speech = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()
         await self.approvals.aclose()
         await self.forecaster.aclose()
         await self.bots.aclose()
+        await self.speech.aclose()
         self.db.close()
 
 

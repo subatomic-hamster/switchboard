@@ -147,15 +147,23 @@ def hear(text: str, vocabulary: tuple[str, ...]) -> Heard:
 # --------------------------------------------------------------------------- the lines
 
 
-def greeting(amount: Decimal, payee_label: str, reason_phrase: str, case_for: str) -> str:
-    """Step 1, spoken as soon as the phone is answered: the operator states the request."""
+def greeting(amount: Decimal, payee_label: str, reason_phrase: str) -> str:
+    """Step 1, spoken as soon as the phone is answered: the operator states the request.
+
+    Only the amount, the payee and the reason: it is fixed when the call is placed, and it
+    is what a voicemail would record if the owner does not pick up."""
     return (
         "This is the Switchboard operator, an automated call about your own account. "
         f"Your agent wants to send {say_money(amount)} to {payee_label}. "
         f"It needs your approval because {reason_phrase}. "
-        f"{case_for} "
-        "Say go on to hear the risk officer. You can say deny or freeze at any time."
+        "Say go on to hear more. You can say deny or freeze at any time."
     )
+
+
+def case_for(text: str) -> str:
+    """Still the operator: where the request came from. Read from the record when the owner
+    answers, so it reflects the sentence they spoke."""
+    return f"The operator. {text}"
 
 
 def restatement(amount: Decimal, payee_label: str, reason_phrase: str) -> str:

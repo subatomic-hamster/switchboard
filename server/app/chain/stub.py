@@ -66,7 +66,9 @@ class _Pending:
 class StubVault:
     """STUB of the vault contract's behaviour. In memory; resets when the server restarts."""
 
-    def __init__(self, bus: EventBus, settings: Settings, allowlist: list[str]) -> None:
+    def __init__(
+        self, bus: EventBus, settings: Settings, allowlist: list[str], first_id: int = 1
+    ) -> None:
         self._bus = bus
         self._policy = Policy(
             transfer_cap_usd=settings.policy_transfer_cap_usd,
@@ -75,7 +77,9 @@ class StubVault:
             approval_expiry_s=settings.approval_expiry_s,
         )
         self._frozen = False
-        self._ids = itertools.count(1)
+        # `first_id` continues past every earlier run on the same database. Starting again
+        # at 1 after a restart would reuse a request number the server has already seen.
+        self._ids = itertools.count(first_id)
         self._permits: dict[str, _Permit] = {}
         self._pending: dict[str, _Pending] = {}
         self._spends: list[tuple[datetime, Decimal]] = []
@@ -187,11 +191,13 @@ class StubVault:
 class StubTransfers:
     """STUB of `chain/transfer.py`. Publishes `transfer.sent`, then `transfer.arrived` later."""
 
-    def __init__(self, spawn: Spawner, bus: EventBus, settings: Settings) -> None:
+    def __init__(
+        self, spawn: Spawner, bus: EventBus, settings: Settings, first_id: int = 1
+    ) -> None:
         self._spawn = spawn
         self._bus = bus
         self._scale = settings.demo_time_scale
-        self._ids = itertools.count(1)
+        self._ids = itertools.count(first_id)
 
     async def start(
         self,

@@ -54,13 +54,15 @@ def taker_fee(rate: Decimal, qty: Decimal, price: Decimal) -> Decimal:
 class StubMarkets:
     """STUB of the venue clients, the equivalence check and the move."""
 
-    def __init__(self, bus: EventBus, settings: Settings, path: Path | None = None) -> None:
+    def __init__(
+        self, bus: EventBus, settings: Settings, path: Path | None = None, first_id: int = 1
+    ) -> None:
         self._bus = bus
         self._settings = settings
         raw = json.loads((path or FIXTURES_DIR / "markets.json").read_text(encoding="utf-8"))
         self._fees = {key: Decimal(value) for key, value in raw["fees"].items()}
         self._markets: dict[str, dict[str, Any]] = {m["slug"]: m for m in raw["markets"]}
-        self._ids = itertools.count(1)
+        self._ids = itertools.count(first_id)
 
     def listing(self) -> list[MarketListing]:
         """Both venues' prices for every market in the fixture, for the side-by-side view."""

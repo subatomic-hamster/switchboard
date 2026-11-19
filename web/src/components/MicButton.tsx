@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { canListen, listen, type Listening } from "../speech";
+import { canListen, listen, type Listening, useSpeechSource } from "../speech";
 
 export interface MicButtonProps {
   /** Interim text while the owner is still speaking. */
@@ -17,9 +17,18 @@ const ERRORS: Record<string, string> = {
   network: "Speech recognition could not reach its service.",
 };
 
+type Phase = "idle" | "listening" | "transcribing";
+
+const LABEL: Record<Phase, string> = {
+  idle: "Speak",
+  listening: "Listening…",
+  transcribing: "Transcribing…",
+};
+
 /** Speak the request instead of typing it. Hidden entirely where the browser cannot listen. */
 export function MicButton({ onText, onFinal }: MicButtonProps) {
-  const [listening, setListening] = useState(false);
+  const source = useSpeechSource();
+  const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState("");
   const session = useRef<Listening | null>(null);
 
@@ -34,7 +43,7 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
   }
 
   function toggle() {
-    if (listening) {
+    if (phase !== "idle") {
       session.current?.stop();
       return;
     }
@@ -42,21 +51,27 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
     session.current = listen({
       onText,
       onFinal,
+      onTranscribing: () => setPhase("transcribing"),
       onEnd: (reason) => {
-        setListening(false);
+        setPhase("idle");
         session.current = null;
         if (reason && reason !== "aborted") setError(ERRORS[reason] ?? "Voice input stopped.");
       },
     });
-    setListening(session.current !== null);
+    setPhase(session.current !== null ? "listening" : "idle");
   }
 
   return (
     <>
       <button
         type="button"
-        className={`mic${listening ? " mic-on" : ""}`}
-        aria-pressed={listening}
+        className={`mic${phase !== "idle" ? " mic-on" : ""}`}
+        aria-pressed={phase !== "idle"}
+        title={
+          source === "elevenlabs"
+            ? "Speech to text by ElevenLabs"
+            : "Speech to text by this browser"
+        }
         onClick={toggle}
       >
         <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
@@ -69,7 +84,7 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
             strokeLinecap="round"
           />
         </svg>
-        {listening ? "Listening…" : "Speak"}
+        {LABEL[phase]}
       </button>
       {error && (
         <span role="status" className="mic-error">

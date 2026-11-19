@@ -11,6 +11,8 @@ that voice. Without one, a single voice announces who is speaking.
 
 from __future__ import annotations
 
+import html
+import json
 from typing import Any
 
 from app.config import Settings
@@ -395,3 +397,44 @@ def agent_payload(settings: Settings, tool_ids: list[str]) -> dict[str, Any]:
             "conversation": {"max_duration_seconds": 300},
         },
     }
+
+
+# --------------------------------------------------------------------------- browser widget
+
+WIDGET_SCRIPT = "https://unpkg.com/@elevenlabs/convai-widget-embed"
+
+
+def widget_page(agent_id: str, variables: dict[str, str]) -> str:
+    """A standalone page that holds the approval conversation in the ElevenLabs browser
+    widget: the fallback when no phone line is available.
+
+    It is a separate file on purpose. The widget is third-party script, and the dashboard
+    shows the one-time word; opened from disk, this page cannot read the dashboard or the
+    local API. The variables are the ones a phone call would carry, without the word.
+    """
+    agent = html.escape(agent_id, quote=True)
+    data = html.escape(json.dumps(variables), quote=True)
+    amount = html.escape(variables.get("amount_words", "a payment"))
+    payee = html.escape(variables.get("payee_label", "a payee"))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Switchboard approval</title>
+<style>
+  body {{ font: 16px/1.5 system-ui, sans-serif; max-width: 34rem; margin: 3rem auto;
+         padding: 0 1rem; color: #1c2330; background: #f6f7f9; }}
+  h1 {{ font-size: 1.25rem; }}
+</style>
+</head>
+<body>
+<h1>Approve or deny: {amount} to {payee}</h1>
+<p>Start the conversation with the widget in the corner. The operator will state the
+request, the risk officer will object once, and you will be asked for the amount and the
+word shown on your Switchboard dashboard. Keep the dashboard open in another tab.</p>
+<elevenlabs-convai agent-id="{agent}" dynamic-variables="{data}"></elevenlabs-convai>
+<script src="{WIDGET_SCRIPT}" async type="text/javascript"></script>
+</body>
+</html>
+"""

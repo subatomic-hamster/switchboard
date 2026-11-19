@@ -81,6 +81,14 @@ async def test_the_frozen_interface_example(parser: IntentParser) -> None:
     assert parsed.transfer.destination.chain == Chain.SOLANA_DEVNET
 
 
+async def test_arc_as_speech_to_text_writes_it(parser: IntentParser) -> None:
+    """A spoken sentence comes back from speech-to-text with "Ark" for "Arc"."""
+    spoken = await parser.parse("Send 200 dollars from my Ark wallet to Sam.")
+    typed = await parser.parse("send 200 dollars from my arc wallet to sam")
+    assert spoken.transfer is not None and typed.transfer is not None
+    assert spoken.transfer == typed.transfer
+
+
 async def test_a_new_address_is_not_known(parser: IntentParser) -> None:
     parsed = await parser.parse(f"send 250 from my arc wallet to {NEW_ADDRESS}")
     assert parsed.transfer is not None

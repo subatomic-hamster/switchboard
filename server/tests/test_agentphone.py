@@ -272,12 +272,12 @@ def test_intents(text: str, intent: str) -> None:
 
 def test_the_greeting_states_the_request_and_says_it_is_automated() -> None:
     line = call_script.greeting(
-        Decimal(250), "Sam's Arc wallet", "it is over your per-transfer limit", "You asked."
+        Decimal(250), "Sam's Arc wallet", "it is over your per-transfer limit"
     )
     assert "automated" in line
     assert "250 dollars to Sam's Arc wallet" in line
     assert "over your per-transfer limit" in line
-    assert "risk officer" in line
+    assert "deny or freeze" in line
 
 
 # --------------------------------------------------------------------------- placing the call
@@ -471,8 +471,12 @@ async def test_objection_comes_first_then_amount_and_word_approve(
     # Saying the right amount and word straight away approves nothing: the risk officer
     # speaks first.
     first = await _say(phone, f"two hundred and fifty dollars {word}")
-    assert first[0]["text"].startswith("Now the risk officer.")
-    assert "over your 200 dollars transfer limit" in first[0]["text"]
+    assert len(first) == 3
+    # The operator says where it came from: the owner's own sentence, linked by now.
+    assert first[0]["text"].startswith("The operator. You asked for this yourself:")
+    assert OVER_CAP in first[0]["text"]
+    assert first[1]["text"].startswith("Now the risk officer.")
+    assert "over your 200 dollars transfer limit" in first[1]["text"]
     assert "say the amount, then the word shown on your dashboard" in first[-1]["text"]
     assert not first[-1].get("hangup")
     assert _row(ctx, request_id).status == "pending"
@@ -736,7 +740,7 @@ async def test_a_different_call_id_is_matched_only_for_our_one_waiting_call(
 
     # The webhook names the call differently, but it is outbound and to the owner's number.
     opening = await _say(phone, "go on", call_id="call_webhook")
-    assert opening[0]["text"].startswith("Now the risk officer.")
+    assert opening[1]["text"].startswith("Now the risk officer.")
     done = await _say(phone, f"250 dollars {word}", call_id="call_webhook")
     assert done[-1]["hangup"] is True
     assert _row(ctx, request_id).status == "approved"

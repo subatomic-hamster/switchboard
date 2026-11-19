@@ -5,12 +5,15 @@ from __future__ import annotations
 import asyncio
 import json
 from decimal import Decimal
+from pathlib import Path
 
 import httpx
 import pytest
 
 from app.context import AppContext
+from app.db import Database
 from app.events import StoredEvent, event_stream
+from app.main import create_app
 from app.schemas import (
     EVENT_PAYLOADS,
     FROZEN_EVENT_TYPES,
@@ -20,6 +23,7 @@ from app.schemas import (
     Reason,
     VoiceApproveRequest,
 )
+from tests.conftest import make_settings
 
 
 async def test_health(client: httpx.AsyncClient) -> None:
@@ -232,3 +236,31 @@ async def test_venues_label_unconnected_ones_as_planned(client: httpx.AsyncClien
     venues = {v["id"]: v["status"] for v in (await client.get("/api/venues")).json()["venues"]}
     assert venues["kalshi"] == "planned"
     assert venues["gemini"] in {"fixtures", "connected"}
+
+
+async def test_a_restart_on_the_same_database_does_not_reuse_request_numbers(
+    tmp_path: Path,
+) -> None:
+    """The stub vault counts in memory. If it began again at 1 after a restart, a new request
+    would look like a repeat of an old one and no approval would be raised for it."""
+    sentence = "send 250 from my arc wallet to sam's arc wallet"
+    seen: list[str] = []
+    for _ in range(2):
+        database = Database(tmp_path / "switchboard.sqlite")
+        application = create_app(make_settings(), database)
+        ctx: AppContext = application.state.ctx
+        transport = httpx.ASGITransport(app=application)
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
+            plan = (await http.post("/api/intent", json={"text": sentence})).json()
+            body = (await http.post(f"/api/plans/{plan['plan_id']}/execute", json={})).json()
+            assert body["status"] == "needs_approval"
+            request_id = str(body["request_id"])
+            row = ctx.approvals.get(request_id)
+            assert row is not None and row.status == "pending"
+            pending = [a for a in ctx.approvals.views() if a.status == "pending"]
+            assert [a.request_id for a in pending] == [request_id]
+            seen.append(request_id)
+            await ctx.approvals.deny(request_id, via="dashboard")
+            await asyncio.sleep(0.01)  # let the expiry timer start before shutdown
+        await ctx.aclose()
+    assert len(set(seen)) == 2

@@ -560,6 +560,29 @@ class SimulatedVoiceRequest(Model):
     challenge: str = Field(max_length=64)
 
 
+class ApprovalWidget(Model):
+    """What the ElevenLabs browser widget needs to hold the approval conversation without a
+    phone line. The challenge word is not among the variables."""
+
+    agent_id: str
+    dynamic_variables: dict[str, str]
+
+
+class SpeechStatus(Model):
+    elevenlabs: bool = Field(
+        description="True when the dashboard's microphone and read-back go through ElevenLabs. "
+        "False means the browser's own speech is used."
+    )
+
+
+class SayRequest(Model):
+    text: str = Field(min_length=1, max_length=1500)
+
+
+class HeardSpeech(Model):
+    text: str
+
+
 class Wallet(Model):
     owner: str
     label: str

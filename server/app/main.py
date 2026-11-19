@@ -16,12 +16,13 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import func, select
 
-from app import bots, events, hostile, market_brief, passkey, rules, voice
+from app import bots, events, hostile, market_brief, passkey, rules, speech, voice
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
-from app.db import Database
+from app.db import Database, EventRow
 from app.events import EventBus, StoredEvent
 from app.forecast import Forecaster
 from app.intent import IntentError, IntentParser, make_llm_call
@@ -68,15 +69,21 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
             "Set USE_P1_STUBS=true, or wire the real modules into app.main.build_context."
         )
     tasks = Tasks()
+    # The stubs number their requests, permits, transfers and moves from 1 in memory. On a
+    # database that has been used before, start above everything it has recorded, so a number
+    # from an earlier run is never handed out again (a reused request number would be taken
+    # for a duplicate delivery and dropped).
+    with database.session() as session:
+        first_id = int(session.exec(select(func.max(EventRow.id))).one() or 0) + 1
     ctx = AppContext(
         settings=settings,
         db=database,
         bus=bus,
         tasks=tasks,
         wallets=wallets,
-        vault=chain_stub.StubVault(bus, settings, wallets.allowlist()),
-        transfers=chain_stub.StubTransfers(tasks.spawn, bus, settings),
-        markets=markets_stub.StubMarkets(bus, settings),
+        vault=chain_stub.StubVault(bus, settings, wallets.allowlist(), first_id=first_id),
+        transfers=chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id),
+        markets=markets_stub.StubMarkets(bus, settings, first_id=first_id),
         anchor=chain_stub.StubAnchor(),
     )
 
@@ -92,6 +99,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     ctx.rules = rules.Rules(ctx)
     ctx.hostile = hostile.HostileLab(ctx)
     ctx.bots = bots.Bots(ctx)
+    ctx.speech = speech.Speech(ctx)
     return ctx
 
 
@@ -141,6 +149,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(hostile.router)
     app.include_router(bots.router)
     app.include_router(bots.dashboard)
+    app.include_router(speech.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:

@@ -103,6 +103,8 @@ _CHAIN_WORDS: dict[str, Chain] = {
     "sol": Chain.SOLANA_DEVNET,
     "solana": Chain.SOLANA_DEVNET,
     "arc": Chain.ARC_TESTNET,
+    # How speech-to-text tends to write "Arc" when the sentence is spoken.
+    "ark": Chain.ARC_TESTNET,
 }
 
 _EVM_ADDRESS = re.compile(r"\b0x[0-9a-fA-F]{40}\b")

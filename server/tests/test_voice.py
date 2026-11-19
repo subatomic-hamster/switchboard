@@ -15,7 +15,13 @@ import pytest
 import respx
 from fastapi import FastAPI
 
-from app.agent_config import agent_payload, market_tool_payloads, system_prompt, tool_payloads
+from app.agent_config import (
+    agent_payload,
+    market_tool_payloads,
+    system_prompt,
+    tool_payloads,
+    widget_page,
+)
 from app.context import AppContext
 from app.db import Database
 from app.main import create_app
@@ -577,3 +583,19 @@ def test_agent_payload_uses_multi_voice_only_when_a_second_voice_is_set() -> Non
 def test_mask_number_hides_the_middle() -> None:
     assert mask_number("+16045550123") == "+1******0123"
     assert mask_number("") == ""
+
+
+def test_widget_page_escapes_what_it_is_given() -> None:
+    page = widget_page(
+        'agent_"x"',
+        {
+            "request_id": "7",
+            "amount_words": "250 dollars",
+            "payee_label": "<b>Sam</b>",
+            "case_for": 'You asked for this yourself: "send 250 to sam".',
+        },
+    )
+    assert 'agent-id="agent_&quot;x&quot;"' in page
+    assert "<b>Sam</b>" not in page and "&lt;b&gt;Sam&lt;/b&gt;" in page
+    assert "&quot;request_id&quot;: &quot;7&quot;" in page
+    assert "convai-widget-embed" in page

@@ -71,6 +71,7 @@ from app.schemas import (
     ApprovalResolvedData,
     ApprovalStats,
     ApprovalView,
+    ApprovalWidget,
     BlockedData,
     CallData,
     OkResponse,
@@ -312,7 +313,6 @@ class Approvals:
                 from_micro(row.amount_micro),
                 row.payee_label,
                 REASON_PHRASES.get(reason, "the vault flagged it"),
-                row.case_for,
             ),
         }
 
@@ -721,9 +721,9 @@ class Approvals:
         """One thing the owner said on an AgentPhone call. Yields what to say back, as the
         chunks of an NDJSON reply: `interim` chunks first, then one final chunk.
 
-        The script is fixed: the greeting stated the request; the first reply is the risk
-        officer's objection and the ask; after that the amount and the word are collected and
-        handed to `approve`, which is the only thing that can say yes."""
+        The script is fixed: the greeting stated the request; the first reply is where it
+        came from, the risk officer's objection, and the ask; after that the amount and the
+        word are collected and handed to `approve`, which is the only thing that can say yes."""
         phone = self._phone_session(data)
         if phone is None:
             yield {"text": call_script.NOT_OUR_CALL, "hangup": True}
@@ -772,6 +772,7 @@ class Approvals:
             phone.state = "asking"
             phone.amount_heard = phone.word_heard = ""
             self._save_session(phone)
+            yield {"text": call_script.case_for(row.case_for), "interim": True}
             yield {"text": call_script.objection(row.case_against), "interim": True}
             yield {"text": call_script.ask(row.passkey_required)}
             return
@@ -1061,6 +1062,24 @@ async def simulate_voice(request_id: str, body: SimulatedVoiceRequest, ctx: Ctx)
         )
     return await ctx.approvals.approve(
         request_id, body.amount_spoken, body.challenge, via="simulated_call"
+    )
+
+
+@dashboard.get("/approvals/{request_id}/widget", response_model=ApprovalWidget)
+async def approval_widget(request_id: str, ctx: Ctx) -> ApprovalWidget:
+    """The fallback when no phone line is available: the same ElevenLabs agent, run in its
+    browser widget on the dashboard. Returns the agent id and the per-call variables the
+    phone call would have carried. 404 until ELEVENLABS_AGENT_ID is set."""
+    if not ctx.settings.elevenlabs_agent_id:
+        raise HTTPException(status_code=404, detail="ELEVENLABS_AGENT_ID is not set")
+    row = ctx.approvals.get(request_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="unknown request")
+    spent = await ctx.vault.spent_today()
+    variables = {**ctx.approvals.call_variables(row), "spent_today_usd": f"{spent.normalize():f}"}
+    return ApprovalWidget(
+        agent_id=ctx.settings.elevenlabs_agent_id,
+        dynamic_variables={key: str(value) for key, value in variables.items()},
     )
 
 

@@ -66,6 +66,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/approvals/{request_id}/widget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Approval Widget
+         * @description The fallback when no phone line is available: the same ElevenLabs agent, run in its
+         *     browser widget on the dashboard. Returns the agent id and the per-call variables the
+         *     phone call would have carried. 404 until ELEVENLABS_AGENT_ID is set.
+         */
+        get: operations["approval_widget_api_approvals__request_id__widget_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bots/equivalence": {
         parameters: {
             query?: never;
@@ -722,6 +744,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/speech": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Speech Status
+         * @description Whether the dashboard should use ElevenLabs or the browser's own speech.
+         */
+        get: operations["speech_status_api_speech_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/speech/hear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hear
+         * @description Turn a microphone recording into text (ElevenLabs speech-to-text). The body is the
+         *     raw audio; the text comes back for the owner to check before anything is sent.
+         */
+        post: operations["hear_api_speech_hear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/speech/say": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Say
+         * @description Read a line aloud in the operator's voice (ElevenLabs text-to-speech).
+         */
+        post: operations["say_api_speech_say_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats": {
         parameters: {
             query?: never;
@@ -1147,6 +1230,19 @@ export interface components {
             /** Voice Ok */
             voice_ok: boolean;
         };
+        /**
+         * ApprovalWidget
+         * @description What the ElevenLabs browser widget needs to hold the approval conversation without a
+         *     phone line. The challenge word is not among the variables.
+         */
+        ApprovalWidget: {
+            /** Agent Id */
+            agent_id: string;
+            /** Dynamic Variables */
+            dynamic_variables: {
+                [key: string]: string;
+            };
+        };
         /** AssertOptionsRequest */
         AssertOptionsRequest: {
             /** Request Id */
@@ -1479,6 +1575,11 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HeardSpeech */
+        HeardSpeech: {
+            /** Text */
+            text: string;
         };
         /** HostileRequest */
         HostileRequest: {
@@ -2073,6 +2174,11 @@ export interface components {
              */
             challenge: string;
         };
+        /** SayRequest */
+        SayRequest: {
+            /** Text */
+            text: string;
+        };
         /** SellQuote */
         SellQuote: {
             /** Bid */
@@ -2088,6 +2194,14 @@ export interface components {
             amount_spoken: number;
             /** Challenge */
             challenge: string;
+        };
+        /** SpeechStatus */
+        SpeechStatus: {
+            /**
+             * Elevenlabs
+             * @description True when the dashboard's microphone and read-back go through ElevenLabs. False means the browser's own speech is used.
+             */
+            elevenlabs: boolean;
         };
         /** StatsResponse */
         StatsResponse: {
@@ -2514,6 +2628,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approval_widget_api_approvals__request_id__widget_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalWidget"];
                 };
             };
             /** @description Validation Error */
@@ -3581,6 +3726,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    speech_status_api_speech_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpeechStatus"];
+                };
+            };
+        };
+    };
+    hear_api_speech_hear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "content-type"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeardSpeech"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    say_api_speech_say_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SayRequest"];
+            };
+        };
+        responses: {
+            /** @description MP3 audio */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "audio/mpeg": unknown;
                 };
             };
             /** @description Validation Error */
