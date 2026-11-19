@@ -21,6 +21,12 @@ export type Wallet = S["Wallet"];
 export type Venue = S["Venue"];
 export type MarketMatchResponse = S["MarketMatchResponse"];
 export type MarketQuoteResponse = S["MarketQuoteResponse"];
+export type MarketBrief = S["MarketBrief"];
+export type MarketListing = S["MarketListing"];
+export type MoveOption = S["MoveOption"];
+export type Opinion = S["Opinion"];
+export type TrackRecord = S["TrackRecord"];
+export type ForecastList = S["ForecastList"];
 
 export const EVENT_TYPES: EventType[] = [
   "transfer.sent",

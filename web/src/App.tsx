@@ -4,6 +4,7 @@ import { api } from "./api";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { CommandBar } from "./components/CommandBar";
 import { EventFeed } from "./components/EventFeed";
+import { MarketsPanel } from "./components/MarketsPanel";
 import { MicButton } from "./components/MicButton";
 import { RingView } from "./components/RingView";
 import { SafetyPanel } from "./components/SafetyPanel";
@@ -25,6 +26,7 @@ export function App() {
   const [approvals, setApprovals] = useState<ApprovalView[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [readAloud, setReadAloud] = useState(true);
+  const [marketSlug, setMarketSlug] = useState<string | null>(null);
   const [spokenRequest, setSpokenRequest] = useState<{ text: string; at: number } | null>(null);
   const readAloudRef = useRef(readAloud);
   readAloudRef.current = readAloud;
@@ -80,6 +82,7 @@ export function App() {
             text={text}
             onTextChange={setText}
             onQuote={onQuote}
+            onMarketMove={setMarketSlug}
             submit={spokenRequest}
             micSlot={
               <MicButton
@@ -118,6 +121,7 @@ export function App() {
             frozen={stats?.frozen ?? false}
             stale={stats?.stream_stale ?? false}
           />
+          <MarketsPanel selectedSlug={marketSlug} refreshKey={lastId} />
         </div>
         <div className="column">
           <StatsPanel stats={stats} />

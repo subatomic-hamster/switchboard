@@ -727,3 +727,104 @@ button.chip {
   align-content: start;
   flex-shrink: 0;
 }
+
+/* Markets */
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.market-pick {
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+
+.qty {
+  display: grid;
+  gap: 2px;
+  width: 110px;
+  font-size: 0.8rem;
+}
+
+table.grid {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+table.grid th,
+table.grid td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+table.grid thead th {
+  color: var(--text-2);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+table.grid tbody th {
+  font-weight: 600;
+}
+
+table.grid .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.contract {
+  display: block;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.checks,
+.venues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks li,
+.venues li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.82rem;
+}
+
+.venues {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.opinion {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.receipt {
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.disclaimer {
+  margin-top: 10px;
+  font-size: 0.8rem;
+}

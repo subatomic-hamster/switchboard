@@ -1,7 +1,11 @@
 import type {
   ApprovalView,
   ExecuteResponse,
+  ForecastList,
   IntentResponse,
+  MarketBrief,
+  MarketListing,
+  Opinion,
   OkResponse,
   StatsResponse,
   SwitchboardEvent,
@@ -74,4 +78,16 @@ export const api = {
     ).events,
   wallets: async () => (await request<{ wallets: Wallet[] }>("/api/wallets")).wallets,
   venues: async () => (await request<{ venues: Venue[] }>("/api/venues")).venues,
+  deskMarkets: async () =>
+    (await request<{ markets: MarketListing[] }>("/api/desk/markets")).markets,
+  deskBrief: (slug: string, qty: number) =>
+    request<MarketBrief>(`/api/desk/brief?slug=${encodeURIComponent(slug)}&qty=${qty}`),
+  deskMove: (slug: string, qty: number, mode: "post" | "take") =>
+    post<{ move_id: string }>("/api/desk/move", { slug, qty, mode }),
+  forecast: (slug: string, qty: number) => post<Opinion>("/api/forecasts", { slug, qty }),
+  forecasts: () => request<ForecastList>("/api/forecasts"),
+  overrideForecast: (receiptId: string) =>
+    post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/override`, {}),
+  revealForecast: (receiptId: string, outcome: boolean) =>
+    post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/reveal`, { outcome }),
 };

@@ -235,11 +235,23 @@ def brier(probability: Decimal, outcome: bool) -> Decimal:
 class Forecaster:
     def __init__(self, ctx: AppContext, models: list[ModelSpec] | None = None) -> None:
         self._ctx = ctx
-        self._http = httpx.AsyncClient()
-        self._models = models if models is not None else configured_models(ctx.settings, self._http)
+        self._http: httpx.AsyncClient | None = None
+        self._injected = models
+        self._configured: list[ModelSpec] | None = None
+
+    @property
+    def _models(self) -> list[ModelSpec]:
+        """The forecasters, built on first use so an idle server opens no HTTP client."""
+        if self._injected is not None:
+            return self._injected
+        if self._configured is None:
+            self._http = httpx.AsyncClient()
+            self._configured = configured_models(self._ctx.settings, self._http)
+        return self._configured
 
     async def aclose(self) -> None:
-        await self._http.aclose()
+        if self._http is not None:
+            await self._http.aclose()
 
     def families(self) -> list[str]:
         return [spec.family for spec in self._models]
