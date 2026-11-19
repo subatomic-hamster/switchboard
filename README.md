@@ -199,6 +199,13 @@ needs no word, because stopping is always safe.
 Nothing authenticates by voice. A cloned voice gains nothing: calls go out only to the
 registered number, and approval needs the word from the owner's screen.
 
+The dashboard stays on the machine running the server. ElevenLabs and the bots reach the
+server through a public tunnel, so only four prefixes are served to requests from outside, and
+each checks its own credential: `/api/voice/` and `/api/bots/` (bearer tokens), `/api/hooks/`
+(HMAC) and `/api/health`. Everything else, including the route that shows the word, is refused
+unless the request was addressed to localhost and did not come through a proxy
+(`server/app/local_only.py`).
+
 Against rubber-stamping: the dashboard shows the approval rate and warns when every request
 has been approved, and calls are capped per day.
 

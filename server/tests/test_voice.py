@@ -58,7 +58,7 @@ async def test_voice_tools_need_the_bearer_token(client: httpx.AsyncClient) -> N
 async def test_voice_tools_are_off_when_no_token_is_configured() -> None:
     application = create_app(make_settings(voice_token=""), Database(None))
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         response = await http.post(
             "/api/voice/freeze", json={}, headers={"Authorization": "Bearer "}
         )
@@ -236,7 +236,7 @@ async def test_no_answer_means_deny() -> None:
 
     ctx.approvals.missed_call_hooks.append(hook)
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         request_id = await _pending(http)
         await asyncio.sleep(0.2)
         row = ctx.approvals.get(request_id)
@@ -261,7 +261,7 @@ async def test_daily_call_cap_denies_without_calling() -> None:
     application = create_app(make_settings(max_calls_per_day=1), Database(None))
     ctx: AppContext = application.state.ctx
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         first = await _pending(http)
         second = await _pending(http)
     first_row, second_row = ctx.approvals.get(first), ctx.approvals.get(second)
@@ -366,7 +366,7 @@ async def live_app() -> AsyncIterator[FastAPI]:
 @pytest.fixture
 async def live_client(live_app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=live_app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         yield http
 
 

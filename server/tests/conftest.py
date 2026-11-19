@@ -80,7 +80,7 @@ def ctx(app: FastAPI) -> AppContext:
 @pytest.fixture
 async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         yield http
 
 

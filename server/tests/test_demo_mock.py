@@ -18,7 +18,7 @@ from tests.conftest import make_settings
 
 async def test_mock_demo_replays_a_full_day(app: FastAPI, ctx: AppContext) -> None:
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as client:
         await Demo(client, pace=0).run()
     await asyncio.sleep(0.2)
 
@@ -60,7 +60,7 @@ async def test_mock_demo_refuses_to_run_when_calls_are_live() -> None:
         Database(None),
     )
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as client:
         with pytest.raises(SystemExit, match="only runs in dry run"):
             await Demo(client, pace=0).run()
     ctx: AppContext = application.state.ctx

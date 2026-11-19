@@ -160,7 +160,7 @@ async def test_missed_call_is_escalated_to_the_bot_webhook() -> None:
     route = respx.post(HOOK).mock(return_value=httpx.Response(200, json={"ok": True}))
     application, ctx = await _missed_call_app(grok_missed_call_webhook_url=HOOK)
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         request = await _run(http, OVER_CAP)
         await asyncio.sleep(0.2)
         assert route.call_count == 1
@@ -194,7 +194,7 @@ async def test_escalation_failure_or_plain_http_url_does_not_break_the_denial() 
     for url in (HOOK, "http://insecure.example.test/hook", ""):
         application, ctx = await _missed_call_app(grok_missed_call_webhook_url=url)
         transport = httpx.ASGITransport(app=application)
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
             request = await _run(http, OVER_CAP)
             await asyncio.sleep(0.2)
         row = ctx.approvals.get(str(request["request_id"]))

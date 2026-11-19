@@ -25,6 +25,7 @@ from app.db import Database
 from app.events import EventBus, StoredEvent
 from app.forecast import Forecaster
 from app.intent import IntentError, IntentParser, make_llm_call
+from app.local_only import LocalOnly
 from app.markets import stub as markets_stub
 from app.planner import PlanError, Planner
 from app.schemas import (
@@ -120,6 +121,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         lifespan=lifespan,
     )
     app.state.ctx = ctx
+    app.add_middleware(LocalOnly)
 
     app.include_router(events.router)
     app.include_router(chain_stub.router)

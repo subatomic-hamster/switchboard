@@ -241,7 +241,7 @@ async def test_dashboard_confirm_is_dry_run_only(
         Database(None),
     )
     transport = httpx.ASGITransport(app=live)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         proposal = (
             await http.post("/api/rules/propose", json={"text": "lower my daily budget to 300"})
         ).json()
@@ -335,7 +335,7 @@ async def test_hostile_spam_runs_into_the_call_cap() -> None:
     application = create_app(make_settings(max_calls_per_day=2), Database(None))
     ctx: AppContext = application.state.ctx
     transport = httpx.ASGITransport(app=application)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
         outcomes = [
             (await http.post("/api/hostile", json={"content": INJECTION})).json()["worst_case"]
             for _ in range(4)
