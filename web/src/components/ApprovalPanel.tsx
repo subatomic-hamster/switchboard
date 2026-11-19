@@ -76,6 +76,9 @@ function PendingApproval({
         <code className="reason-code">{approval.reason}</code>
         {REASON_TEXT[approval.reason]}
         {approval.source === "hostile" ? " · triggered by outside content, not by you" : ""}
+        {approval.source.startsWith("connector:")
+          ? ` · asked for by ${approval.source.slice("connector:".length)}, a connected assistant, not by you here`
+          : ""}
       </p>
 
       <div className="word-box">

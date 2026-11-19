@@ -300,7 +300,18 @@ class Planner:
             )
 
         assert parsed.transfer is not None
-        request = parsed.transfer
+        return await self._plan_transfer(row, parsed.transfer)
+
+    async def plan_transfer(
+        self, request: TransferRequest, text: str, source: str
+    ) -> IntentResponse:
+        """Plan a transfer that arrived already structured (from a connector, not a sentence).
+        `text` is the record of who asked for what. Nothing is executed."""
+        row = PlanRow(created=utcnow(), text=text, kind="transfer", parser="rules")
+        row.source = source
+        return await self._plan_transfer(row, request)
+
+    async def _plan_transfer(self, row: PlanRow, request: TransferRequest) -> IntentResponse:
         routes = self.routes(request)
         if not routes:
             raise IntentError("I have no route between those two wallets.")
@@ -315,7 +326,7 @@ class Planner:
             routes=routes,
             spoken_quote=spoken_quote(request, routes, decision),
             preview=decision,
-            parser=parsed.parser,
+            parser="llm" if row.parser == "llm" else "rules",
         )
 
     def _resolve_market(self, move: MarketMoveIntent) -> MarketMoveIntent:
@@ -354,7 +365,11 @@ class Planner:
             session.add(row)
             session.commit()
 
-    async def execute(self, plan_id: str, route_id: str) -> ExecuteResponse:
+    async def execute(
+        self, plan_id: str, route_id: str, *, hold: Reason | None = None
+    ) -> ExecuteResponse:
+        """Ask the vault to spend. With `hold`, the owner is asked first for that reason even
+        though the vault would allow it (see `app.holds`); the vault is asked after a yes."""
         ctx = self._ctx
         row = self._load(plan_id)
         if row.kind != "transfer":
@@ -392,9 +407,12 @@ class Planner:
             return await block(Reason.FROZEN, "The vault is frozen.")
 
         assert request.destination.address is not None
-        result = await ctx.vault.request_spend(
-            request.destination.address, request.amount_usd, purpose=f"plan {plan_id}"
-        )
+        if hold is not None:
+            result = await ctx.holds.hold(request.destination.address, request.amount_usd, hold)
+        else:
+            result = await ctx.vault.request_spend(
+                request.destination.address, request.amount_usd, purpose=f"plan {plan_id}"
+            )
         if result.permitted:
             assert result.permit_id is not None
             row.permit_id = result.permit_id
@@ -421,6 +439,32 @@ class Planner:
                 ),
             )
         return await block(result.reason or Reason.FROZEN, "The vault refused the spend.")
+
+    async def refuse(self, plan_id: str, reason: Reason, detail: str) -> ExecuteResponse:
+        """Block a quoted plan before the vault is asked, and record why."""
+        row = self._load(plan_id)
+        if row.status != "quoted":
+            raise PlanError(f"this plan was already run (status: {row.status})")
+        request = TransferRequest.model_validate_json(row.request_json)
+        row.status = "blocked"
+        self._update(row)
+        await self._ctx.bus.publish(
+            "blocked",
+            BlockedData(
+                reason=reason,
+                plan_id=plan_id,
+                amount_usd=request.amount_usd,
+                payee_label=request.destination.label,
+                detail=detail,
+            ),
+        )
+        return ExecuteResponse(status=ExecuteStatus.BLOCKED, reason=reason, detail=detail)
+
+    def plan_row(self, plan_id: str) -> PlanRow | None:
+        try:
+            return self._load(plan_id)
+        except PlanError:
+            return None
 
     async def _redeem_and_send(self, row: PlanRow, request: TransferRequest, route: Route) -> str:
         ctx = self._ctx

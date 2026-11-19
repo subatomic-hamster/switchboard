@@ -933,3 +933,66 @@ table.grid .num {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+
+/* Connected assistants */
+
+.connectors {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.connector {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.connector-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.connector-head p {
+  margin: 0;
+}
+
+.connector label,
+.connector-form label {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 150px;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.connector-form .row {
+  align-items: end;
+  margin-top: 10px;
+}
+
+.connector-created > div {
+  min-width: 0;
+}
+
+.secret {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.secret code {
+  overflow-wrap: anywhere;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}

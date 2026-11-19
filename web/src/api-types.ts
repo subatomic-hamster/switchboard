@@ -229,6 +229,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/connect/v1/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Connect Quote
+         * @description Price a transfer and say what would happen. Nothing is sent.
+         */
+        post: operations["switchboard_quote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connect/v1/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connect Receive
+         * @description The owner's receiving addresses, to give to someone who is paying them.
+         */
+        get: operations["switchboard_receive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connect/v1/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Connect Send
+         * @description Ask Switchboard to send USDC to a payee. Sent at once if inside every limit; otherwise
+         *     the owner is asked, or it is blocked. Read `status` in the answer.
+         */
+        post: operations["switchboard_send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connect/v1/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connect Status
+         * @description What this assistant may do: its limits, who it can pay, and whether spending is paused.
+         *     Call this first.
+         */
+        get: operations["switchboard_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connect/v1/transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Connect Transfers
+         * @description Transfers this assistant asked for in the last week, or one of them by id.
+         */
+        get: operations["switchboard_transfers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connector List */
+        get: operations["connector_list_api_connectors_get"];
+        put?: never;
+        /**
+         * Connector Create
+         * @description Make a connector and return its token. This is the only time the token is shown.
+         */
+        post: operations["connector_create_api_connectors_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connectors/{connector_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Connector Revoke
+         * @description Revoke a connector. Its token stops working at once; its history is kept.
+         */
+        delete: operations["connector_revoke_api_connectors__connector_id__delete"];
+        options?: never;
+        head?: never;
+        /** Connector Update */
+        patch: operations["connector_update_api_connectors__connector_id__patch"];
+        trace?: never;
+    };
     "/api/desk/brief": {
         parameters: {
             query?: never;
@@ -1401,6 +1545,294 @@ export interface components {
             /** Transfer Id */
             transfer_id: string;
         };
+        /** ConnectQuote */
+        ConnectQuote: {
+            /** Amount Usd */
+            amount_usd?: number | null;
+            /** Message */
+            message: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "would_send" | "would_ask_owner" | "would_block" | "rejected";
+            /** Routes */
+            routes?: components["schemas"]["RouteInfo"][];
+            /**
+             * To
+             * @default
+             */
+            to: string;
+        };
+        /** ConnectReceive */
+        ConnectReceive: {
+            /** Message */
+            message: string;
+            /** Wallets */
+            wallets: components["schemas"]["ReceiveWallet"][];
+        };
+        /** ConnectResult */
+        ConnectResult: {
+            /** Amount Usd */
+            amount_usd?: number | null;
+            /** Message */
+            message: string;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "sent" | "needs_approval" | "blocked" | "rejected";
+            /**
+             * To
+             * @default
+             */
+            to: string;
+            /**
+             * Transfer
+             * @description Handle for looking this transfer up later.
+             */
+            transfer?: string | null;
+        };
+        /** ConnectSendRequest */
+        ConnectSendRequest: {
+            /**
+             * Allow Duplicate
+             * @description Set true only when the user really wants the same amount sent to the same payee again within two minutes.
+             * @default false
+             */
+            allow_duplicate: boolean;
+            /**
+             * Amount Usd
+             * @description US dollars, whole cents.
+             */
+            amount_usd: number;
+            /** @description Which of the owner's wallets pays. Defaults to Arc. */
+            from_chain?: components["schemas"]["Chain"] | null;
+            /**
+             * Receive As
+             * @default USDC
+             * @enum {string}
+             */
+            receive_as: "USDC" | "EURC";
+            /**
+             * Speed
+             * @default cheapest
+             * @enum {string}
+             */
+            speed: "cheapest" | "fastest";
+            /**
+             * To
+             * @description A payee name from the status call, for example 'sam'. Addresses are not accepted.
+             */
+            to: string;
+            /** @description Which of the payee's wallets. Needed only if ambiguous. */
+            to_chain?: components["schemas"]["Chain"] | null;
+        };
+        /** ConnectStatus */
+        ConnectStatus: {
+            /** Approval Requests Left Today */
+            approval_requests_left_today: number;
+            /**
+             * Approvals By
+             * @enum {string}
+             */
+            approvals_by: "phone call" | "dashboard";
+            /** Assistant */
+            assistant: string;
+            /** Daily Without Asking Usd */
+            daily_without_asking_usd: number;
+            /**
+             * May Send Without Asking Usd
+             * @description The most this assistant may send in one transfer without the owner being asked. 0 means the owner is asked every time.
+             */
+            may_send_without_asking_usd: number;
+            /** Message */
+            message: string;
+            /** Paused Reason */
+            paused_reason: string;
+            /** Payees */
+            payees: components["schemas"]["PayeeInfo"][];
+            /** Sent Today Usd */
+            sent_today_usd: number;
+            /**
+             * Simulated
+             * @description True when this Switchboard runs on stand-in chain modules: transfers are simulated and no funds move.
+             */
+            simulated: boolean;
+            /** Spending Paused */
+            spending_paused: boolean;
+            /** Your Wallets */
+            your_wallets: components["schemas"]["WalletInfo"][];
+        };
+        /** ConnectTransfer */
+        ConnectTransfer: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Created
+             * Format: date-time
+             */
+            created: string;
+            /** Message */
+            message: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "not_started" | "waiting_for_owner" | "in_flight" | "arrived" | "denied" | "blocked";
+            /** To */
+            to: string;
+            /** Transfer */
+            transfer: string;
+        };
+        /** ConnectTransferRequest */
+        ConnectTransferRequest: {
+            /**
+             * Amount Usd
+             * @description US dollars, whole cents.
+             */
+            amount_usd: number;
+            /** @description Which of the owner's wallets pays. Defaults to Arc. */
+            from_chain?: components["schemas"]["Chain"] | null;
+            /**
+             * Receive As
+             * @default USDC
+             * @enum {string}
+             */
+            receive_as: "USDC" | "EURC";
+            /**
+             * To
+             * @description A payee name from the status call, for example 'sam'. Addresses are not accepted.
+             */
+            to: string;
+            /** @description Which of the payee's wallets. Needed only if ambiguous. */
+            to_chain?: components["schemas"]["Chain"] | null;
+        };
+        /** ConnectTransfers */
+        ConnectTransfers: {
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Transfers */
+            transfers: components["schemas"]["ConnectTransfer"][];
+        };
+        /** ConnectorCreate */
+        ConnectorCreate: {
+            /**
+             * Auth
+             * @default header
+             * @enum {string}
+             */
+            auth: "header" | "link";
+            /**
+             * Auto Send Usd
+             * @default 0
+             */
+            auto_send_usd: number;
+            /**
+             * Daily Usd
+             * @default 0
+             */
+            daily_usd: number;
+            /**
+             * Kind
+             * @default other
+             * @enum {string}
+             */
+            kind: "chatgpt" | "claude" | "grok" | "gemini" | "meta" | "other";
+            /** Name */
+            name: string;
+        };
+        /**
+         * ConnectorCreated
+         * @description Returned once, when a connector is made. The token cannot be shown again.
+         */
+        ConnectorCreated: {
+            /** Api Url */
+            api_url: string;
+            connector: components["schemas"]["ConnectorView"];
+            /** Mcp Url */
+            mcp_url: string;
+            /** Token */
+            token: string;
+        };
+        /** ConnectorList */
+        ConnectorList: {
+            /** Api Url */
+            api_url: string;
+            /** Connectors */
+            connectors: components["schemas"]["ConnectorView"][];
+            /** Max Asks Per Day */
+            max_asks_per_day: number;
+            /** Mcp Url */
+            mcp_url: string;
+            /**
+             * Public
+             * @description False when PUBLIC_BASE_URL is not set: local addresses only.
+             */
+            public: boolean;
+            /** Simulated */
+            simulated: boolean;
+        };
+        /** ConnectorUpdate */
+        ConnectorUpdate: {
+            /** Auto Send Usd */
+            auto_send_usd: number;
+            /** Daily Usd */
+            daily_usd: number;
+        };
+        /**
+         * ConnectorView
+         * @description One connected assistant, as the owner's dashboard shows it. Never carries the token.
+         */
+        ConnectorView: {
+            /** Asks Today */
+            asks_today: number;
+            /**
+             * Auth
+             * @enum {string}
+             */
+            auth: "header" | "link";
+            /**
+             * Auto Send Usd
+             * @description Most it may send at once without asking. 0 asks every time.
+             */
+            auto_send_usd: number;
+            /**
+             * Created
+             * Format: date-time
+             */
+            created: string;
+            /**
+             * Daily Usd
+             * @description Most it may send in 24 hours without asking.
+             */
+            daily_usd: number;
+            /** Id */
+            id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "chatgpt" | "claude" | "grok" | "gemini" | "meta" | "other";
+            /** Last Used */
+            last_used: string | null;
+            /** Name */
+            name: string;
+            /** Revoked */
+            revoked: boolean;
+            /** Sent Today Usd */
+            sent_today_usd: number;
+            /**
+             * Token Hint
+             * @description The last four characters of the token.
+             */
+            token_hint: string;
+        };
         /** DailySummary */
         DailySummary: {
             /** Approvals Approved */
@@ -2006,6 +2438,19 @@ export interface components {
             /** Registered */
             registered: boolean;
         };
+        /** PayeeInfo */
+        PayeeInfo: {
+            /**
+             * Name
+             * @description Use this as `to`.
+             */
+            name: string;
+            /**
+             * Wallets
+             * @description The chains this payee has a wallet on.
+             */
+            wallets: string[];
+        };
         /** Policy */
         Policy: {
             /** Allowlist */
@@ -2060,7 +2505,20 @@ export interface components {
          *     that happen before or around the contract call.
          * @enum {string}
          */
-        Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
+        Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "OVER_AGENT_LIMIT" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
+        /** ReceiveWallet */
+        ReceiveWallet: {
+            /** Address */
+            address: string;
+            /**
+             * Asset
+             * @default USDC
+             */
+            asset: string;
+            chain: components["schemas"]["Chain"];
+            /** Label */
+            label: string;
+        };
         /** RegisterVerifyRequest */
         RegisterVerifyRequest: {
             /**
@@ -2092,6 +2550,18 @@ export interface components {
             id: "cheapest" | "fastest";
             /** Steps */
             steps: components["schemas"]["RouteStep"][];
+        };
+        /** RouteInfo */
+        RouteInfo: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Eta S */
+            eta_s: number;
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "cheapest" | "fastest";
         };
         /** RouteStep */
         RouteStep: {
@@ -2541,6 +3011,12 @@ export interface components {
             /** Owner */
             owner: string;
         };
+        /** WalletInfo */
+        WalletInfo: {
+            chain: components["schemas"]["Chain"];
+            /** Label */
+            label: string;
+        };
         /** WalletList */
         WalletList: {
             /** Wallets */
@@ -2894,6 +3370,290 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChainTransferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switchboard_quote: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectQuote"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switchboard_receive: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectReceive"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switchboard_send: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switchboard_status: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switchboard_transfers: {
+        parameters: {
+            query?: {
+                transfer?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectTransfers"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connector_list_api_connectors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorList"];
+                };
+            };
+        };
+    };
+    connector_create_api_connectors_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectorCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connector_revoke_api_connectors__connector_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connector_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connector_update_api_connectors__connector_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connector_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectorUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorView"];
                 };
             };
             /** @description Validation Error */

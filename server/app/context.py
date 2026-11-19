@@ -18,7 +18,9 @@ from app.wallets import WalletBook
 
 if TYPE_CHECKING:
     from app.bots import Bots
+    from app.connectors import Connectors
     from app.forecast import Forecaster
+    from app.holds import HoldingVault
     from app.hostile import HostileLab
     from app.market_brief import MarketDesk
     from app.passkey import Passkeys
@@ -81,6 +83,9 @@ class AppContext:
     hostile: HostileLab = field(init=False)
     bots: Bots = field(init=False)
     speech: Speech = field(init=False)
+    connectors: Connectors = field(init=False)
+    # The same object as `vault`, typed so the planner can place a server-side hold.
+    holds: HoldingVault = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()

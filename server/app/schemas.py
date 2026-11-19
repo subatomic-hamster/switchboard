@@ -56,6 +56,7 @@ class Reason(StrEnum):
     FROZEN = "FROZEN"
     STREAM_STALE = "STREAM_STALE"
     CALL_CAP_REACHED = "CALL_CAP_REACHED"
+    OVER_AGENT_LIMIT = "OVER_AGENT_LIMIT"
     TRADING_DISABLED = "TRADING_DISABLED"
     OVER_ORDER_CAP = "OVER_ORDER_CAP"
     NOT_EQUIVALENT = "NOT_EQUIVALENT"
@@ -581,6 +582,62 @@ class SayRequest(Model):
 
 class HeardSpeech(Model):
     text: str
+
+
+# --------------------------------------------------------------------------- connectors
+
+ConnectorKind = Literal["chatgpt", "claude", "grok", "gemini", "meta", "other"]
+ConnectorAuth = Literal["header", "link"]
+
+
+class ConnectorView(Model):
+    """One connected assistant, as the owner's dashboard shows it. Never carries the token."""
+
+    id: int
+    name: str
+    kind: ConnectorKind
+    auth: ConnectorAuth
+    token_hint: str = Field(description="The last four characters of the token.")
+    created: datetime
+    revoked: bool
+    auto_send_usd: Money = Field(
+        description="Most it may send at once without asking. 0 asks every time."
+    )
+    daily_usd: Money = Field(description="Most it may send in 24 hours without asking.")
+    sent_today_usd: Money
+    asks_today: int
+    last_used: datetime | None
+
+
+class ConnectorList(Model):
+    connectors: list[ConnectorView]
+    mcp_url: str
+    api_url: str
+    public: bool = Field(description="False when PUBLIC_BASE_URL is not set: local addresses only.")
+    simulated: bool
+    max_asks_per_day: int
+
+
+class ConnectorCreate(Model):
+    name: str = Field(min_length=1, max_length=40)
+    kind: ConnectorKind = "other"
+    auth: ConnectorAuth = "header"
+    auto_send_usd: Money = Field(default=Decimal(0), ge=0, le=100_000)
+    daily_usd: Money = Field(default=Decimal(0), ge=0, le=100_000)
+
+
+class ConnectorUpdate(Model):
+    auto_send_usd: Money = Field(ge=0, le=100_000)
+    daily_usd: Money = Field(ge=0, le=100_000)
+
+
+class ConnectorCreated(Model):
+    """Returned once, when a connector is made. The token cannot be shown again."""
+
+    connector: ConnectorView
+    token: str
+    mcp_url: str
+    api_url: str
 
 
 class Wallet(Model):

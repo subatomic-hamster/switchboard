@@ -13,6 +13,7 @@ dependencies = [
     "sse-starlette>=2.1",
     "anthropic>=0.50",
     "webauthn>=2.2",
+    "mcp>=2.3",
 ]
 
 [dependency-groups]

@@ -18,13 +18,25 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import func, select
 
-from app import bots, events, hostile, market_brief, passkey, rules, speech, voice
+from app import (
+    bots,
+    connectors,
+    events,
+    hostile,
+    market_brief,
+    mcp_http,
+    passkey,
+    rules,
+    speech,
+    voice,
+)
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
 from app.db import Database, EventRow
 from app.events import EventBus, StoredEvent
 from app.forecast import Forecaster
+from app.holds import HoldingVault
 from app.intent import IntentError, IntentParser, make_llm_call
 from app.local_only import LocalOnly
 from app.markets import stub as markets_stub
@@ -75,13 +87,20 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     # for a duplicate delivery and dropped).
     with database.session() as session:
         first_id = int(session.exec(select(func.max(EventRow.id))).one() or 0) + 1
+    # Everything reaches the vault through this wrapper, which adds server-side holds for
+    # connected assistants and passes every other call straight through.
+    vault = HoldingVault(
+        chain_stub.StubVault(bus, settings, wallets.allowlist(), first_id=first_id),
+        bus,
+        first_id=first_id,
+    )
     ctx = AppContext(
         settings=settings,
         db=database,
         bus=bus,
         tasks=tasks,
         wallets=wallets,
-        vault=chain_stub.StubVault(bus, settings, wallets.allowlist(), first_id=first_id),
+        vault=vault,
         transfers=chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id),
         markets=markets_stub.StubMarkets(bus, settings, first_id=first_id),
         anchor=chain_stub.StubAnchor(),
@@ -91,6 +110,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         ctx.stream_stale = bool(event.data.get("stale"))
 
     bus.on("stream.stale", track_stream)
+    ctx.holds = vault
     ctx.planner = Planner(ctx, IntentParser(wallets, make_llm_call(settings)))
     ctx.approvals = voice.Approvals(ctx)
     ctx.passkeys = passkey.Passkeys(ctx)
@@ -100,12 +120,14 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     ctx.hostile = hostile.HostileLab(ctx)
     ctx.bots = bots.Bots(ctx)
     ctx.speech = speech.Speech(ctx)
+    ctx.connectors = connectors.Connectors(ctx)
     return ctx
 
 
 def create_app(settings: Settings | None = None, db: Database | None = None) -> FastAPI:
     settings = settings or get_settings()
     ctx = build_context(settings, db)
+    gateway = mcp_http.McpGateway(ctx)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -124,7 +146,9 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         if settings.anthropic_api_key:
             # The first structured-output call compiles the schema and is slow; do it now.
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")
-        yield
+        # The MCP SDK answers requests inside a task group that lives as long as the app.
+        async with gateway.server.session_manager.run():
+            yield
         await ctx.aclose()
 
     app = FastAPI(
@@ -134,6 +158,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         lifespan=lifespan,
     )
     app.state.ctx = ctx
+    app.state.mcp = gateway
     app.add_middleware(LocalOnly)
 
     app.include_router(events.router)
@@ -150,6 +175,9 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(bots.router)
     app.include_router(bots.dashboard)
     app.include_router(speech.router)
+    app.include_router(connectors.router)
+    app.include_router(connectors.dashboard)
+    app.include_router(mcp_http.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:

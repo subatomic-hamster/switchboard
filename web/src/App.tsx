@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { CommandBar } from "./components/CommandBar";
+import { ConnectorsPanel } from "./components/ConnectorsPanel";
 import { EventFeed } from "./components/EventFeed";
 import { FlightRecorder, type ReplayFrame } from "./components/FlightRecorder";
 import { HostileBox } from "./components/HostileBox";
@@ -151,6 +152,7 @@ export function App() {
             />
             <HostileBox onChanged={refresh} />
           </SafetyPanel>
+          <ConnectorsPanel refreshKey={lastId} />
         </div>
       </main>
     </div>

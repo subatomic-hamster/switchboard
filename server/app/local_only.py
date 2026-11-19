@@ -22,6 +22,9 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 PUBLIC_PREFIXES = (
     "/api/voice/",  # bearer VOICE_TOKEN; the post-call webhook is HMAC-verified
     "/api/bots/",  # bearer BOT_TOKEN
+    # One bearer token per connected assistant. The trailing slash matters: the routes that
+    # create and revoke those tokens are under /api/connectors and stay on this machine.
+    "/api/connect/",
     "/api/hooks/",  # P1's Stream webhook, HMAC-verified
     "/api/health",
 )

@@ -32,6 +32,11 @@ export type RuleProposal = S["RuleProposal"];
 export type HostileResult = S["HostileResult"];
 export type DailySummary = S["DailySummary"];
 export type BotNote = S["BotNote"];
+export type ConnectorView = S["ConnectorView"];
+export type ConnectorList = S["ConnectorList"];
+export type ConnectorCreate = S["ConnectorCreate"];
+export type ConnectorUpdate = S["ConnectorUpdate"];
+export type ConnectorCreated = S["ConnectorCreated"];
 
 export const EVENT_TYPES: EventType[] = [
   "transfer.sent",

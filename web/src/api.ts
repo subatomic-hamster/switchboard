@@ -1,6 +1,11 @@
 import type {
   ApprovalView,
   BotNote,
+  ConnectorCreate,
+  ConnectorCreated,
+  ConnectorList,
+  ConnectorUpdate,
+  ConnectorView,
   DailySummary,
   ExecuteResponse,
   ForecastList,
@@ -107,6 +112,15 @@ export const api = {
       )
     ).notes,
   hostile: (content: string) => post<HostileResult>("/api/hostile", { content }),
+  connectors: () => request<ConnectorList>("/api/connectors"),
+  createConnector: (body: ConnectorCreate) => post<ConnectorCreated>("/api/connectors", body),
+  updateConnector: (id: number, body: ConnectorUpdate) =>
+    request<ConnectorView>(`/api/connectors/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  revokeConnector: (id: number) =>
+    request<OkResponse>(`/api/connectors/${id}`, { method: "DELETE" }),
   revealForecast: (receiptId: string, outcome: boolean) =>
     post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/reveal`, { outcome }),
 };

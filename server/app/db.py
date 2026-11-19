@@ -171,6 +171,42 @@ class BotNoteRow(SQLModel, table=True):
     body: str
 
 
+class ConnectorRow(SQLModel, table=True):
+    """One outside assistant (ChatGPT, Claude, Grok, ...) that may ask Switchboard to send.
+
+    The token itself is never stored: only its SHA-256, and its last four characters so the
+    owner can tell two connectors apart. The two limits are what this assistant may send
+    without the owner being asked; they sit in front of the vault's own limits, never in
+    place of them.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    kind: str = "other"
+    # "header": the token is sent as `Authorization: Bearer`. "link": the token is part of the
+    # address, for assistants whose settings take only a URL. Each token works one way only.
+    auth: str = "header"
+    token_hash: str = Field(index=True, unique=True)
+    token_hint: str = ""
+    created: datetime
+    revoked_at: datetime | None = None
+    auto_send_micro: int = 0
+    daily_micro: int = 0
+    last_used: datetime | None = None
+
+
+class ConnectorRequestRow(SQLModel, table=True):
+    """Links a plan to the connector that asked for it. `asked` is true when the owner had
+    to be asked about it."""
+
+    plan_id: int = Field(primary_key=True)
+    connector_id: int = Field(index=True)
+    created: datetime = Field(index=True)
+    amount_micro: int
+    payee_address: str
+    asked: bool = False
+
+
 class HostileRow(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     ts: datetime

@@ -53,6 +53,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlmodel import col, func, select
 
 from app import call_script
+from app.connectors import CONNECTOR_SOURCE
 from app.context import AppContext, get_ctx
 from app.db import (
     ApprovalRow,
@@ -116,6 +117,10 @@ REASON_PHRASES: dict[Reason, str] = {
     Reason.OVER_DAILY_BUDGET: "it would take you past your daily budget",
     Reason.PAYEE_NOT_ALLOWED: "the destination is one you have never paid before",
     Reason.FROZEN: "the vault is frozen",
+    Reason.OVER_AGENT_LIMIT: (
+        "it came from a connected assistant and is more than that assistant may send "
+        "without asking you"
+    ),
 }
 
 MissedCallHook = Callable[[ApprovalRow, str], Awaitable[None]]
@@ -260,6 +265,11 @@ class Approvals:
                 "Nothing supports this. It did not come from a sentence you spoke; it was "
                 "triggered by outside content the agent read."
             )
+        elif plan.source.startswith(CONNECTOR_SOURCE):
+            # Not the owner's sentence: an outside assistant asked. Say so, and by name.
+            row.case_for, objection = self._ctx.connectors.cases(plan, row)
+            if objection:
+                row.case_against = objection
         else:
             cost = (
                 f" The {route.id} route costs {say_money(route.cost_usd)} and takes "
