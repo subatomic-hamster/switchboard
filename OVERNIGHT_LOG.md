@@ -119,8 +119,14 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
     Then `uv run python -m scripts.widget_page <request id> --open` holds the approval
     conversation in the ElevenLabs widget. This path has not been run: the agent does not
     exist yet.
-11. **Set up the four Grok Bot routines** from `bots/routines.md` (they cannot be created by
-    API), run each once, and save the chat exports under `bots/exports/`.
+11. **Set up the four Grok Bot routines** from `bots/routines.md`, run each once, and save
+    the chats under `bots/exports/`. You asked me to do this in Chrome, by API or by CLI.
+    There is no API or CLI for it, and I did not make them in Chrome yet, for two reasons.
+    Every routine has the server's public address in its text, and there is none until the
+    tunnel is open (item 5). And the Bot needs `BOT_TOKEN`, which I do not type into a web
+    page: you save it on the Bot yourself, as a secret. Once the address exists I can make
+    the `Switchboard` Bot and send it the four routines in Chrome; making a Bot shows xAI's
+    Grok Bot terms, so I will ask before that click.
 12. **Record the demo video.** `uv run python -m app.demo_mock` paces a full run for the screen
     (it needs `CALLS_ENABLED=false`); the call audio needs items 1 to 8.
 13. **Decide the wording for Kalshi, Limitless and Phantom.** You asked for them to be
@@ -396,3 +402,10 @@ agreement because they touch the shared interface.
     one exception to "do not force-push, rewrite history, or push to main". Every commit id
     changed; the ids in this log were updated to the new ones. Commits from here on carry no
     co-author line, and the PR description no longer has an attribution footer.
+54. **Grok Bot routines, as they really work.** Checked on 19 November against xAI's
+    documentation and your signed-in grok.com (looked at, nothing changed). A routine is made
+    by asking a Bot in chat; there is no API or CLI. Its webhook is called with the routine's
+    own key as a bearer token, which the server did not send; it does now, from the new
+    setting `GROK_MISSED_CALL_WEBHOOK_KEY`, to that address only and only over https.
+    `bots/routines.md` was rewritten to match, and has the bot token saved on the Bot as a
+    secret instead of pasted into the routine text.
