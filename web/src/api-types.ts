@@ -66,6 +66,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/bots/equivalence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bot Equivalence
+         * @description The research routine posts what it found about a market (subject = the market slug).
+         *     Shown to the owner as unverified. It never changes the verdict of the equivalence check.
+         */
+        post: operations["bot_equivalence_api_bots_equivalence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bots/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bot Ledger
+         * @description For the reconciliation routine: every movement, and whether it adds up.
+         */
+        get: operations["bot_ledger_api_bots_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bots/missed-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bot Missed Calls
+         * @description Approval requests that were denied because nobody decided.
+         */
+        get: operations["bot_missed_calls_api_bots_missed_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bots/reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bot Reconciliation
+         * @description The reconciliation routine reports what it found. Stored as a note; nothing acts on it.
+         */
+        post: operations["bot_reconciliation_api_bots_reconciliation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/bots/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bot Summary
+         * @description For the daily summary routine. `spoken` is ready to post or read out.
+         */
+        get: operations["bot_summary_api_bots_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chain/stub/stream": {
         parameters: {
             query?: never;
@@ -409,6 +510,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Notes
+         * @description Notes left by bot routines, for display as unverified outside content.
+         */
+        get: operations["notes_api_notes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/passkey/assert/options": {
         parameters: {
             query?: never;
@@ -612,6 +733,26 @@ export interface paths {
          * @description Budget remaining, approval rate, and the state of every safety switch.
          */
         get: operations["stats_api_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Summary
+         * @description The same summary, for the dashboard's "hear today's summary".
+         */
+        get: operations["summary_api_summary_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1034,6 +1175,38 @@ export interface components {
              */
             type: "blocked";
         };
+        /** BotNote */
+        BotNote: {
+            /**
+             * Body
+             * @description Written by a bot from outside sources. Unverified.
+             */
+            body: string;
+            /** Routine */
+            routine: string;
+            /** Subject */
+            subject: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /** BotNoteIn */
+        BotNoteIn: {
+            /** Body */
+            body: string;
+            /**
+             * Subject
+             * @default
+             */
+            subject: string;
+        };
+        /** BotNoteList */
+        BotNoteList: {
+            /** Notes */
+            notes: components["schemas"]["BotNote"][];
+        };
         /** BuyQuote */
         BuyQuote: {
             /** Ask */
@@ -1108,6 +1281,39 @@ export interface components {
         ChainTransferResponse: {
             /** Transfer Id */
             transfer_id: string;
+        };
+        /** DailySummary */
+        DailySummary: {
+            /** Approvals Approved */
+            approvals_approved: number;
+            /** Approvals Asked */
+            approvals_asked: number;
+            /** Approvals Denied */
+            approvals_denied: number;
+            /** Blocked */
+            blocked: {
+                [key: string]: number;
+            };
+            /** Calls */
+            calls: number;
+            /** Dry Run Trades */
+            dry_run_trades: number;
+            /** Fees Total Usd */
+            fees_total_usd: number;
+            /** Frozen */
+            frozen: boolean;
+            /** Hours */
+            hours: number;
+            /** Missed Calls */
+            missed_calls: number;
+            /** Sent Total Usd */
+            sent_total_usd: number;
+            /** Spoken */
+            spoken: string;
+            /** Stream Stale */
+            stream_stale: boolean;
+            /** Transfers */
+            transfers: number;
         };
         /**
          * Decision
@@ -1329,6 +1535,46 @@ export interface components {
         JsonObject: {
             [key: string]: unknown;
         };
+        /** LedgerLine */
+        LedgerLine: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /** From Place */
+            from_place: string;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string;
+            /** Payee Label */
+            payee_label: string;
+            /** Ref */
+            ref: string;
+            /** Status */
+            status: string;
+            /** To Place */
+            to_place: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /** LedgerResponse */
+        LedgerResponse: {
+            /**
+             * Consistent
+             * @description True when transfers in the ledger for the last 24 hours add up to what the vault says was spent.
+             */
+            consistent: boolean;
+            /** Lines */
+            lines: components["schemas"]["LedgerLine"][];
+            /** Sent Total Usd */
+            sent_total_usd: number;
+            /** Vault Spent 24H Usd */
+            vault_spent_24h_usd: number;
+        };
         /** MarketBrief */
         MarketBrief: {
             /**
@@ -1480,6 +1726,31 @@ export interface components {
              * @enum {string}
              */
             time: "same" | "different" | "unknown" | "n/a";
+        };
+        /** MissedCall */
+        MissedCall: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** How */
+            how: string;
+            /** Outcome */
+            outcome: string;
+            /** Payee Label */
+            payee_label: string;
+            /** Reason */
+            reason: string;
+            /** Request Id */
+            request_id: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /** MissedCallList */
+        MissedCallList: {
+            /** Missed */
+            missed: components["schemas"]["MissedCall"][];
         };
         /** ModelForecast */
         ModelForecast: {
@@ -2221,6 +2492,175 @@ export interface operations {
             };
         };
     };
+    bot_equivalence_api_bots_equivalence_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BotNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bot_ledger_api_bots_ledger_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bot_missed_calls_api_bots_missed_calls_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissedCallList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bot_reconciliation_api_bots_reconciliation_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BotNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bot_summary_api_bots_summary_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stub_stream_api_chain_stub_stream_post: {
         parameters: {
             query?: never;
@@ -2777,6 +3217,38 @@ export interface operations {
             };
         };
     };
+    notes_api_notes_get: {
+        parameters: {
+            query?: {
+                routine?: string;
+                subject?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotNoteList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     assert_options_api_passkey_assert_options_post: {
         parameters: {
             query?: never;
@@ -3103,6 +3575,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatsResponse"];
+                };
+            };
+        };
+    };
+    summary_api_summary_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

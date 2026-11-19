@@ -17,6 +17,7 @@ from app.ports import AnchorPort, MarketsPort, TransferPort, VaultPort
 from app.wallets import WalletBook
 
 if TYPE_CHECKING:
+    from app.bots import Bots
     from app.forecast import Forecaster
     from app.hostile import HostileLab
     from app.market_brief import MarketDesk
@@ -77,11 +78,13 @@ class AppContext:
     desk: MarketDesk = field(init=False)
     rules: Rules = field(init=False)
     hostile: HostileLab = field(init=False)
+    bots: Bots = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()
         await self.approvals.aclose()
         await self.forecaster.aclose()
+        await self.bots.aclose()
         self.db.close()
 
 
