@@ -15,7 +15,7 @@ import pytest
 import respx
 from fastapi import FastAPI
 
-from app.agent_config import agent_payload, system_prompt, tool_payloads
+from app.agent_config import agent_payload, market_tool_payloads, system_prompt, tool_payloads
 from app.context import AppContext
 from app.db import Database
 from app.main import create_app
@@ -533,6 +533,18 @@ def test_agent_tools_point_at_the_four_voice_routes() -> None:
     assert approve["request_id"] == {"type": "string", "dynamic_variable": "request_id"}
     assert "description" in approve["amount_spoken"] and "description" in approve["challenge"]
     assert VOICE_TOKEN not in json.dumps(tools)
+
+
+def test_market_tools_point_at_the_markets_voice_routes() -> None:
+    configs = [tool["tool_config"] for tool in market_tool_payloads("https://example.test", "s1")]
+    assert [(c["name"], c["api_schema"]["method"]) for c in configs] == [
+        ("list_markets", "GET"),
+        ("market_brief", "GET"),
+        ("market_override", "POST"),
+    ]
+    assert configs[1]["api_schema"]["url"] == "https://example.test/api/voice/markets/brief"
+    assert configs[1]["api_schema"]["query_params_schema"]["required"] == ["slug"]
+    assert "You cannot place orders on a call" in system_prompt(two_voices=False)
 
 
 def test_agent_payload_uses_multi_voice_only_when_a_second_voice_is_set() -> None:

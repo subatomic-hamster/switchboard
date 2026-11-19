@@ -70,6 +70,17 @@ Passkey also needed: {{{{requires_passkey}}}}.
    spending is stopped until they unfreeze it from the dashboard.
 9. Say goodbye in one short sentence and end the call.
 
+# If the owner asks about moving a prediction-market position
+You are then the Markets operator, in the Operator's voice.
+1. Call list_markets and pick the market the owner means. If none fits, say so.
+2. Call market_brief with that market's slug and the number of contracts, and read out its
+   "spoken" text as it is. It gives the match result or the refusal, the cost of the move, whether
+   there is a bid, and the hold-or-move opinion with its track record.
+3. The opinion is a forecast, not advice, and the owner may go against it. If they do, call
+   market_override with the receipt id from the brief, then tell them the move itself is run
+   from the Switchboard dashboard. You cannot place orders on a call.
+4. If the brief refuses the move, say why and stop. Never suggest a way around a refusal.
+
 # Rules that never bend
 - "Yes", "approve", "go ahead" or "do it" is not an approval. Without both the amount and the
   word, do not call approve; explain what is needed.
@@ -193,6 +204,81 @@ def tool_payloads(base_url: str, secret_id: str) -> list[dict[str, Any]]:
                 "properties": {"source": {"type": "string", "constant_value": "phone"}},
             },
         ),
+    ]
+
+
+def market_tool_payloads(base_url: str, secret_id: str) -> list[dict[str, Any]]:
+    """The markets operator's three tools, as `POST /v1/convai/tools` bodies."""
+    base = base_url.rstrip("/")
+    headers = {"Authorization": {"secret_id": secret_id}}
+    return [
+        {
+            "tool_config": {
+                "type": "webhook",
+                "name": "list_markets",
+                "description": "List the markets that can be compared, with slug and title.",
+                "response_timeout_secs": 20,
+                "api_schema": {
+                    "url": f"{base}/api/voice/markets/list",
+                    "method": "GET",
+                    "request_headers": headers,
+                },
+            }
+        },
+        {
+            "tool_config": {
+                "type": "webhook",
+                "name": "market_brief",
+                "description": (
+                    "For one market: whether the two venues' contracts are the same bet, what "
+                    "moving the position costs, whether there is a bid, and the hold-or-move "
+                    "opinion with its track record. Read the 'spoken' field to the owner."
+                ),
+                "response_timeout_secs": 20,
+                "api_schema": {
+                    "url": f"{base}/api/voice/markets/brief",
+                    "method": "GET",
+                    "request_headers": headers,
+                    "query_params_schema": {
+                        "properties": {
+                            "slug": {
+                                "type": "string",
+                                "description": "The market's slug, from list_markets.",
+                            },
+                            "qty": {
+                                "type": "number",
+                                "description": "How many contracts the owner wants to move.",
+                            },
+                        },
+                        "required": ["slug"],
+                    },
+                },
+            }
+        },
+        {
+            "tool_config": {
+                "type": "webhook",
+                "name": "market_override",
+                "description": "Record that the owner chose to go against the opinion.",
+                "response_timeout_secs": 20,
+                "api_schema": {
+                    "url": f"{base}/api/voice/markets/override",
+                    "method": "POST",
+                    "content_type": "application/json",
+                    "request_headers": headers,
+                    "request_body_schema": {
+                        "type": "object",
+                        "required": ["receipt_id"],
+                        "properties": {
+                            "receipt_id": {
+                                "type": "string",
+                                "description": "The opinion's receipt id from market_brief.",
+                            }
+                        },
+                    },
+                },
+            }
+        },
     ]
 
 

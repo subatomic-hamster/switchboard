@@ -6,7 +6,7 @@
     uv run python -m scripts.create_agent --apply --write-env   # also save the agent id in .env
 
 `--apply` writes to your ElevenLabs account: it stores one workspace secret (the bearer token
-for the voice tools), creates the four webhook tools, and creates the agent, or updates it when
+for the voice tools), creates the seven webhook tools, and creates the agent, or updates it when
 ELEVENLABS_AGENT_ID is already set. It places no call and costs no call minutes.
 
 Needs in `.env`: ELEVENLABS_API_KEY, VOICE_TOKEN, and PUBLIC_BASE_URL (the public HTTPS address
@@ -24,7 +24,13 @@ from typing import Any
 
 import httpx
 
-from app.agent_config import AGENT_NAME, SECRET_NAME, agent_payload, tool_payloads
+from app.agent_config import (
+    AGENT_NAME,
+    SECRET_NAME,
+    agent_payload,
+    market_tool_payloads,
+    tool_payloads,
+)
 from app.config import REPO_ROOT, Settings, get_settings
 
 API = "https://api.elevenlabs.io"
@@ -77,7 +83,7 @@ def dry_run(settings: Settings) -> int:
     print("# 1. workspace secret (value not shown)")
     print(_redacted({"type": "new", "name": SECRET_NAME, "value": "Bearer <VOICE_TOKEN>"}))
     print("\n# 2. tools: POST /v1/convai/tools, once each")
-    for tool in tool_payloads(base, "<secret_id>"):
+    for tool in [*tool_payloads(base, "<secret_id>"), *market_tool_payloads(base, "<secret_id>")]:
         print(_redacted(tool))
     print("\n# 3. agent: POST /v1/convai/agents/create (or PATCH when ELEVENLABS_AGENT_ID is set)")
     print(_redacted(agent_payload(settings, ["<tool ids from step 2>"])))
@@ -114,7 +120,10 @@ def apply(settings: Settings, write_env: bool) -> int:
         print(f"stored secret {SECRET_NAME}")
 
         tool_ids: list[str] = []
-        for tool in tool_payloads(settings.public_base_url, secret_id):
+        for tool in [
+            *tool_payloads(settings.public_base_url, secret_id),
+            *market_tool_payloads(settings.public_base_url, secret_id),
+        ]:
             created = _check(client.post("/v1/convai/tools", json=tool))
             tool_ids.append(str(created["id"]))
             print(f"created tool {tool['tool_config']['name']}")

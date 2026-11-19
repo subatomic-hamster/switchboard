@@ -306,6 +306,12 @@ voice_router = APIRouter(
 )
 
 
+@voice_router.get("/list", response_model=MarketListingList)
+async def voice_market_list(ctx: Ctx) -> MarketListingList:
+    """Voice tool. The markets the operator can compare."""
+    return MarketListingList(markets=ctx.markets.listing())
+
+
 @voice_router.get("/brief", response_model=MarketBrief)
 async def voice_market_brief(ctx: Ctx, slug: Slug, qty: Qty = Decimal("1")) -> MarketBrief:
     """Voice tool. The markets operator reads `spoken`."""
