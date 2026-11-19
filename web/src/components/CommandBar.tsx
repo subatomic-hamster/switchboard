@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api";
 import { CHAIN_NAMES, duration, money, REASON_TEXT, type Tone } from "../format";
@@ -33,6 +33,10 @@ export interface CommandBarProps {
   text: string;
   onTextChange: (text: string) => void;
   micSlot?: React.ReactNode;
+  /** Shown under the examples (the read-aloud toggle). */
+  footer?: React.ReactNode;
+  /** A sentence to quote at once, for example one that was just spoken. */
+  submit?: { text: string; at: number } | null;
 }
 
 function RouteCard({
@@ -72,7 +76,15 @@ function RouteCard({
   );
 }
 
-export function CommandBar({ onQuote, onMarketMove, text, onTextChange, micSlot }: CommandBarProps) {
+export function CommandBar({
+  onQuote,
+  onMarketMove,
+  text,
+  onTextChange,
+  micSlot,
+  footer,
+  submit,
+}: CommandBarProps) {
   const [plan, setPlan] = useState<IntentResponse | null>(null);
   const [result, setResult] = useState<ExecuteResponse | null>(null);
   const [error, setError] = useState("");
@@ -110,6 +122,12 @@ export function CommandBar({ onQuote, onMarketMove, text, onTextChange, micSlot 
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (submit) void quote(submit.text);
+    // Only a new spoken sentence should trigger this, not a re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submit]);
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -159,6 +177,8 @@ export function CommandBar({ onQuote, onMarketMove, text, onTextChange, micSlot 
           </button>
         ))}
       </div>
+
+      {footer && <div className="command-footer">{footer}</div>}
 
       {error && (
         <p className="notice notice-critical" role="alert">

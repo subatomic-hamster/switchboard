@@ -5,6 +5,7 @@ import { EVENT_TYPES, type SwitchboardEvent } from "./types";
 
 export const MAX_EVENTS = 2000;
 const RETRY_MS = 2000;
+const MAX_LIVE = 300;
 
 /** Add events to the log: ordered by id, no duplicates, capped at MAX_EVENTS. */
 export function mergeEvents(
@@ -24,8 +25,8 @@ export type StreamState = "connecting" | "live" | "reconnecting";
 export interface EventStream {
   events: SwitchboardEvent[];
   state: StreamState;
-  /** The most recent event received live (not from history), for animations and tones. */
-  latest: SwitchboardEvent | null;
+  /** Events received live (not from history), oldest first, for animations and tones. */
+  live: SwitchboardEvent[];
 }
 
 /**
@@ -38,7 +39,7 @@ export interface EventStream {
 export function useEventStream(): EventStream {
   const [events, setEvents] = useState<SwitchboardEvent[]>([]);
   const [state, setState] = useState<StreamState>("connecting");
-  const [latest, setLatest] = useState<SwitchboardEvent | null>(null);
+  const [live, setLive] = useState<SwitchboardEvent[]>([]);
 
   useEffect(() => {
     let source: EventSource | null = null;
@@ -59,7 +60,7 @@ export function useEventStream(): EventStream {
     const onMessage = (message: MessageEvent<string>) => {
       const event = JSON.parse(message.data) as SwitchboardEvent;
       setEvents((current) => mergeEvents(current, [event]));
-      setLatest(event);
+      setLive((current) => [...current.slice(-MAX_LIVE + 1), event]);
     };
 
     const connect = () => {
@@ -89,5 +90,5 @@ export function useEventStream(): EventStream {
     };
   }, []);
 
-  return { events, state, latest };
+  return { events, state, live };
 }

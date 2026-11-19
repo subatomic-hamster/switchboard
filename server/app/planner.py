@@ -416,7 +416,12 @@ class Planner:
                 status=ExecuteStatus.NEEDS_APPROVAL,
                 reason=result.reason,
                 request_id=result.request_id,
-                detail="The vault needs your approval. Your phone will ring.",
+                detail=(
+                    "The vault needs your approval. Your phone will ring."
+                    if ctx.settings.calls_live
+                    else "The vault needs your approval. Calls are in dry run, so no phone "
+                    "rings: approve or deny on the dashboard."
+                ),
             )
         return await block(result.reason or Reason.FROZEN, "The vault refused the spend.")
 
