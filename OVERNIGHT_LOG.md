@@ -143,33 +143,33 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
 
 | Phase | Task | Commit |
 |---|---|---|
-| 0 | Layout, `schemas.py`, event bus and SSE, SQLModel tables, stub routers, generated-types script, Vite app | `88f1b12` |
-| 0 | Proof: fetch Gemini and Polymarket US and print one matched pair. Run against the live public APIs; it found Rockets at Nuggets on both, same start time, 45/46 on each | `c6585ac` |
-| 0 | Proof: outbound call script. Dry run only; the real call is Blocked | `ae425a2` |
-| 1 | Intent parser: sentence to `TransferRequest`. LLM path verified on a live call | `42297a2` |
-| 1 | Planner: cheapest and fastest routes, pay / ask / block with a reason | `42297a2` |
-| 1 | Agent prompt with two personas, the four voice tools, the outbound call function | `ae425a2` |
-| 1 | Dashboard: event feed and sentence input | `b3bb4f5` |
-| 2 | Ring view: vault at the centre, particles, flash and tone on a block | `83970c2` |
-| 2 | Voice input on the dashboard; route quote read back before execution | `83970c2` |
-| 2 | Approval hardening: amount said back, challenge word on screen, no answer means deny | `ae425a2` |
-| 2 | Approval hardening: passkey above a second threshold | `068838e` |
-| 3 | Markets panel: both venues' prices side by side for a matched pair | `180eef4` |
-| 3 | Markets operator voice: match result, move cost, bid depth, hold-or-move opinion with track record, override | `221d8c4`, `cd008ce` |
-| 3 | Forecast receipts: hash before the event, reveal after, Brier score. Four model families verified on live calls | `221d8c4` |
-| 4 | Anti-rubber-stamping: daily cap on calls, approval-rate counter with a warning at 100% | `ae425a2`, `83970c2` |
-| 4 | Rules by voice: say a rule, hear it read back, confirm, policy updates | `278779c`, `008c5db` |
-| 4 | Hostile-content text box | `278779c`, `008c5db` |
-| 5 | Grok Bot routines: server routes, and `bots/routines.md` with the exact text, trigger, calls and setup of all four | `044979d` |
-| 5 | Flight recorder: scrub bar replaying past activity on the ring | `719064f` |
-| 5 | README: setup from a clean clone, architecture diagram, decision loop, safety limits, ElevenLabs products, Grok Bot role | `c2c2712` |
-| – | Mock event generator `uv run python -m app.demo_mock` | `83970c2` |
-| – | Dashboard routes served only to this machine, even behind a tunnel (found in self-review) | `1699a16` |
-| – | Bot research notes shown in the markets panel as unverified | `9f48b2f` |
-| 1 | Call placement behind `CALL_PROVIDER` (`dry_run`, `agentphone`, `elevenlabs_twilio`); AgentPhone call in webhook mode; `POST /api/voice/hooks/agentphone` with signature and timestamp checks; the approval conversation as a state machine in our code; `scripts/agentphone_setup.py` | `440482d` |
-| 2 | Dashboard microphone and read-back through ElevenLabs speech-to-text and text-to-speech, browser speech as the fallback; ElevenLabs browser-widget fallback for the approval (`scripts/widget_page.py`) | `1bd01f3` |
-| – | Fix: after a restart on the same database the stub vault reused request numbers, so a new over-limit request raised no approval (found in the browser) | `1bd01f3` |
-| – | Connected assistants: a key and a limit per assistant, held requests, MCP endpoint (official SDK) and JSON routes, dashboard panel | `bda315f` |
+| 0 | Layout, `schemas.py`, event bus and SSE, SQLModel tables, stub routers, generated-types script, Vite app | `720ff44` |
+| 0 | Proof: fetch Gemini and Polymarket US and print one matched pair. Run against the live public APIs; it found Rockets at Nuggets on both, same start time, 45/46 on each | `56cc078` |
+| 0 | Proof: outbound call script. Dry run only; the real call is Blocked | `5eb55c0` |
+| 1 | Intent parser: sentence to `TransferRequest`. LLM path verified on a live call | `3a9f7a7` |
+| 1 | Planner: cheapest and fastest routes, pay / ask / block with a reason | `3a9f7a7` |
+| 1 | Agent prompt with two personas, the four voice tools, the outbound call function | `5eb55c0` |
+| 1 | Dashboard: event feed and sentence input | `249937f` |
+| 2 | Ring view: vault at the centre, particles, flash and tone on a block | `7dd36d1` |
+| 2 | Voice input on the dashboard; route quote read back before execution | `7dd36d1` |
+| 2 | Approval hardening: amount said back, challenge word on screen, no answer means deny | `5eb55c0` |
+| 2 | Approval hardening: passkey above a second threshold | `3105dc5` |
+| 3 | Markets panel: both venues' prices side by side for a matched pair | `fe8eb74` |
+| 3 | Markets operator voice: match result, move cost, bid depth, hold-or-move opinion with track record, override | `1e130a0`, `74b2be7` |
+| 3 | Forecast receipts: hash before the event, reveal after, Brier score. Four model families verified on live calls | `1e130a0` |
+| 4 | Anti-rubber-stamping: daily cap on calls, approval-rate counter with a warning at 100% | `5eb55c0`, `7dd36d1` |
+| 4 | Rules by voice: say a rule, hear it read back, confirm, policy updates | `a3ab3ab`, `82dcf53` |
+| 4 | Hostile-content text box | `a3ab3ab`, `82dcf53` |
+| 5 | Grok Bot routines: server routes, and `bots/routines.md` with the exact text, trigger, calls and setup of all four | `86d30ff` |
+| 5 | Flight recorder: scrub bar replaying past activity on the ring | `00014a3` |
+| 5 | README: setup from a clean clone, architecture diagram, decision loop, safety limits, ElevenLabs products, Grok Bot role | `25d9b06` |
+| – | Mock event generator `uv run python -m app.demo_mock` | `7dd36d1` |
+| – | Dashboard routes served only to this machine, even behind a tunnel (found in self-review) | `874fab6` |
+| – | Bot research notes shown in the markets panel as unverified | `71f3cad` |
+| 1 | Call placement behind `CALL_PROVIDER` (`dry_run`, `agentphone`, `elevenlabs_twilio`); AgentPhone call in webhook mode; `POST /api/voice/hooks/agentphone` with signature and timestamp checks; the approval conversation as a state machine in our code; `scripts/agentphone_setup.py` | `75fc578` |
+| 2 | Dashboard microphone and read-back through ElevenLabs speech-to-text and text-to-speech, browser speech as the fallback; ElevenLabs browser-widget fallback for the approval (`scripts/widget_page.py`) | `b966ab8` |
+| – | Fix: after a restart on the same database the stub vault reused request numbers, so a new over-limit request raised no approval (found in the browser) | `b966ab8` |
+| – | Connected assistants: a key and a limit per assistant, held requests, MCP endpoint (official SDK) and JSON routes, dashboard panel | `8a7a03c` |
 
 ## Blocked
 
@@ -389,3 +389,10 @@ agreement because they touch the shared interface.
     OAuth token, but the same caution applies. Only the key's SHA-256 is stored.
 52. **Receiving is addresses only.** `switchboard_receive` returns your wallets. Nothing
     watches for incoming payments, and the answer says so.
+53. **History was rewritten on 19 November, on your instruction.** You asked for the Claude
+    co-author line to be removed from GitHub. That line was in the message of every commit, so
+    all 25 commits on this branch and the one on `main` were replaced by copies with the same
+    files, author and dates and no such line, and both branches were force-pushed. This is the
+    one exception to "do not force-push, rewrite history, or push to main". Every commit id
+    changed; the ids in this log were updated to the new ones. Commits from here on carry no
+    co-author line, and the PR description no longer has an attribution footer.
