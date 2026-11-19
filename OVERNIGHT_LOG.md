@@ -70,9 +70,9 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    and put the `https://...` address in `PUBLIC_BASE_URL`. AgentPhone posts every turn of the
    call to it. Only the signed and token-protected routes are served through it; the dashboard
    stays local.
-6. **Switch your AgentPhone agent to webhook mode.** It is in `hosted` mode today.
-   `cd server && uv run python -m scripts.agentphone_setup --set-webhook-mode`. This changes
-   the agent in your account: AgentPhone clears its hosted prompt and greeting.
+6. ~~Switch your AgentPhone agent to webhook mode.~~ **Done on 19 November, on your say.** I ran
+   `uv run python -m scripts.agentphone_setup --set-webhook-mode` and read the agent back: its
+   `voiceMode` is `webhook`. AgentPhone clears the hosted prompt and greeting when it switches.
 7. **Register the webhook with AgentPhone.**
    `uv run python -m scripts.agentphone_setup --register-webhook`. It sets the agent's webhook
    to `PUBLIC_BASE_URL/api/voice/hooks/agentphone` and saves the signing secret in `.env` as
@@ -85,8 +85,8 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    dashboard and answer. Things I could not check without a real call:
    - whether the call id in AgentPhone's webhook is the one returned when the call is placed
      (if not, the server matches the call by direction and your number, and logs a warning);
-   - whether an outbound call with no prompt reaches the webhook while the agent is in hosted
-     mode (item 6 avoids the question);
+   - whether each turn of an outbound call reaches the webhook now that the agent is in webhook
+     mode (item 6);
    - how well the speech-to-text hears the amount and the word on a phone line. If a word is
      misheard, say it again; only a wrong amount-and-word pair costs one of the three tries.
    The risk officer is in the same voice as the operator. That is a limit of AgentPhone, not
@@ -150,8 +150,8 @@ on 19 November for the provider change.
 
 | Item | Why | Exact step that unblocks it |
 |---|---|---|
-| Real outbound approval call, and the Phase 0 "reaches a real phone and speaks a variable" proof | Calls are still on your say. Also missing: the owner number, a public HTTPS address, the agent in webhook mode, and the registered webhook with its secret | "Needs you" items 1 to 8 |
-| Registering the AgentPhone webhook and switching the agent to webhook mode | Both change your AgentPhone account, and the first needs a public address | "Needs you" items 5 to 7 |
+| Real outbound approval call, and the Phase 0 "reaches a real phone and speaks a variable" proof | Calls are still on your say. Also missing: the owner number, a public HTTPS address, and the registered webhook with its secret. The agent is in webhook mode | "Needs you" items 1 to 8 |
+| Registering the AgentPhone webhook | It changes your AgentPhone account and needs a public address | "Needs you" items 5 and 7 |
 | Creating the ElevenLabs agent (now only for the browser-widget fallback and the `elevenlabs_twilio` path) | No public HTTPS address; and creating it writes to your account, which you have not approved | "Needs you" item 10 |
 | Two distinct voices on the phone call | AgentPhone gives one voice per call. The risk officer is announced by name in the same voice | Known limit. Two voices exist only on the ElevenLabs agent |
 | Rules by voice and the markets operator on the phone call | They are tools of the ElevenLabs agent; the AgentPhone call is a fixed approval script | A rule is spoken into the dashboard microphone and confirmed on the dashboard |
