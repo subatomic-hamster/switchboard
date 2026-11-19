@@ -4,6 +4,68 @@
  */
 
 export interface paths {
+    "/api/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Approvals
+         * @description Recent approval requests for the owner's dashboard, including the challenge word for
+         *     any that are pending.
+         */
+        get: operations["approvals_api_approvals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/approvals/{request_id}/deny": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dashboard Deny
+         * @description Deny from the dashboard. Always allowed: saying no never needs proof.
+         */
+        post: operations["dashboard_deny_api_approvals__request_id__deny_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/approvals/{request_id}/simulate-voice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulate Voice
+         * @description Dry-run only: stand in for the phone call from the dashboard. Goes through exactly the
+         *     same checks as the voice tool. Refused when real calls are enabled.
+         */
+        post: operations["simulate_voice_api_approvals__request_id__simulate_voice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chain/stub/stream": {
         parameters: {
             query?: never;
@@ -64,6 +126,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Freeze
+         * @description Freeze or unfreeze the vault from the dashboard.
+         */
+        post: operations["freeze_api_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -95,6 +177,26 @@ export interface paths {
          * @description STUB. P1's real handler verifies the HMAC, decodes vault events and publishes them.
          */
         post: operations["quicknode_hook_api_hooks_quicknode_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/intent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Intent
+         * @description Turn a sentence into a plan with quoted routes. Nothing is executed.
+         */
+        post: operations["intent_api_intent_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -161,6 +263,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/plans/{plan_id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute
+         * @description Ask the vault to spend. Returns executing, needs_approval, or blocked with a reason.
+         */
+        post: operations["execute_api_plans__plan_id__execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats
+         * @description Budget remaining, approval rate, and the state of every safety switch.
+         */
+        get: operations["stats_api_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/venues": {
         parameters: {
             query?: never;
@@ -173,6 +315,104 @@ export interface paths {
          * @description Prediction-market venues and how real each one is right now.
          */
         get: operations["venues_api_venues_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Approve
+         * @description Approve only if the amount said back and the word from the owner's screen both match.
+         *     A refusal is a normal response (`ok: false` with an `error`), so the agent can say why.
+         */
+        post: operations["voice_approve_api_voice_approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/deny": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Voice Deny */
+        post: operations["voice_deny_api_voice_deny_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Freeze
+         * @description The kill switch. Freezing needs no challenge: stopping all spending is always safe.
+         */
+        post: operations["voice_freeze_api_voice_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/hooks/elevenlabs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Elevenlabs Webhook
+         * @description ElevenLabs post-call webhook. A call that was not answered denies the request.
+         */
+        post: operations["elevenlabs_webhook_api_voice_hooks_elevenlabs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/request/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Voice Request
+         * @description What the operator and the risk officer need to state the request and argue it.
+         */
+        get: operations["voice_request_api_voice_request__request_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -202,6 +442,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ApprovalList */
+        ApprovalList: {
+            /** Approvals */
+            approvals: components["schemas"]["ApprovalView"][];
+        };
         /** ApprovalRequestedData */
         ApprovalRequestedData: {
             /**
@@ -261,6 +506,65 @@ export interface components {
              * @enum {string}
              */
             type: "approval.resolved";
+        };
+        /** ApprovalStats */
+        ApprovalStats: {
+            /** Approved */
+            approved: number;
+            /** Denied */
+            denied: number;
+            /**
+             * Rate Pct
+             * @description Approved share of resolved requests, 0 to 100.
+             */
+            rate_pct: number | null;
+            /** Total */
+            total: number;
+            /**
+             * Warning
+             * @default
+             */
+            warning: string;
+        };
+        /**
+         * ApprovalView
+         * @description What the owner's dashboard shows for an approval request.
+         *
+         *     The challenge word appears here and nowhere else: it is never sent to the voice agent.
+         */
+        ApprovalView: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Call Status */
+            call_status: string;
+            /** Case Against */
+            case_against: string;
+            /** Case For */
+            case_for: string;
+            /** Challenge */
+            challenge: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Passkey Ok */
+            passkey_ok: boolean;
+            /** Payee Label */
+            payee_label: string;
+            /** Plan Id */
+            plan_id: string | null;
+            reason: components["schemas"]["Reason"];
+            /** Request Id */
+            request_id: string;
+            /** Requires Passkey */
+            requires_passkey: boolean;
+            /** Source */
+            source: string;
+            /** Status */
+            status: string;
+            /** Voice Ok */
+            voice_ok: boolean;
         };
         /** BlockedData */
         BlockedData: {
@@ -371,11 +675,49 @@ export interface components {
             /** Transfer Id */
             transfer_id: string;
         };
+        /**
+         * Decision
+         * @description The planner's prediction of what the vault will do. The contract has the final word.
+         */
+        Decision: {
+            /** Detail */
+            detail: string;
+            outcome: components["schemas"]["Outcome"];
+            reason?: components["schemas"]["Reason"] | null;
+        };
         /** EventHistory */
         EventHistory: {
             /** Events */
             events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"])[];
         };
+        /** ExecuteRequest */
+        ExecuteRequest: {
+            /**
+             * Route Id
+             * @default cheapest
+             * @enum {string}
+             */
+            route_id: "cheapest" | "fastest";
+        };
+        /** ExecuteResponse */
+        ExecuteResponse: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            reason?: components["schemas"]["Reason"] | null;
+            /** Request Id */
+            request_id?: string | null;
+            status: components["schemas"]["ExecuteStatus"];
+            /** Transfer Id */
+            transfer_id?: string | null;
+        };
+        /**
+         * ExecuteStatus
+         * @enum {string}
+         */
+        ExecuteStatus: "executing" | "needs_approval" | "blocked";
         /** ForecastCommittedEvent */
         ForecastCommittedEvent: {
             data: components["schemas"]["ForecastData"];
@@ -423,6 +765,11 @@ export interface components {
              */
             type: "forecast.revealed";
         };
+        /** FreezeRequest */
+        FreezeRequest: {
+            /** Frozen */
+            frozen: boolean;
+        };
         /** FrozenData */
         FrozenData: {
             /** Frozen */
@@ -454,6 +801,41 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** IntentRequest */
+        IntentRequest: {
+            /** Text */
+            text: string;
+        };
+        /** IntentResponse */
+        IntentResponse: {
+            /**
+             * Kind
+             * @default transfer
+             * @enum {string}
+             */
+            kind: "transfer" | "market_move";
+            market_move?: components["schemas"]["MarketMoveIntent"] | null;
+            /**
+             * Parser
+             * @default rules
+             * @enum {string}
+             */
+            parser: "llm" | "rules";
+            /** Plan Id */
+            plan_id: string;
+            preview?: components["schemas"]["Decision"] | null;
+            request?: components["schemas"]["TransferRequest"] | null;
+            /**
+             * Routes
+             * @default []
+             */
+            routes: components["schemas"]["Route"][];
+            /**
+             * Spoken Quote
+             * @default
+             */
+            spoken_quote: string;
+        };
         /**
          * JsonObject
          * @description An untyped JSON object, used where a third party defines the body.
@@ -476,6 +858,25 @@ export interface components {
              * @enum {string}
              */
             verdict: "match" | "refuse";
+        };
+        /**
+         * MarketMoveIntent
+         * @description A request to move a prediction-market position between venues.
+         */
+        MarketMoveIntent: {
+            /** From Venue */
+            from_venue: string;
+            /**
+             * Market Hint
+             * @description The user's words for the market, for example 'Fed'.
+             */
+            market_hint: string;
+            /** Qty */
+            qty?: number | null;
+            /** Slug */
+            slug?: string | null;
+            /** To Venue */
+            to_venue: string;
         };
         /** MarketMoveRequest */
         MarketMoveRequest: {
@@ -547,6 +948,38 @@ export interface components {
              */
             status: string;
         };
+        /**
+         * Outcome
+         * @enum {string}
+         */
+        Outcome: "pay" | "ask" | "block";
+        /**
+         * Party
+         * @description One end of a transfer.
+         */
+        Party: {
+            /** Address */
+            address?: string | null;
+            chain: components["schemas"]["Chain"];
+            /**
+             * Known
+             * @description True when the address is on the vault's payee allowlist.
+             */
+            known: boolean;
+            /** Label */
+            label: string;
+        };
+        /** Policy */
+        Policy: {
+            /** Allowlist */
+            allowlist: string[];
+            /** Approval Expiry S */
+            approval_expiry_s: number;
+            /** Daily Budget Usd */
+            daily_budget_usd: number;
+            /** Transfer Cap Usd */
+            transfer_cap_usd: number;
+        };
         /** PolicyData */
         PolicyData: {
             /** Allowlist Size */
@@ -591,6 +1024,33 @@ export interface components {
          * @enum {string}
          */
         Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
+        /** Route */
+        Route: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Eta S */
+            eta_s: number;
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "cheapest" | "fastest";
+            /** Steps */
+            steps: components["schemas"]["RouteStep"][];
+        };
+        /** RouteStep */
+        RouteStep: {
+            /** Cost Usd */
+            cost_usd: number;
+            /** Description */
+            description: string;
+            /** Eta S */
+            eta_s: number;
+            from_chain: components["schemas"]["Chain"];
+            /** Rail */
+            rail: string;
+            to_chain: components["schemas"]["Chain"];
+        };
         /** SellQuote */
         SellQuote: {
             /** Bid */
@@ -599,6 +1059,42 @@ export interface components {
             post_at: number;
             /** Taker Fee */
             taker_fee: number;
+        };
+        /** SimulatedVoiceRequest */
+        SimulatedVoiceRequest: {
+            /** Amount Spoken */
+            amount_spoken: number;
+            /** Challenge */
+            challenge: string;
+        };
+        /** StatsResponse */
+        StatsResponse: {
+            approvals: components["schemas"]["ApprovalStats"];
+            /** Budget Remaining Usd */
+            budget_remaining_usd: number;
+            /** Calls Live */
+            calls_live: boolean;
+            /** Calls Today */
+            calls_today: number;
+            /** Frozen */
+            frozen: boolean;
+            /** Max Calls Per Day */
+            max_calls_per_day: number;
+            /** Max Order Usd */
+            max_order_usd: number;
+            /** Passkey Registered */
+            passkey_registered: boolean;
+            /** Passkey Threshold Usd */
+            passkey_threshold_usd: number;
+            policy: components["schemas"]["Policy"];
+            /** Spent Today Usd */
+            spent_today_usd: number;
+            /** Stream Stale */
+            stream_stale: boolean;
+            /** Trading Enabled */
+            trading_enabled: boolean;
+            /** Using P1 Stubs */
+            using_p1_stubs: boolean;
         };
         /** StreamStaleData */
         StreamStaleData: {
@@ -715,6 +1211,25 @@ export interface components {
              */
             type: "transfer.arrived";
         };
+        /** TransferRequest */
+        TransferRequest: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Asset
+             * @default USDC
+             * @constant
+             */
+            asset: "USDC";
+            destination: components["schemas"]["Party"];
+            source: components["schemas"]["Party"];
+            /**
+             * To Asset
+             * @default USDC
+             * @enum {string}
+             */
+            to_asset: "USDC" | "EURC";
+        };
         /** TransferSentData */
         TransferSentData: {
             /** Amount Usd */
@@ -792,6 +1307,49 @@ export interface components {
             /** Venues */
             venues: components["schemas"]["Venue"][];
         };
+        /** VoiceApproveRequest */
+        VoiceApproveRequest: {
+            /** Amount Spoken */
+            amount_spoken: number;
+            /** Challenge */
+            challenge: string;
+            /** Request Id */
+            request_id: string;
+        };
+        /** VoiceDenyRequest */
+        VoiceDenyRequest: {
+            /** Request Id */
+            request_id: string;
+        };
+        /**
+         * VoiceFreezeRequest
+         * @description No fields are needed. Extra fields (a tool may send a constant) are ignored.
+         */
+        VoiceFreezeRequest: Record<string, never>;
+        /** VoiceRequestInfo */
+        VoiceRequestInfo: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Case Against */
+            case_against: string;
+            /** Case For */
+            case_for: string;
+            /** Payee Label */
+            payee_label: string;
+            reason: components["schemas"]["Reason"];
+            /**
+             * Requires Passkey
+             * @default false
+             */
+            requires_passkey: boolean;
+            /** Spent Today Usd */
+            spent_today_usd: number;
+            /**
+             * Status
+             * @default pending
+             */
+            status: string;
+        };
         /** Wallet */
         Wallet: {
             /** Address */
@@ -818,6 +1376,92 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    approvals_api_approvals_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalList"];
+                };
+            };
+        };
+    };
+    dashboard_deny_api_approvals__request_id__deny_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    simulate_voice_api_approvals__request_id__simulate_voice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulatedVoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stub_stream_api_chain_stub_stream_post: {
         parameters: {
             query?: never;
@@ -918,6 +1562,39 @@ export interface operations {
             };
         };
     };
+    freeze_api_freeze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FreezeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_api_health_get: {
         parameters: {
             query?: never;
@@ -960,6 +1637,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intent_api_intent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1071,6 +1781,61 @@ export interface operations {
             };
         };
     };
+    execute_api_plans__plan_id__execute_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecuteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stats_api_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsResponse"];
+                };
+            };
+        };
+    };
     venues_api_venues_get: {
         parameters: {
             query?: never;
@@ -1087,6 +1852,175 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VenueList"];
+                };
+            };
+        };
+    };
+    voice_approve_api_voice_approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceApproveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_deny_api_voice_deny_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceDenyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_freeze_api_voice_freeze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceFreezeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    elevenlabs_webhook_api_voice_hooks_elevenlabs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "elevenlabs-signature"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_request_api_voice_request__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceRequestInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

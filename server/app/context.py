@@ -18,6 +18,7 @@ from app.wallets import WalletBook
 
 if TYPE_CHECKING:
     from app.planner import Planner
+    from app.voice import Approvals
 
 log = logging.getLogger("switchboard")
 
@@ -65,9 +66,11 @@ class AppContext:
     stream_stale: bool = False
     # Services are attached by app.main.build_context once the context exists.
     planner: Planner = field(init=False)
+    approvals: Approvals = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()
+        await self.approvals.aclose()
         self.db.close()
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from decimal import Decimal
 from pathlib import Path
 from typing import Annotated
 
@@ -16,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import events
+from app import events, voice
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
@@ -28,8 +29,11 @@ from app.planner import PlanError, Planner
 from app.schemas import (
     ExecuteRequest,
     ExecuteResponse,
+    FreezeRequest,
     IntentRequest,
     IntentResponse,
+    OkResponse,
+    StatsResponse,
     Venue,
     VenueList,
     WalletList,
@@ -79,6 +83,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
 
     bus.on("stream.stale", track_stream)
     ctx.planner = Planner(ctx, IntentParser(wallets, make_llm_call(settings)))
+    ctx.approvals = voice.Approvals(ctx)
     return ctx
 
 
@@ -94,6 +99,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             settings.trading_enabled,
             settings.calls_live,
         )
+        await ctx.approvals.resume()
         if settings.anthropic_api_key:
             # The first structured-output call compiles the schema and is slow; do it now.
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")
@@ -111,6 +117,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(events.router)
     app.include_router(chain_stub.router)
     app.include_router(markets_stub.router)
+    app.include_router(voice.router)
+    app.include_router(voice.dashboard)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:
@@ -132,6 +140,34 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         except PlanError as exc:
             status = 404 if "unknown" in str(exc) else 409
             raise HTTPException(status_code=status, detail=str(exc)) from exc
+
+    @app.get("/api/stats", response_model=StatsResponse, tags=["meta"])
+    async def stats(ctx: CtxDep) -> StatsResponse:
+        """Budget remaining, approval rate, and the state of every safety switch."""
+        policy = await ctx.vault.get_policy()
+        spent = await ctx.vault.spent_today()
+        return StatsResponse(
+            policy=policy,
+            spent_today_usd=spent,
+            budget_remaining_usd=max(policy.daily_budget_usd - spent, Decimal(0)),
+            approvals=ctx.approvals.stats(),
+            calls_today=ctx.approvals.calls_in_last_day(),
+            max_calls_per_day=ctx.settings.max_calls_per_day,
+            frozen=await ctx.vault.is_frozen(),
+            stream_stale=ctx.stream_stale,
+            trading_enabled=ctx.settings.trading_enabled,
+            max_order_usd=ctx.settings.effective_max_order_usd,
+            calls_live=ctx.settings.calls_live,
+            using_p1_stubs=ctx.settings.use_p1_stubs,
+            passkey_threshold_usd=ctx.settings.passkey_threshold_usd,
+            passkey_registered=False,
+        )
+
+    @app.post("/api/freeze", response_model=OkResponse, tags=["meta"])
+    async def freeze(body: FreezeRequest, ctx: CtxDep) -> OkResponse:
+        """Freeze or unfreeze the vault from the dashboard."""
+        await ctx.vault.freeze(body.frozen, via="dashboard")
+        return OkResponse(ok=True, status="frozen" if body.frozen else "live")
 
     @app.get("/api/wallets", response_model=WalletList, tags=["meta"])
     async def wallets(ctx: CtxDep) -> WalletList:

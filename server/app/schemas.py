@@ -190,8 +190,10 @@ class VoiceDenyRequest(Model):
     request_id: str
 
 
-class VoiceFreezeRequest(Model):
-    pass
+class VoiceFreezeRequest(BaseModel):
+    """No fields are needed. Extra fields (a tool may send a constant) are ignored."""
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class OkResponse(Model):
@@ -575,6 +577,10 @@ class VenueList(Model):
 
 class StreamToggleRequest(Model):
     stale: bool
+
+
+class FreezeRequest(Model):
+    frozen: bool
 
 
 class JsonObject(Model):

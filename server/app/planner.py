@@ -411,6 +411,7 @@ class Planner:
             row.status = "needs_approval"
             row.vault_request_id = result.request_id
             self._update(row)
+            ctx.approvals.attach_plan(result.request_id, row)
             return ExecuteResponse(
                 status=ExecuteStatus.NEEDS_APPROVAL,
                 reason=result.reason,
