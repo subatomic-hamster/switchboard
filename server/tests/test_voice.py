@@ -547,6 +547,17 @@ def test_market_tools_point_at_the_markets_voice_routes() -> None:
     assert "You cannot place orders on a call" in system_prompt(two_voices=False)
 
 
+def test_rule_tools_point_at_the_rules_voice_routes() -> None:
+    from app.agent_config import rule_tool_payloads
+
+    configs = [tool["tool_config"] for tool in rule_tool_payloads("https://example.test", "s1")]
+    assert [(c["name"], c["api_schema"]["url"]) for c in configs] == [
+        ("propose_rule", "https://example.test/api/voice/rules/propose"),
+        ("confirm_rule", "https://example.test/api/voice/rules/confirm"),
+    ]
+    assert "propose_rule" in system_prompt(two_voices=True)
+
+
 def test_agent_payload_uses_multi_voice_only_when_a_second_voice_is_set() -> None:
     single = agent_payload(make_settings(), ["tool_a"])
     assert "supported_voices" not in single["conversation_config"]["tts"]

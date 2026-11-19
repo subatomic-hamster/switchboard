@@ -17,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import events, market_brief, passkey, voice
+from app import events, hostile, market_brief, passkey, rules, voice
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
@@ -88,6 +88,8 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     ctx.passkeys = passkey.Passkeys(ctx)
     ctx.forecaster = Forecaster(ctx)
     ctx.desk = market_brief.MarketDesk(ctx)
+    ctx.rules = rules.Rules(ctx)
+    ctx.hostile = hostile.HostileLab(ctx)
     return ctx
 
 
@@ -126,6 +128,9 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(passkey.router)
     app.include_router(market_brief.router)
     app.include_router(market_brief.voice_router)
+    app.include_router(rules.router)
+    app.include_router(rules.voice_router)
+    app.include_router(hostile.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:

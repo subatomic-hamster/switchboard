@@ -81,6 +81,13 @@ You are then the Markets operator, in the Operator's voice.
    from the Switchboard dashboard. You cannot place orders on a call.
 4. If the brief refuses the move, say why and stop. Never suggest a way around a refusal.
 
+# If the owner states a rule ("raise my transfer limit to 300", "stop paying Sam's Arc wallet")
+1. Call propose_rule with their words. Read its "readback" to them exactly.
+2. If the status is "rejected", the readback says why. Nothing changes.
+3. If they confirm, call confirm_rule with the proposal id. When "needs_word" is true they must
+   also say the word on their Switchboard screen; pass it as challenge. You do not know it.
+4. Tell them the result: "applied", or what did not match.
+
 # Rules that never bend
 - "Yes", "approve", "go ahead" or "do it" is not an approval. Without both the amount and the
   word, do not call approve; explain what is needed.
@@ -279,6 +286,64 @@ def market_tool_payloads(base_url: str, secret_id: str) -> list[dict[str, Any]]:
                 },
             }
         },
+    ]
+
+
+def rule_tool_payloads(base_url: str, secret_id: str) -> list[dict[str, Any]]:
+    """The two rules-by-voice tools, as `POST /v1/convai/tools` bodies."""
+    base = base_url.rstrip("/")
+    headers = {"Authorization": {"secret_id": secret_id}}
+
+    def post(name: str, description: str, path: str, schema: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "tool_config": {
+                "type": "webhook",
+                "name": name,
+                "description": description,
+                "response_timeout_secs": 20,
+                "api_schema": {
+                    "url": f"{base}{path}",
+                    "method": "POST",
+                    "content_type": "application/json",
+                    "request_headers": headers,
+                    "request_body_schema": schema,
+                },
+            }
+        }
+
+    return [
+        post(
+            "propose_rule",
+            "Parse a rule the owner said and get the read-back. Changes nothing yet.",
+            "/api/voice/rules/propose",
+            {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                    "text": {"type": "string", "description": "The rule, in the owner's words."}
+                },
+            },
+        ),
+        post(
+            "confirm_rule",
+            "Apply the proposed rule after the owner confirms. Loosening a limit also needs "
+            "the word from their screen.",
+            "/api/voice/rules/confirm",
+            {
+                "type": "object",
+                "required": ["proposal_id"],
+                "properties": {
+                    "proposal_id": {
+                        "type": "string",
+                        "description": "The proposal id from propose_rule.",
+                    },
+                    "challenge": {
+                        "type": "string",
+                        "description": "The word the owner read from their screen, if needed.",
+                    },
+                },
+            },
+        ),
     ]
 
 

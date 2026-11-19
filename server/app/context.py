@@ -18,9 +18,11 @@ from app.wallets import WalletBook
 
 if TYPE_CHECKING:
     from app.forecast import Forecaster
+    from app.hostile import HostileLab
     from app.market_brief import MarketDesk
     from app.passkey import Passkeys
     from app.planner import Planner
+    from app.rules import Rules
     from app.voice import Approvals
 
 log = logging.getLogger("switchboard")
@@ -73,6 +75,8 @@ class AppContext:
     passkeys: Passkeys = field(init=False)
     forecaster: Forecaster = field(init=False)
     desk: MarketDesk = field(init=False)
+    rules: Rules = field(init=False)
+    hostile: HostileLab = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()

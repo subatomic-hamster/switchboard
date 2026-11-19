@@ -308,6 +308,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/hostile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hostile
+         * @description Feed the agent hostile content. Shows what the reader does (nothing) and the worst case
+         *     if the agent itself were hijacked (a phone call, or one capped transfer to a trusted payee).
+         */
+        post: operations["hostile_api_hostile_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/intent": {
         parameters: {
             query?: never;
@@ -496,6 +517,83 @@ export interface paths {
          * @description Ask the vault to spend. Returns executing, needs_approval, or blocked with a reason.
          */
         post: operations["execute_api_plans__plan_id__execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rules
+         * @description Recent rule proposals for the dashboard, with the word for one that is pending.
+         */
+        get: operations["list_rules_api_rules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose Rule
+         * @description Propose a rule from the dashboard (typed, or spoken into the microphone).
+         */
+        post: operations["propose_rule_api_rules_propose_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules/{proposal_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Rule */
+        post: operations["cancel_rule_api_rules__proposal_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules/{proposal_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Rule
+         * @description Dry-run only: stand in for the spoken confirmation. Refused when calls are live.
+         */
+        post: operations["confirm_rule_api_rules__proposal_id__confirm_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -694,6 +792,46 @@ export interface paths {
         get: operations["voice_request_api_voice_request__request_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/rules/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Confirm
+         * @description Voice tool. Apply the proposed rule. Loosening needs the word from the owner's screen.
+         */
+        post: operations["voice_confirm_api_voice_rules_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/rules/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Propose
+         * @description Voice tool. Parse the spoken rule and return the read-back. Nothing changes yet.
+         */
+        post: operations["voice_propose_api_voice_rules_propose_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1112,6 +1250,35 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HostileRequest */
+        HostileRequest: {
+            /** Content */
+            content: string;
+        };
+        /** HostileResult */
+        HostileResult: {
+            /** Demanded Amount Usd */
+            demanded_amount_usd: number;
+            /** Demanded Payee */
+            demanded_payee: string;
+            /** Explanation */
+            explanation: string;
+            /**
+             * Reader Flags
+             * @description Instruction-like phrases the reader noticed. Reporting them is all it can do.
+             */
+            reader_flags: string[];
+            /** Reader Outcome */
+            reader_outcome: string;
+            reason?: components["schemas"]["Reason"] | null;
+            /** Request Id */
+            request_id?: string | null;
+            /**
+             * Worst Case
+             * @enum {string}
+             */
+            worst_case: "phone_call" | "would_pay" | "blocked" | "denied_call_cap";
         };
         /** IntentRequest */
         IntentRequest: {
@@ -1543,6 +1710,74 @@ export interface components {
             /** Rail */
             rail: string;
             to_chain: components["schemas"]["Chain"];
+        };
+        /** RuleConfirmRequest */
+        RuleConfirmRequest: {
+            /**
+             * Challenge
+             * @default
+             */
+            challenge: string;
+            /** Proposal Id */
+            proposal_id: string;
+        };
+        /** RuleList */
+        RuleList: {
+            /** Rules */
+            rules: components["schemas"]["RuleView"][];
+        };
+        /**
+         * RuleProposal
+         * @description What the agent may see: the read-back, and whether a word is needed. Never the word.
+         */
+        RuleProposal: {
+            /** Needs Word */
+            needs_word: boolean;
+            /** Proposal Id */
+            proposal_id: string;
+            /** Readback */
+            readback: string;
+            /**
+             * Status
+             * @default pending
+             */
+            status: string;
+        };
+        /** RuleProposeRequest */
+        RuleProposeRequest: {
+            /** Text */
+            text: string;
+        };
+        /**
+         * RuleView
+         * @description What the owner's dashboard sees, including the word.
+         */
+        RuleView: {
+            /** Challenge */
+            challenge: string | null;
+            /** Expires At */
+            expires_at: string;
+            /** Needs Word */
+            needs_word: boolean;
+            /** Proposal Id */
+            proposal_id: string;
+            /** Readback */
+            readback: string;
+            /**
+             * Status
+             * @default pending
+             */
+            status: string;
+            /** Text */
+            text: string;
+        };
+        /** RuleWord */
+        RuleWord: {
+            /**
+             * Challenge
+             * @default
+             */
+            challenge: string;
         };
         /** SellQuote */
         SellQuote: {
@@ -2378,6 +2613,39 @@ export interface operations {
             };
         };
     };
+    hostile_api_hostile_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HostileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostileResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     intent_api_intent_post: {
         parameters: {
             query?: never;
@@ -2700,6 +2968,125 @@ export interface operations {
             };
         };
     };
+    list_rules_api_rules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleList"];
+                };
+            };
+        };
+    };
+    propose_rule_api_rules_propose_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleProposeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleProposal"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_rule_api_rules__proposal_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_rule_api_rules__proposal_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleWord"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stats_api_stats_get: {
         parameters: {
             query?: never;
@@ -2996,6 +3383,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VoiceRequestInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_confirm_api_voice_rules_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_propose_api_voice_rules_propose_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleProposeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleProposal"];
                 };
             };
             /** @description Validation Error */
