@@ -590,3 +590,109 @@ class JsonObject(Model):
 
 
 AnyJson = dict[str, Any]
+
+
+# --------------------------------------------------------------------------- P2 additions: markets
+
+
+class VenuePrices(Model):
+    bid: Money
+    ask: Money
+    bid_depth: Money
+
+
+class MarketListing(Model):
+    """One market with both venues' prices, for the side-by-side view."""
+
+    slug: str
+    title: str
+    kind: str = ""
+    event_time: datetime | None = None
+    gemini_symbol: str | None = None
+    polymarket: VenuePrices
+    gemini: VenuePrices | None = None
+
+
+class MarketListingList(Model):
+    markets: list[MarketListing]
+
+
+class MoveOption(Model):
+    """One way to do the move, with what it costs."""
+
+    mode: Literal["take", "post"]
+    label: str
+    sell_price: Money
+    buy_price: Money
+    fees_usd: Money
+    cost_usd: Money
+    cost_pct: Money
+
+
+class ModelForecast(Model):
+    family: str
+    model: str
+    probability: Money | None = None
+    rationale: str = Field(default="", description="The model's own words. Untrusted text.")
+    error: str = ""
+
+
+class TrackRecord(Model):
+    revealed: int
+    pending: int
+    mean_brier: Money | None = Field(description="Lower is better. 0.25 is a coin flip.")
+    market_brier: Money | None = Field(description="The market price's score on the same events.")
+
+
+class Opinion(Model):
+    """The operator's second opinion. A forecast, not a fact, and not financial advice."""
+
+    receipt_id: str
+    slug: str
+    created: datetime
+    stance: Literal["hold", "move"]
+    probability: Money
+    market_price: Money
+    summary: str
+    models: list[ModelForecast]
+    commitment: str
+    anchor_ref: str
+    overridden: bool = False
+    revealed: bool = False
+    outcome: bool | None = None
+    brier: Money | None = None
+
+
+class MarketBrief(Model):
+    slug: str
+    title: str
+    qty: Money
+    match: MarketMatchResponse
+    listing: MarketListing | None = None
+    quote: MarketQuoteResponse | None = None
+    options: list[MoveOption] = []
+    bid_answer: str = Field(description="Will I get a bid? Read from depth and spread; a fact.")
+    opinion: Opinion | None = None
+    opinion_unavailable: str = ""
+    track_record: TrackRecord
+    spoken: str = Field(description="What the markets operator reads out.")
+    disclaimer: str
+
+
+class ForecastRequest(Model):
+    slug: str
+    qty: Money = Field(default=Decimal("1"), gt=0)
+
+
+class ForecastList(Model):
+    forecasts: list[Opinion]
+    track_record: TrackRecord
+
+
+class RevealRequest(Model):
+    outcome: bool = Field(description="True if the contract resolved YES.")
+
+
+class VoiceOverrideRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    receipt_id: str

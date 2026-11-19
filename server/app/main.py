@@ -17,12 +17,13 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import events, passkey, voice
+from app import events, market_brief, passkey, voice
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
 from app.db import Database
 from app.events import EventBus, StoredEvent
+from app.forecast import Forecaster
 from app.intent import IntentError, IntentParser, make_llm_call
 from app.markets import stub as markets_stub
 from app.planner import PlanError, Planner
@@ -85,6 +86,8 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     ctx.planner = Planner(ctx, IntentParser(wallets, make_llm_call(settings)))
     ctx.approvals = voice.Approvals(ctx)
     ctx.passkeys = passkey.Passkeys(ctx)
+    ctx.forecaster = Forecaster(ctx)
+    ctx.desk = market_brief.MarketDesk(ctx)
     return ctx
 
 
@@ -121,6 +124,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(voice.router)
     app.include_router(voice.dashboard)
     app.include_router(passkey.router)
+    app.include_router(market_brief.router)
+    app.include_router(market_brief.voice_router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:

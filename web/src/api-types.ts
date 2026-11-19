@@ -106,6 +106,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/desk/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Desk Brief
+         * @description Match result, move cost, bid depth, the latest opinion and its track record.
+         */
+        get: operations["desk_brief_api_desk_brief_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desk/markets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Desk Markets
+         * @description Markets with both venues' prices, for the side-by-side panel.
+         */
+        get: operations["desk_markets_api_desk_markets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desk/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desk Move
+         * @description Run the move through the guards. Refused unless the markets match; against the stub it
+         *     places no order.
+         */
+        post: operations["desk_move_api_desk_move_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/history": {
         parameters: {
             query?: never;
@@ -120,6 +181,70 @@ export interface paths {
         get: operations["events_history_api_events_history_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/forecasts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Forecasts
+         * @description Every opinion with its commitment, and the track record once events have resolved.
+         */
+        get: operations["list_forecasts_api_forecasts_get"];
+        put?: never;
+        /**
+         * Create Forecast
+         * @description Ask the forecasting models, commit the hash of the opinion, and return it.
+         */
+        post: operations["create_forecast_api_forecasts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/forecasts/{receipt_id}/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Override Forecast
+         * @description The owner goes against the opinion. Recorded.
+         */
+        post: operations["override_forecast_api_forecasts__receipt_id__override_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/forecasts/{receipt_id}/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Forecast
+         * @description After the event: verify the commitment and score the opinion (Brier).
+         */
+        post: operations["reveal_forecast_api_forecasts__receipt_id__reveal_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -495,6 +620,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/voice/markets/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Voice Market Brief
+         * @description Voice tool. The markets operator reads `spoken`.
+         */
+        get: operations["voice_market_brief_api_voice_markets_brief_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/markets/override": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Voice Market Override
+         * @description Voice tool. Records that the owner chose to go against the opinion.
+         */
+        post: operations["voice_market_override_api_voice_markets_override_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/voice/request/{request_id}": {
         parameters: {
             query?: never;
@@ -860,6 +1025,22 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /** ForecastList */
+        ForecastList: {
+            /** Forecasts */
+            forecasts: components["schemas"]["Opinion"][];
+            track_record: components["schemas"]["TrackRecord"];
+        };
+        /** ForecastRequest */
+        ForecastRequest: {
+            /**
+             * Qty
+             * @default 1
+             */
+            qty: number;
+            /** Slug */
+            slug: string;
+        };
         /** ForecastRevealedEvent */
         ForecastRevealedEvent: {
             data: components["schemas"]["ForecastData"];
@@ -961,6 +1142,68 @@ export interface components {
         JsonObject: {
             [key: string]: unknown;
         };
+        /** MarketBrief */
+        MarketBrief: {
+            /**
+             * Bid Answer
+             * @description Will I get a bid? Read from depth and spread; a fact.
+             */
+            bid_answer: string;
+            /** Disclaimer */
+            disclaimer: string;
+            listing?: components["schemas"]["MarketListing"] | null;
+            match: components["schemas"]["MarketMatchResponse"];
+            opinion?: components["schemas"]["Opinion"] | null;
+            /**
+             * Opinion Unavailable
+             * @default
+             */
+            opinion_unavailable: string;
+            /**
+             * Options
+             * @default []
+             */
+            options: components["schemas"]["MoveOption"][];
+            /** Qty */
+            qty: number;
+            quote?: components["schemas"]["MarketQuoteResponse"] | null;
+            /** Slug */
+            slug: string;
+            /**
+             * Spoken
+             * @description What the markets operator reads out.
+             */
+            spoken: string;
+            /** Title */
+            title: string;
+            track_record: components["schemas"]["TrackRecord"];
+        };
+        /**
+         * MarketListing
+         * @description One market with both venues' prices, for the side-by-side view.
+         */
+        MarketListing: {
+            /** Event Time */
+            event_time?: string | null;
+            gemini?: components["schemas"]["VenuePrices"] | null;
+            /** Gemini Symbol */
+            gemini_symbol?: string | null;
+            /**
+             * Kind
+             * @default
+             */
+            kind: string;
+            polymarket: components["schemas"]["VenuePrices"];
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+        };
+        /** MarketListingList */
+        MarketListingList: {
+            /** Markets */
+            markets: components["schemas"]["MarketListing"][];
+        };
         /** MarketMatchResponse */
         MarketMatchResponse: {
             checks: components["schemas"]["MatchChecks"];
@@ -1051,6 +1294,49 @@ export interface components {
              */
             time: "same" | "different" | "unknown" | "n/a";
         };
+        /** ModelForecast */
+        ModelForecast: {
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /** Family */
+            family: string;
+            /** Model */
+            model: string;
+            /** Probability */
+            probability?: number | null;
+            /**
+             * Rationale
+             * @description The model's own words. Untrusted text.
+             * @default
+             */
+            rationale: string;
+        };
+        /**
+         * MoveOption
+         * @description One way to do the move, with what it costs.
+         */
+        MoveOption: {
+            /** Buy Price */
+            buy_price: number;
+            /** Cost Pct */
+            cost_pct: number;
+            /** Cost Usd */
+            cost_usd: number;
+            /** Fees Usd */
+            fees_usd: number;
+            /** Label */
+            label: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "take" | "post";
+            /** Sell Price */
+            sell_price: number;
+        };
         /** OkResponse */
         OkResponse: {
             /**
@@ -1065,6 +1351,52 @@ export interface components {
              * @default
              */
             status: string;
+        };
+        /**
+         * Opinion
+         * @description The operator's second opinion. A forecast, not a fact, and not financial advice.
+         */
+        Opinion: {
+            /** Anchor Ref */
+            anchor_ref: string;
+            /** Brier */
+            brier?: number | null;
+            /** Commitment */
+            commitment: string;
+            /**
+             * Created
+             * Format: date-time
+             */
+            created: string;
+            /** Market Price */
+            market_price: number;
+            /** Models */
+            models: components["schemas"]["ModelForecast"][];
+            /** Outcome */
+            outcome?: boolean | null;
+            /**
+             * Overridden
+             * @default false
+             */
+            overridden: boolean;
+            /** Probability */
+            probability: number;
+            /** Receipt Id */
+            receipt_id: string;
+            /**
+             * Revealed
+             * @default false
+             */
+            revealed: boolean;
+            /** Slug */
+            slug: string;
+            /**
+             * Stance
+             * @enum {string}
+             */
+            stance: "hold" | "move";
+            /** Summary */
+            summary: string;
         };
         /**
          * Outcome
@@ -1156,6 +1488,14 @@ export interface components {
             credential: {
                 [key: string]: unknown;
             };
+        };
+        /** RevealRequest */
+        RevealRequest: {
+            /**
+             * Outcome
+             * @description True if the contract resolved YES.
+             */
+            outcome: boolean;
         };
         /** Route */
         Route: {
@@ -1259,6 +1599,23 @@ export interface components {
         StreamToggleRequest: {
             /** Stale */
             stale: boolean;
+        };
+        /** TrackRecord */
+        TrackRecord: {
+            /**
+             * Market Brier
+             * @description The market price's score on the same events.
+             */
+            market_brier: number | null;
+            /**
+             * Mean Brier
+             * @description Lower is better. 0.25 is a coin flip.
+             */
+            mean_brier: number | null;
+            /** Pending */
+            pending: number;
+            /** Revealed */
+            revealed: number;
         };
         /** TradeData */
         TradeData: {
@@ -1440,6 +1797,15 @@ export interface components {
             /** Venues */
             venues: components["schemas"]["Venue"][];
         };
+        /** VenuePrices */
+        VenuePrices: {
+            /** Ask */
+            ask: number;
+            /** Bid */
+            bid: number;
+            /** Bid Depth */
+            bid_depth: number;
+        };
         /** VoiceApproveRequest */
         VoiceApproveRequest: {
             /** Amount Spoken */
@@ -1459,6 +1825,11 @@ export interface components {
          * @description No fields are needed. Extra fields (a tool may send a constant) are ignored.
          */
         VoiceFreezeRequest: Record<string, never>;
+        /** VoiceOverrideRequest */
+        VoiceOverrideRequest: {
+            /** Receipt Id */
+            receipt_id: string;
+        };
         /** VoiceRequestInfo */
         VoiceRequestInfo: {
             /** Amount Usd */
@@ -1661,6 +2032,91 @@ export interface operations {
             };
         };
     };
+    desk_brief_api_desk_brief_get: {
+        parameters: {
+            query: {
+                slug: string;
+                qty?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketBrief"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    desk_markets_api_desk_markets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketListingList"];
+                };
+            };
+        };
+    };
+    desk_move_api_desk_move_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketMoveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     events_history_api_events_history_get: {
         parameters: {
             query?: {
@@ -1682,6 +2138,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventHistory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_forecasts_api_forecasts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForecastList"];
+                };
+            };
+        };
+    };
+    create_forecast_api_forecasts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForecastRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opinion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    override_forecast_api_forecasts__receipt_id__override_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opinion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_forecast_api_forecasts__receipt_id__reveal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                receipt_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevealRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Opinion"];
                 };
             };
             /** @description Validation Error */
@@ -2260,6 +2835,75 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_market_brief_api_voice_markets_brief_get: {
+        parameters: {
+            query: {
+                slug: string;
+                qty?: number | string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketBrief"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    voice_market_override_api_voice_markets_override_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceOverrideRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -23,6 +23,7 @@ from app.context import AppContext, get_ctx
 from app.events import EventBus
 from app.schemas import (
     BuyQuote,
+    MarketListing,
     MarketMatchResponse,
     MarketMoveRequest,
     MarketMoveResponse,
@@ -30,6 +31,7 @@ from app.schemas import (
     MatchChecks,
     SellQuote,
     TradeData,
+    VenuePrices,
 )
 
 CENT = Decimal("0.01")
@@ -60,8 +62,20 @@ class StubMarkets:
         self._markets: dict[str, dict[str, Any]] = {m["slug"]: m for m in raw["markets"]}
         self._ids = itertools.count(1)
 
-    def listing(self) -> list[dict[str, Any]]:
-        return list(self._markets.values())
+    def listing(self) -> list[MarketListing]:
+        """Both venues' prices for every market in the fixture, for the side-by-side view."""
+        return [
+            MarketListing(
+                slug=market["slug"],
+                title=market["title"],
+                kind=market["kind"],
+                event_time=market.get("event_time"),
+                gemini_symbol=market["gemini_symbol"],
+                polymarket=VenuePrices(**market["polymarket"]),
+                gemini=VenuePrices(**market["gemini"]) if market["gemini"] else None,
+            )
+            for market in self._markets.values()
+        ]
 
     def _get(self, slug: str) -> dict[str, Any]:
         market = self._markets.get(slug)

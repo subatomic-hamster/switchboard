@@ -320,16 +320,13 @@ class Planner:
 
     def _resolve_market(self, move: MarketMoveIntent) -> MarketMoveIntent:
         """Attach a market slug when the owner's words name a market we hold a listing for."""
-        listing = getattr(self._ctx.markets, "listing", None)
-        if move.slug or listing is None:
+        if move.slug:
             return move
         hint_words = {word for word in move.market_hint.lower().split() if len(word) > 2}
-        for market in listing():
-            haystack = (
-                f"{market.get('title', '')} {market.get('kind', '')} {market['slug']}".lower()
-            )
+        for market in self._ctx.markets.listing():
+            haystack = f"{market.title} {market.kind} {market.slug}".lower()
             if hint_words and any(word in haystack for word in hint_words):
-                return move.model_copy(update={"slug": market["slug"]})
+                return move.model_copy(update={"slug": market.slug})
         return move
 
     def _save(self, row: PlanRow) -> str:

@@ -17,6 +17,8 @@ from app.ports import AnchorPort, MarketsPort, TransferPort, VaultPort
 from app.wallets import WalletBook
 
 if TYPE_CHECKING:
+    from app.forecast import Forecaster
+    from app.market_brief import MarketDesk
     from app.passkey import Passkeys
     from app.planner import Planner
     from app.voice import Approvals
@@ -69,10 +71,13 @@ class AppContext:
     planner: Planner = field(init=False)
     approvals: Approvals = field(init=False)
     passkeys: Passkeys = field(init=False)
+    forecaster: Forecaster = field(init=False)
+    desk: MarketDesk = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()
         await self.approvals.aclose()
+        await self.forecaster.aclose()
         self.db.close()
 
 

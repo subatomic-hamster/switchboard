@@ -16,6 +16,7 @@ from typing import Protocol
 
 from app.schemas import (
     ChainTransferRequest,
+    MarketListing,
     MarketMatchResponse,
     MarketMoveRequest,
     MarketQuoteResponse,
@@ -99,6 +100,14 @@ class MarketsPort(Protocol):
     async def quote(self, from_venue: str, slug: str, qty: Decimal) -> MarketQuoteResponse: ...
 
     async def move(self, request: MarketMoveRequest) -> str: ...
+
+    def listing(self) -> list[MarketListing]:
+        """Markets with both venues' best bid, ask and bid depth, for the side-by-side panel.
+
+        Not in the plan's frozen routes: P2 needs both sides' prices to show them next to each
+        other, and `quote` only carries the sell bid and the buy ask.
+        """
+        ...
 
 
 class AnchorPort(Protocol):
