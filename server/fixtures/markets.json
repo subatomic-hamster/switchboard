@@ -1,0 +1,66 @@
+{
+  "_note": "FIXTURE. A snapshot of the pairs listed in docs/implementation-plan.md ('Reference data for the markets work') with the example prices from docs/product-plan.md. Not live data. P1's markets/ modules replace this.",
+  "fees": {"polymarket_taker_rate": "0.095", "gemini_taker_rate": "0.07"},
+  "markets": [
+    {
+      "slug": "aec-nba-hou-den-2026-11-20",
+      "title": "NBA: Rockets at Nuggets, Rockets to win",
+      "kind": "NBA game winner",
+      "event_time": "2026-11-21T03:00:00Z",
+      "gemini_symbol": "GEMI-NBA-2611210300-HOU-DEN-M-HOU",
+      "verdict": "match",
+      "checks": {"event": "same", "strike": "n/a", "direction": "same", "time": "same", "source": "same"},
+      "notes": ["postponement rules differ"],
+      "polymarket": {"bid": "0.45", "ask": "0.46", "bid_depth": "120"},
+      "gemini": {"bid": "0.44", "ask": "0.46", "bid_depth": "85"}
+    },
+    {
+      "slug": "atc-lal-get-atm-2026-11-22-atm",
+      "title": "La Liga: Getafe v Atletico Madrid, Atletico to win",
+      "kind": "La Liga three-way result",
+      "event_time": "2026-11-22T20:00:00Z",
+      "gemini_symbol": "GEMI-LALIGA-2611222000-ATM-GET-M-ATM",
+      "verdict": "match",
+      "checks": {"event": "same", "strike": "n/a", "direction": "same", "time": "same", "source": "same"},
+      "notes": ["both settle on 90 minutes plus stoppage time", "postponement rules differ"],
+      "polymarket": {"bid": "0.62", "ask": "0.63", "bid_depth": "240"},
+      "gemini": {"bid": "0.62", "ask": "0.63", "bid_depth": "150"}
+    },
+    {
+      "slug": "cpc-btc-above-day-2026-11-19-63000",
+      "title": "Bitcoin above $63,000 at 5pm ET on 19 November",
+      "kind": "Bitcoin above a strike",
+      "event_time": "2026-11-19T22:00:00Z",
+      "gemini_symbol": "GEMI-BTC2611192200-HI63000",
+      "verdict": "refuse",
+      "checks": {"event": "same", "strike": "same", "direction": "same", "time": "same", "source": "different"},
+      "notes": ["different price index: Gemini settles on the Lukka index, Polymarket US on CF Benchmarks"],
+      "polymarket": {"bid": "0.62", "ask": "0.63", "bid_depth": "310"},
+      "gemini": {"bid": "0.61", "ask": "0.64", "bid_depth": "90"}
+    },
+    {
+      "slug": "tc-temp-sfohigh-2026-11-19-57-58",
+      "title": "San Francisco daily high between 57 and 58 degrees",
+      "kind": "City daily high temperature",
+      "event_time": "2026-11-20T08:00:00Z",
+      "gemini_symbol": null,
+      "verdict": "refuse",
+      "checks": {"event": "same", "strike": "different", "direction": "same", "time": "same", "source": "same"},
+      "notes": ["temperature bands are offset by one degree: Gemini lists 56-57 and 58-59, Polymarket US lists 55-56 and 57-58, so no single contract matches"],
+      "polymarket": {"bid": "0.31", "ask": "0.34", "bid_depth": "40"},
+      "gemini": null
+    },
+    {
+      "slug": "tsc-nfl-example-tt-home-45pt5",
+      "title": "NFL: total points over 45.5",
+      "kind": "NFL team total vs game total",
+      "event_time": "2026-11-22T18:00:00Z",
+      "gemini_symbol": null,
+      "verdict": "refuse",
+      "checks": {"event": "different", "strike": "same", "direction": "same", "time": "same", "source": "same"},
+      "notes": ["identical question text, different market: this is a team total, the look-alike is the game total"],
+      "polymarket": {"bid": "0.48", "ask": "0.51", "bid_depth": "60"},
+      "gemini": null
+    }
+  ]
+}

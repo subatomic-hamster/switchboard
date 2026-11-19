@@ -1,0 +1,17 @@
+{
+  "_note": "FIXTURE. Estimated fee and time figures for each rail, used until P1 supplies measured ones (plan, Phase 5: 'Route planner data'). Costs are in USD, times in seconds.",
+  "rails": [
+    {"rail": "cctp-standard", "from": "eth-sepolia", "to": "arc-testnet", "cost_usd": "0.25", "eta_s": 900, "description": "Circle CCTP standard transfer, Ethereum to Arc"},
+    {"rail": "cctp-fast", "from": "eth-sepolia", "to": "arc-testnet", "cost_usd": "0.45", "eta_s": 20, "description": "Circle CCTP fast transfer, Ethereum to Arc"},
+    {"rail": "cctp-standard", "from": "arc-testnet", "to": "eth-sepolia", "cost_usd": "0.20", "eta_s": 30, "description": "Circle CCTP standard transfer, Arc to Ethereum"},
+    {"rail": "cctp-standard", "from": "arc-testnet", "to": "solana-devnet", "cost_usd": "0.05", "eta_s": 15, "description": "Circle CCTP standard transfer, Arc to Solana"},
+    {"rail": "cctp-standard", "from": "solana-devnet", "to": "arc-testnet", "cost_usd": "0.05", "eta_s": 25, "description": "Circle CCTP standard transfer, Solana to Arc"},
+    {"rail": "cctp-standard", "from": "eth-sepolia", "to": "solana-devnet", "cost_usd": "0.40", "eta_s": 960, "description": "Circle CCTP standard transfer, Ethereum to Solana"},
+    {"rail": "cctp-fast", "from": "eth-sepolia", "to": "solana-devnet", "cost_usd": "0.60", "eta_s": 20, "description": "Circle CCTP fast transfer, Ethereum to Solana"},
+    {"rail": "cctp-standard", "from": "solana-devnet", "to": "eth-sepolia", "cost_usd": "0.30", "eta_s": 40, "description": "Circle CCTP standard transfer, Solana to Ethereum"},
+    {"rail": "arc-native", "from": "arc-testnet", "to": "arc-testnet", "cost_usd": "0.01", "eta_s": 1, "description": "USDC transfer on Arc"},
+    {"rail": "eth-native", "from": "eth-sepolia", "to": "eth-sepolia", "cost_usd": "0.35", "eta_s": 15, "description": "USDC transfer on Ethereum"},
+    {"rail": "solana-native", "from": "solana-devnet", "to": "solana-devnet", "cost_usd": "0.01", "eta_s": 2, "description": "USDC transfer on Solana"}
+  ],
+  "fx": {"rail": "stablefx", "chain": "arc-testnet", "cost_bps": "5", "eta_s": 2, "description": "USDC to EURC through Circle StableFX on Arc"}
+}
