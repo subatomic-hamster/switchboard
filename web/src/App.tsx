@@ -4,6 +4,7 @@ import { api } from "./api";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { CommandBar } from "./components/CommandBar";
 import { EventFeed } from "./components/EventFeed";
+import { FlightRecorder, type ReplayFrame } from "./components/FlightRecorder";
 import { HostileBox } from "./components/HostileBox";
 import { MarketsPanel } from "./components/MarketsPanel";
 import { MicButton } from "./components/MicButton";
@@ -29,6 +30,7 @@ export function App() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [readAloud, setReadAloud] = useState(true);
   const [marketSlug, setMarketSlug] = useState<string | null>(null);
+  const [replay, setReplay] = useState<ReplayFrame | null>(null);
   const [spokenRequest, setSpokenRequest] = useState<{ text: string; at: number } | null>(null);
   const readAloudRef = useRef(readAloud);
   readAloudRef.current = readAloud;
@@ -118,11 +120,14 @@ export function App() {
             onChanged={refresh}
           />
           <RingView
-            signals={stream.live}
+            signals={replay ? replay.signals : stream.live}
             wallets={wallets}
             frozen={stats?.frozen ?? false}
             stale={stats?.stream_stale ?? false}
+            replayLabel={replay?.label}
+            resetKey={replay?.resetKey ?? 0}
           />
+          <FlightRecorder events={stream.events} onFrame={setReplay} />
           <MarketsPanel selectedSlug={marketSlug} refreshKey={lastId} />
         </div>
         <div className="column">

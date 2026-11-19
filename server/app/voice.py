@@ -46,6 +46,7 @@ from app.events import StoredEvent
 from app.planner import say_money, say_time
 from app.schemas import (
     ApprovalList,
+    ApprovalResolvedData,
     ApprovalStats,
     ApprovalView,
     BlockedData,
@@ -451,6 +452,13 @@ class Approvals:
                 await ctx.vault.deny(row.request_id, via=via)
         except ValueError:
             log.info("request %s was already resolved in the vault", row.request_id)
+            if via == "restart":
+                # The vault no longer knows this request (the stub's state does not survive a
+                # restart), so nothing else will record the outcome. Keep the event log whole.
+                await ctx.bus.publish(
+                    "approval.resolved",
+                    ApprovalResolvedData(request_id=row.request_id, approved=False, via=via),
+                )
         await ctx.bus.publish(
             "call.ended",
             CallData(

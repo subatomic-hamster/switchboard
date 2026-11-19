@@ -30,6 +30,7 @@ export type ForecastList = S["ForecastList"];
 export type RuleView = S["RuleView"];
 export type RuleProposal = S["RuleProposal"];
 export type HostileResult = S["HostileResult"];
+export type DailySummary = S["DailySummary"];
 
 export const EVENT_TYPES: EventType[] = [
   "transfer.sent",

@@ -890,3 +890,30 @@ table.grid .num {
   color: var(--text-2);
   font-size: 0.8rem;
 }
+
+/* Flight recorder */
+
+.recorder-controls {
+  margin-bottom: 8px;
+}
+
+.recorder-controls select {
+  width: auto;
+  padding: 4px 8px;
+}
+
+.scrub input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.recorder-status {
+  font-size: 0.82rem;
+}
+
+.recorder-event {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 6px;
+}

@@ -38,6 +38,8 @@ export interface RingViewProps {
   stale: boolean;
   /** Shown over the ring while the flight recorder is replaying. */
   replayLabel?: string;
+  /** When this changes, everything on the ring is cleared (a replay starts or jumps). */
+  resetKey?: number;
 }
 
 function arc(angle: number, spread: number): string {
@@ -51,7 +53,14 @@ function arc(angle: number, spread: number): string {
  * destination. One that needs approval stops at the ring and waits, with a flash and a tone.
  * One that is blocked stops at the ring and fades.
  */
-export function RingView({ signals, wallets, frozen, stale, replayLabel }: RingViewProps) {
+export function RingView({
+  signals,
+  wallets,
+  frozen,
+  stale,
+  replayLabel,
+  resetKey = 0,
+}: RingViewProps) {
   const stateRef = useRef<RingState>(EMPTY);
   const [, redraw] = useReducer((count: number) => count + 1, 0);
   const [sound, setSound] = useState(true);
@@ -61,6 +70,12 @@ export function RingView({ signals, wallets, frozen, stale, replayLabel }: RingV
   const frame = useRef<number | null>(null);
   const walletsRef = useRef(wallets);
   walletsRef.current = wallets;
+
+  useEffect(() => {
+    stateRef.current = EMPTY;
+    seen.current = new WeakSet();
+    redraw();
+  }, [resetKey]);
 
   useEffect(() => {
     const tick = () => {
@@ -234,7 +249,7 @@ export function RingView({ signals, wallets, frozen, stale, replayLabel }: RingV
         })}
 
         {replayLabel && (
-          <text x={VIEW.width / 2} y={24} textAnchor="middle" className="replay-label">
+          <text x={12} y={VIEW.height - 12} textAnchor="start" className="replay-label">
             {replayLabel}
           </text>
         )}

@@ -1,5 +1,6 @@
 import type {
   ApprovalView,
+  DailySummary,
   ExecuteResponse,
   ForecastList,
   HostileResult,
@@ -97,6 +98,7 @@ export const api = {
     post<OkResponse>(`/api/rules/${encodeURIComponent(proposalId)}/confirm`, { challenge }),
   cancelRule: (proposalId: string) =>
     post<OkResponse>(`/api/rules/${encodeURIComponent(proposalId)}/cancel`, {}),
+  summary: () => request<DailySummary>("/api/summary"),
   hostile: (content: string) => post<HostileResult>("/api/hostile", { content }),
   revealForecast: (receiptId: string, outcome: boolean) =>
     post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/reveal`, { outcome }),
