@@ -520,10 +520,11 @@ class Connectors:
                 by_owner.setdefault(wallet.owner, []).append(wallet.chain.value)
         auto = from_micro(row.auto_send_micro)
         limits = (
-            "The owner is asked about every transfer."
+            "The owner is asked to approve every transfer you send."
             if auto == 0
             else f"Up to {say_money(auto)} at a time goes without asking, to a total of "
-            f"{say_money(from_micro(row.daily_micro))} in 24 hours."
+            f"{say_money(from_micro(row.daily_micro))} in 24 hours. Anything over that, or "
+            "over the vault's own limits, needs the owner's approval."
         )
         return ConnectStatus(
             assistant=row.name,
@@ -544,9 +545,8 @@ class Connectors:
                 if wallet.owner == OWNER
             ],
             message=(
-                f"{limits} Anything over that, or over the vault's own limits, needs the "
-                "owner's approval, which only the owner can give and never in this chat. "
-                "Only the payees listed can be paid."
+                f"{limits} Only the owner can approve, and never in this chat. Only the "
+                "payees listed can be paid."
                 + (
                     " Transfers here are simulated; no funds move."
                     if ctx.settings.use_p1_stubs

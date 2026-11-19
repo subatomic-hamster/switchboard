@@ -4,9 +4,11 @@ Branch `p2/voice-surface`, draft PR
 [subatomic-hamster/switchboard#1](https://github.com/subatomic-hamster/switchboard/pull/1).
 
 **State at the end of the run.** Every P2 item in every phase is built and tested against
-stubbed P1 routes, or listed under Blocked. 208 server tests and 45 dashboard tests pass; ruff,
-mypy (strict) and the TypeScript check are clean. No phone call was placed, no order was
-placed, no funds moved, nothing was deployed, and nothing was changed in any of your accounts.
+stubbed P1 routes, or listed under Blocked. 208 server tests and 45 dashboard tests passed
+then (242 and 51 after the follow-ups below); ruff, mypy (strict) and the TypeScript check are
+clean. No phone call was placed, no order was placed, no funds moved and nothing was deployed.
+Nothing was changed in any of your accounts during that run; the one change since is in the
+second follow-up below.
 
 **Follow-up on 19 November: the phone provider changed.** Twilio is out. The approval call is
 now placed through AgentPhone, behind `CALL_PROVIDER`; the ElevenLabs and Twilio path is kept.
@@ -18,6 +20,22 @@ accounts in this follow-up, all of it read-only or a single generation:
 - ElevenLabs: one sentence through text-to-speech and the same audio through speech-to-text
   (it came back as "Send 200 dollars from my Ark wallet to Sam."), and two more short
   text-to-speech requests while checking the dashboard in a browser.
+
+**Second follow-up on 19 November.**
+
+- **Your AgentPhone agent is now in webhook mode.** You said yes; I ran
+  `agentphone_setup --set-webhook-mode` and read the agent back. This is the one change made
+  to any of your accounts. No webhook is registered and no call was placed.
+- **Connected assistants were added**, at your request: ChatGPT, Claude, Grok and others can
+  ask Switchboard to send, each with its own key and its own limit. This is not in the plan;
+  see Decisions 44 to 52. 242 server tests and 51 dashboard tests pass. It was checked on
+  this machine with the official MCP client over real HTTP. No assistant was connected for
+  real, because that needs a public address.
+- Versine (versine.com) was looked at once, read-only, to answer your question. Nothing was
+  taken from it except the idea of a limit per assistant.
+- While checking in the browser I made one test connector on your local database, sent one
+  simulated 20 dollar request through it, approved it in the dry-run stand-in, and revoked
+  the connector. It shows as "1 revoked connector not shown". No funds exist to move.
 
 ## How to run
 
@@ -111,6 +129,15 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
     behind it. The label is one edit away: `VENUES` in `server/app/main.py`.
 14. **Tell P1** about the interface proposals in Decisions (marked P1), most of all the event
     payloads and `server/app/ports.py`.
+15. **Connect a real assistant.** Nothing outside this computer can reach Switchboard until
+    the tunnel is open and `PUBLIC_BASE_URL` is set (item 5). Then, on the dashboard under
+    "Connected assistants", make a connector and paste its address into the assistant. Start
+    with the limit at 0, so it asks you every time. The README table says what each
+    assistant accepts; none of it has been tried from here.
+16. **Decide about the secret address.** ChatGPT, Claude and Grok take an address and no key
+    in their own settings, so those connectors carry the key in the address. Anyone who has
+    the address can act as that assistant, inside its limit. If that is not acceptable, use
+    only key-type connectors (Claude Code, the APIs, Gemini CLI) until OAuth sign-in is built.
 
 ## Done
 
@@ -142,6 +169,7 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
 | 1 | Call placement behind `CALL_PROVIDER` (`dry_run`, `agentphone`, `elevenlabs_twilio`); AgentPhone call in webhook mode; `POST /api/voice/hooks/agentphone` with signature and timestamp checks; the approval conversation as a state machine in our code; `scripts/agentphone_setup.py` | `440482d` |
 | 2 | Dashboard microphone and read-back through ElevenLabs speech-to-text and text-to-speech, browser speech as the fallback; ElevenLabs browser-widget fallback for the approval (`scripts/widget_page.py`) | `1bd01f3` |
 | – | Fix: after a restart on the same database the stub vault reused request numbers, so a new over-limit request raised no approval (found in the browser) | `1bd01f3` |
+| – | Connected assistants: a key and a limit per assistant, held requests, MCP endpoint (official SDK) and JSON routes, dashboard panel | `bda315f` |
 
 ## Blocked
 
@@ -157,6 +185,9 @@ on 19 November for the provider change.
 | Rules by voice and the markets operator on the phone call | They are tools of the ElevenLabs agent; the AgentPhone call is a fixed approval script | A rule is spoken into the dashboard microphone and confirmed on the dashboard |
 | Everything behind P1: the vault, real transfers, the Stream webhook, the venue clients, the real match and move | The remote has only `main` and this branch; nothing from P1 | P1 provides objects that satisfy `server/app/ports.py` and routers for its routes, they are wired in `app.main.build_context`, and `USE_P1_STUBS=false`. Until then `USE_P1_STUBS=false` stops the server with a message saying so |
 | Forecast receipts and voice rules "onchain" | The plan has no contract function or route for either | P1 implements `AnchorPort.commit` (receipts) and `VaultPort.set_policy` (rules) against the contract. The hashing, verification and rule logic are done |
+| Connecting a real assistant (ChatGPT, Claude, Grok, ...) | It has to reach this server from the internet, and the hookup is done in your account with each one | "Needs you" items 5 and 15 |
+| Confirming that money arrived, for an assistant | Nothing here watches for incoming payments | P1's chain module publishes arrivals; then `switchboard_receive` can report them |
+| The Gemini app, and any assistant that only accepts OAuth sign-in | Switchboard has no OAuth sign-in | Build an authorization server for connectors (not started) |
 | Grok Bot routines running, and the chat exports | Cannot be created by API | "Needs you" item 11 |
 | Demo video | Needs a person | "Needs you" item 12 |
 
@@ -317,3 +348,44 @@ agreement because they touch the shared interface.
     taken for a duplicate delivery and dropped without a call or an approval panel.
 43. **"Ark" is read as Arc** by the intent parser, because that is how speech-to-text writes
     the word when the sentence is spoken.
+44. **Connected assistants. This is not in the plan.** You asked for connectors so ChatGPT,
+    Claude, Grok and others can send and receive through Switchboard. Built as
+    `server/app/connectors.py`, `mcp_http.py` and `holds.py`, all additive. The frozen routes
+    and events are unchanged.
+45. **An assistant gets less than the agent, never more.** Its request goes through the same
+    planner and vault. It can pay only people in the wallet book (an address is refused, not
+    queued for a call), and it has five operations: status, quote, send, its own transfers,
+    receiving addresses. Approving, limits, payees, freeze and the word have no route.
+46. **A limit per assistant, held by the server (P1).** Each connector has "without asking,
+    up to" and a daily figure, 0 by default, which means ask every time. A spend the vault
+    would allow but that is over the assistant's limit is held in `HoldingVault`, a wrapper
+    around `VaultPort`: it publishes the same `approval.requested`, the same call follows,
+    and the vault is asked only after a yes. If the vault would refuse by then, nothing is
+    sent and no second request is raised. Held request ids start with `h`. The contract
+    knows one agent key, so this limit is not enforced onchain. Proposal to P1: a key per
+    assistant in the vault, each with its own cap.
+47. **New reason code `OVER_AGENT_LIMIT`**, server-side like `CALL_CAP_REACHED`. Additive.
+48. **An assistant cannot spend your attention freely.** Three approval requests in 24 hours
+    and one waiting at a time, per assistant; past that it is refused without a call. The
+    same amount to the same payee inside two minutes is refused unless the assistant marks
+    it deliberate, because assistants retry tool calls that time out.
+49. **What the call says about it.** The operator says the request came from the named
+    assistant and not from a sentence of yours; the risk officer says which of its limits it
+    passed. Both are built from the connector's name (which you typed, reduced to plain
+    characters) and from numbers. The assistant cannot add a note to a request: anything it
+    wrote would be read to you as the case for paying.
+50. **MCP through the official SDK, not hand-written.** The protocol changed after my
+    training data (revision 2026-07-28 is stateless), so I installed `mcp` 2.3 and read its
+    API from the package. The server authenticates before the SDK sees a request, passes the
+    connector's identity inward in a header it sets itself (a copy sent by the client is
+    dropped), and answers only POST. The SDK's own Host check is off because it accepts only
+    localhost and every request already carries a token.
+51. **Two kinds of key.** A key sent as `Authorization: Bearer`, or a key that is part of
+    the address, for assistants whose settings take only an address (ChatGPT, Claude, Grok,
+    per their documentation). Each key works one way only. The address form is weaker: who
+    has the address is the assistant. It is the owner's choice per connector, the dashboard
+    says so, and limits still bound it. OAuth sign-in is the proper fix and is not built.
+    The MCP spec forbids access tokens in a query string; this is a path, and it is not an
+    OAuth token, but the same caution applies. Only the key's SHA-256 is stored.
+52. **Receiving is addresses only.** `switchboard_receive` returns your wallets. Nothing
+    watches for incoming payments, and the answer says so.

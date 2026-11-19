@@ -21,6 +21,7 @@ here, so everything below runs with no chain, no venue account and no phone.
 | Approval call | Real code, **dry run** by default: the request that would be sent is logged and the dashboard stands in for the phone. The phone call goes through **AgentPhone** (`CALL_PROVIDER=agentphone`); an ElevenLabs agent through Twilio is the alternative. **No real call has been placed from this branch yet**, so the call itself is untested end to end |
 | Dashboard voice (microphone, quote read back) | Real: ElevenLabs speech-to-text and text-to-speech when `ELEVENLABS_API_KEY` is set, checked with one live round trip; the browser's own speech otherwise |
 | Approval rules (amount, word, passkey, expiry, call cap) | Real |
+| Connected assistants (ChatGPT, Claude, Grok and others sending through Switchboard) | Real server code, checked on this machine with the official MCP client. **No assistant has been connected for real**: that needs a public address. See [Connected assistants](#connected-assistants) |
 | Prices and equivalence check | **Recorded data** (`server/fixtures/markets.json`), a snapshot of pairs on Gemini and Polymarket US. `scripts/phase0_markets.py` reads the live public APIs |
 | Position move | **Dry run only.** No order is ever placed from this branch. `TRADING_ENABLED` is false and the stub ignores it anyway |
 | Forecast opinion | Real: four model families on live calls, when the keys are set |
@@ -132,6 +133,7 @@ in without changes on this side.
 | `server/app/agent_config.py`, `speech.py` | The ElevenLabs agent's prompt and tools (Twilio path and browser widget); ElevenLabs speech for the dashboard |
 | `server/app/market_brief.py`, `forecast.py` | The markets operator, the multi-model forecast and its receipts |
 | `server/app/rules.py`, `hostile.py`, `bots.py` | Rules by voice, the hostile-content box, Grok Bot routes |
+| `server/app/connectors.py`, `mcp_http.py`, `holds.py` | Connected assistants: keys and limits, the MCP endpoint, and requests held for the owner in front of the vault |
 | `server/app/chain/stub.py`, `markets/stub.py` | **Stubs** for P1's modules |
 | `server/scripts/` | `gen_api_types`, `agentphone_setup`, `create_agent`, `widget_page`, and the two Phase 0 proofs |
 | `web/src/` | The dashboard |
@@ -171,6 +173,8 @@ in without changes on this side.
 | Stale-Stream pause | Spending stops while the Stream is quiet | Server, before the vault is asked |
 | Approval expiry | 5 minutes, then denied | Vault contract and server |
 | Approval calls per day | 5, then requests are denied without a call | Server |
+| Per-assistant limit | Asks every time, until the owner sets an amount | Server, in front of the vault |
+| Approval requests per assistant | 3 a day and one at a time, then refused without a call | Server |
 | Passkey threshold | Above $1,000, a passkey as well as the call | Server |
 | Order size | `MAX_ORDER_USD` = $2, and a hard ceiling of $2 in code | Before any order call |
 | Trading switch | `TRADING_ENABLED` = false | Before any order call |
@@ -334,6 +338,94 @@ What the call sounds like:
 
 "Deny" and "freeze" work at any point. The API key is sent to `api.agentphone.ai` and to no
 other host; the address is a constant in the code, not a setting.
+
+## Connected assistants
+
+Other assistants can use Switchboard to send, and to hand out your receiving addresses:
+ChatGPT, Claude, Grok, Gemini, or anything else that speaks MCP or plain HTTP. You connect
+one on the dashboard ("Connected assistants"), where it gets its own key and its own limit.
+
+**What a connected assistant can do**
+
+| Tool | What it does |
+|---|---|
+| `switchboard_status` | Its limit, what it has sent today, who it can pay, whether spending is paused |
+| `switchboard_quote` | Price a transfer and say what would happen. Sends nothing |
+| `switchboard_send` | Ask for a transfer to a payee in the wallet book |
+| `switchboard_transfers` | Look up transfers it asked for itself |
+| `switchboard_receive` | Your receiving addresses, one per chain |
+
+**What it can never do**, whatever a web page, a file or someone in its chat tells it:
+approve anything, see the one-time word, pay an address that is not in your wallet book,
+change a limit, add a payee, unfreeze the vault, or see another assistant's requests. There
+is no route for any of these, so there is nothing to talk it into.
+
+**How a request is decided.** It goes through the same planner and the same vault as your
+own sentence. Two things are added in front:
+
+- **Its own limit.** Each assistant has "without asking, up to" and "in a day, up to". A new
+  connector starts at 0, which means it asks you every time. A transfer the vault would
+  allow, but that is over the assistant's limit, is held: you get the same approval call,
+  with the amount and the word, and the vault is asked only after you say yes.
+- **A cap on asking.** One assistant can have you asked 3 times in 24 hours and once at a
+  time. Past that its requests are refused without a call, so it cannot use up the day's
+  calls or wear you down.
+
+On the call the operator says where the request came from ("your connected assistant
+ChatGPT asked for it; it did not come from a sentence you spoke"). Nothing the assistant
+wrote is read out.
+
+The assistant's limit is kept by this server. The vault contract knows one agent key, so a
+limit per assistant is not enforced onchain; the vault's own limits are. That is a proposal
+to P1, recorded in the log.
+
+**Two ways to connect**
+
+| | Address | Credential |
+|---|---|---|
+| Key | `PUBLIC_BASE_URL/api/connect/mcp` | `Authorization: Bearer <key>` |
+| Secret address | `PUBLIC_BASE_URL/api/connect/link/<key>/mcp` | The address itself |
+
+A key works one way only: a key-type key is refused in an address, and the other way round.
+The secret address exists because several assistants' own settings take an address and
+nothing else. Anyone who has that address can act as that assistant, inside its limit, so
+keep the limit low and revoke it on the dashboard if it gets out. Signing in with OAuth is
+the better answer and is not built.
+
+What each assistant accepts, from its documentation as read on 19 November 2026. **None of
+these has been tried from this branch**, because that needs a public address:
+
+| Assistant | How |
+|---|---|
+| ChatGPT | Developer mode, add a custom MCP server, no authentication, the secret address. Its settings have no field for a key. The OpenAI API takes the key as `authorization` |
+| ChatGPT "dots" | They use what is already installed on the ChatGPT account, so the ChatGPT connector should cover them. Not confirmed |
+| Claude | Custom connector with no sign-in and the secret address. Claude Code: `claude mcp add --transport http switchboard <address> --header "Authorization: Bearer <key>"`. The Messages API takes the key as `authorization_token` |
+| Grok | grok.com/connectors, custom, the address. The xAI API takes the key as `authorization` |
+| Gemini | Gemini CLI and API: the address with the key as a header. The Gemini app asks connectors to sign in with OAuth, so it cannot connect yet |
+| Meta AI (Muse) | Connectors are a developer preview. What the app accepts could not be confirmed |
+| Anything else | Any MCP client with the key, or the JSON routes below |
+
+Without MCP, the same five operations are plain JSON routes under `/api/connect/v1`
+(`status`, `quote`, `send`, `transfers`, `receive`) with the key as a bearer token.
+`/api/connect/v1/openapi.json` describes them, for tools that import an OpenAPI document.
+
+```
+curl -H "Authorization: Bearer <key>" http://localhost:8787/api/connect/v1/status
+curl -H "Authorization: Bearer <key>" -H "Content-Type: application/json" \
+     -d '{"amount_usd": 20, "to": "sam"}' http://localhost:8787/api/connect/v1/send
+```
+
+**Known limits**
+
+- **Receiving is addresses only.** Switchboard does not watch for incoming payments yet, so
+  an assistant can give out your address but cannot confirm that money arrived. That needs
+  P1's chain module.
+- **Transfers are simulated** while the chain is stubbed, and the assistant is told so in
+  every answer.
+- The MCP protocol is handled by the official SDK (`mcp` 2.3), which serves both current
+  stateless clients and older ones that open with a handshake. Only POST is answered.
+- Making, changing and revoking connectors happens on the dashboard, which is served on
+  this machine only. Only `/api/connect/` is reachable through the tunnel.
 
 ## Grok Bot
 

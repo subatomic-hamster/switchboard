@@ -122,8 +122,8 @@ function ConnectorRow({
         <p>
           <strong>{connector.name}</strong>{" "}
           <span className="muted">
-            {KIND_LABEL[connector.kind]} · {connector.auth === "link" ? "secret address" : "key"}{" "}
-            ending {connector.token_hint}
+            {connector.name === KIND_LABEL[connector.kind] ? "" : `${KIND_LABEL[connector.kind]} · `}
+            {connector.auth === "link" ? "secret address" : "key"} ending {connector.token_hint}
           </span>
         </p>
         <div className="row">
