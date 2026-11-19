@@ -6,7 +6,7 @@ import asyncio
 import logging
 from collections.abc import Coroutine
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request
 
@@ -15,6 +15,9 @@ from app.db import Database
 from app.events import EventBus
 from app.ports import AnchorPort, MarketsPort, TransferPort, VaultPort
 from app.wallets import WalletBook
+
+if TYPE_CHECKING:
+    from app.planner import Planner
 
 log = logging.getLogger("switchboard")
 
@@ -60,7 +63,8 @@ class AppContext:
     markets: MarketsPort
     anchor: AnchorPort
     stream_stale: bool = False
-    services: dict[str, Any] = field(default_factory=dict)
+    # Services are attached by app.main.build_context once the context exists.
+    planner: Planner = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()
