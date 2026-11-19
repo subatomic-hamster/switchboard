@@ -50,7 +50,9 @@ def main() -> int:
             generate(fresh)
             current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
             if fresh.read_text(encoding="utf-8") != current:
-                print("web/src/api-types.ts is out of date. Run `uv run python -m scripts.gen_api_types` in server/.")
+                print(
+                    "web/src/api-types.ts is out of date. Regenerate it with scripts.gen_api_types."
+                )
                 return 1
         print("web/src/api-types.ts is up to date.")
         return 0
