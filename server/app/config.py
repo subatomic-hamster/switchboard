@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SERVER_ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +27,22 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """`.env` wins over the process environment.
+
+        The project's `.env` is the one place its keys are set. A key that happens to be in the
+        shell (for example one a coding tool exports for itself) must not silently replace it.
+        """
+        return init_settings, dotenv_settings, env_settings, file_secret_settings
 
     # server
     port: int = 8787

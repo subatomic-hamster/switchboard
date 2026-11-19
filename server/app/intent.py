@@ -30,6 +30,7 @@ log = logging.getLogger("switchboard.intent")
 
 VENUES = ("polymarket", "gemini", "kalshi", "limitless", "phantom")
 LLM_TIMEOUT_S = 8.0
+ANTHROPIC_API = "https://api.anthropic.com"
 
 SYSTEM_PROMPT = """\
 You turn one sentence from the account owner into a structured money-movement request.
@@ -268,8 +269,12 @@ def make_llm_call(settings: Settings) -> LlmCall | None:
     if not settings.anthropic_api_key:
         return None
     # A spoken request cannot wait long: past this budget the rule-based parser answers.
+    # The base URL is fixed so an ANTHROPIC_BASE_URL exported by another tool is not picked up.
     client = anthropic.AsyncAnthropic(
-        api_key=settings.anthropic_api_key, timeout=LLM_TIMEOUT_S, max_retries=0
+        api_key=settings.anthropic_api_key,
+        base_url=ANTHROPIC_API,
+        timeout=LLM_TIMEOUT_S,
+        max_retries=0,
     )
 
     async def call(text: str) -> IntentDraft | None:

@@ -172,7 +172,14 @@ async def events(
     what it missed."""
     bus: EventBus = request.app.state.ctx.bus
     after_id = int(last_event_id) if last_event_id and last_event_id.isdigit() else 0
-    return EventSourceResponse(event_stream(bus, after_id), ping=15)
+
+    async def stream() -> AsyncGenerator[dict[str, str]]:
+        # A comment first, so the browser's connection opens at once instead of on the first event.
+        yield {"comment": "connected"}
+        async for message in event_stream(bus, after_id):
+            yield message
+
+    return EventSourceResponse(stream(), ping=15)
 
 
 @router.get("/api/events/history", response_model=EventHistory, tags=["events"])
