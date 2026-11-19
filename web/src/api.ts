@@ -2,11 +2,14 @@ import type {
   ApprovalView,
   ExecuteResponse,
   ForecastList,
+  HostileResult,
   IntentResponse,
   MarketBrief,
   MarketListing,
   Opinion,
   OkResponse,
+  RuleProposal,
+  RuleView,
   StatsResponse,
   SwitchboardEvent,
   Venue,
@@ -88,6 +91,13 @@ export const api = {
   forecasts: () => request<ForecastList>("/api/forecasts"),
   overrideForecast: (receiptId: string) =>
     post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/override`, {}),
+  rules: async () => (await request<{ rules: RuleView[] }>("/api/rules")).rules,
+  proposeRule: (text: string) => post<RuleProposal>("/api/rules/propose", { text }),
+  confirmRule: (proposalId: string, challenge: string) =>
+    post<OkResponse>(`/api/rules/${encodeURIComponent(proposalId)}/confirm`, { challenge }),
+  cancelRule: (proposalId: string) =>
+    post<OkResponse>(`/api/rules/${encodeURIComponent(proposalId)}/cancel`, {}),
+  hostile: (content: string) => post<HostileResult>("/api/hostile", { content }),
   revealForecast: (receiptId: string, outcome: boolean) =>
     post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/reveal`, { outcome }),
 };

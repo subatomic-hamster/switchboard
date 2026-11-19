@@ -4,9 +4,11 @@ import { api } from "./api";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { CommandBar } from "./components/CommandBar";
 import { EventFeed } from "./components/EventFeed";
+import { HostileBox } from "./components/HostileBox";
 import { MarketsPanel } from "./components/MarketsPanel";
 import { MicButton } from "./components/MicButton";
 import { RingView } from "./components/RingView";
+import { RulesBox } from "./components/RulesBox";
 import { SafetyPanel } from "./components/SafetyPanel";
 import { StatsPanel } from "./components/StatsPanel";
 import { useEventStream } from "./events";
@@ -126,7 +128,14 @@ export function App() {
         <div className="column">
           <StatsPanel stats={stats} />
           <EventFeed events={stream.events} />
-          <SafetyPanel stats={stats} onChanged={refresh} />
+          <SafetyPanel stats={stats} onChanged={refresh}>
+            <RulesBox
+              callsLive={stats?.calls_live ?? false}
+              refreshKey={lastId}
+              onChanged={refresh}
+            />
+            <HostileBox onChanged={refresh} />
+          </SafetyPanel>
         </div>
       </main>
     </div>

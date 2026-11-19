@@ -27,6 +27,9 @@ export type MoveOption = S["MoveOption"];
 export type Opinion = S["Opinion"];
 export type TrackRecord = S["TrackRecord"];
 export type ForecastList = S["ForecastList"];
+export type RuleView = S["RuleView"];
+export type RuleProposal = S["RuleProposal"];
+export type HostileResult = S["HostileResult"];
 
 export const EVENT_TYPES: EventType[] = [
   "transfer.sent",

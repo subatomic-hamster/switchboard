@@ -828,3 +828,65 @@ table.grid .num {
   margin-top: 10px;
   font-size: 0.8rem;
 }
+
+/* Rules and the hostile-content box */
+
+.subpanel {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.subpanel textarea {
+  display: block;
+  margin-bottom: 8px;
+  resize: vertical;
+}
+
+.rule-pending {
+  margin-top: 0;
+}
+
+.rule-pending > div {
+  display: grid;
+  gap: 6px;
+}
+
+.word-inline {
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+.hostile-result {
+  display: grid;
+  gap: 6px;
+}
+
+.hostile-result h4 {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.hostile-result .notice {
+  margin-top: 0;
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flags li {
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+}
