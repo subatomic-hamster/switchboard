@@ -2,8 +2,18 @@
 
 Flow. The vault emits `ApprovalRequested`; P1's Stream webhook publishes `approval.requested`
 on the bus; this module reacts: it stores the request with a one-time challenge word, then
-places an outbound ElevenLabs call through Twilio (or logs it, in dry-run). On the call the
-agent uses the tools below. The agent prompt and tool definitions are in `app/agent_config.py`.
+calls the owner through the provider named in CALL_PROVIDER (or logs the call, in dry-run).
+
+- `agentphone`: `POST https://api.agentphone.ai/v1/calls` in webhook mode. AgentPhone posts
+  each thing the owner says to `/api/voice/hooks/agentphone`, and this server decides what
+  is said back, following the fixed script in `app/call_script.py`. No language model is on
+  the call.
+- `elevenlabs_twilio`: an ElevenLabs agent called through Twilio. The agent uses the four
+  voice tools below; its prompt and tool definitions are in `app/agent_config.py`. The same
+  agent can run in the ElevenLabs browser widget when no phone line is available.
+- `dry_run` (the default): no call.
+
+Every path ends in the same `approve`, `deny` and `freeze` methods, so the rules are the same.
 
 What it takes to approve:
 
@@ -17,9 +27,10 @@ What it takes to approve:
 Nothing here authenticates by voice. A cloned voice gains nothing: calls go only to
 OWNER_PHONE_NUMBER, and approval needs the word from the owner's screen.
 
-Dry-run. Unless CALLS_ENABLED=true and the ElevenLabs agent id, phone-number id and owner
-number are all set, no call is placed: the request that would be sent is logged, and the
-dashboard offers a labelled "simulate the call" form that goes through the same checks.
+Dry-run. Unless CALLS_ENABLED=true, CALL_PROVIDER names a provider, and everything that
+provider needs is set (`Settings.call_blockers` lists what is missing), no call is placed:
+the request that would be sent is logged, and the dashboard offers a labelled "simulate the
+call" form that goes through the same checks.
 """
 
 from __future__ import annotations
@@ -31,17 +42,28 @@ import json
 import logging
 import secrets
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import timedelta
 from decimal import Decimal
 from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlmodel import col, func, select
 
+from app import call_script
 from app.context import AppContext, get_ctx
-from app.db import ApprovalRow, CallRow, PlanRow, as_utc, from_micro, to_micro, utcnow
+from app.db import (
+    ApprovalRow,
+    CallRow,
+    PhoneSessionRow,
+    PlanRow,
+    as_utc,
+    from_micro,
+    to_micro,
+    utcnow,
+)
 from app.events import StoredEvent
 from app.planner import say_money, say_time
 from app.schemas import (
@@ -65,6 +87,13 @@ log = logging.getLogger("switchboard.voice")
 
 ELEVENLABS_API = "https://api.elevenlabs.io"
 OUTBOUND_CALL_PATH = "/v1/convai/twilio/outbound-call"
+# The AgentPhone key is sent to this host and to no other. It is a constant, not a setting,
+# so no configuration can point the key somewhere else.
+AGENTPHONE_API = "https://api.agentphone.ai"
+AGENTPHONE_CALLS_PATH = "/v1/calls"
+AGENTPHONE_TOLERANCE_S = 5 * 60
+# A call that has not reached a decision after this many caller turns is denied.
+MAX_PHONE_TURNS = 12
 MAX_ATTEMPTS = 3
 RATE_WARNING_MIN_RESOLVED = 3
 WEBHOOK_TOLERANCE_S = 30 * 60
@@ -258,19 +287,77 @@ class Approvals:
             "requires_passkey": "yes" if row.passkey_required else "no",
         }
 
-    async def start_approval_call(self, request_id: str) -> CallRow:
-        """Call the owner about a pending request. Dry-run unless calls are fully enabled."""
-        ctx, settings = self._ctx, self._ctx.settings
-        row = self._require(request_id)
-        spent = await ctx.vault.spent_today()
+    def _elevenlabs_body(self, row: ApprovalRow, spent: Decimal) -> dict[str, Any]:
+        settings = self._ctx.settings
         variables = {**self.call_variables(row), "spent_today_usd": f"{spent.normalize():f}"}
-        body = {
+        return {
             "agent_id": settings.elevenlabs_agent_id,
             "agent_phone_number_id": settings.elevenlabs_phone_number_id,
             # Only ever the registered owner number; never a number from request data.
             "to_number": settings.owner_phone_number,
             "conversation_initiation_client_data": {"dynamic_variables": variables},
         }
+
+    def _agentphone_body(self, row: ApprovalRow) -> dict[str, Any]:
+        """Webhook mode: no `systemPrompt`, so every caller turn comes to this server. The
+        greeting is the operator stating the request. The challenge word is not in it."""
+        settings = self._ctx.settings
+        reason = Reason(row.reason)
+        return {
+            "agentId": settings.agentphone_agent_id,
+            # Only ever the registered owner number; never a number from request data.
+            "toNumber": settings.owner_phone_number,
+            "fromNumberId": settings.agentphone_number_id,
+            "initialGreeting": call_script.greeting(
+                from_micro(row.amount_micro),
+                row.payee_label,
+                REASON_PHRASES.get(reason, "the vault flagged it"),
+                row.case_for,
+            ),
+        }
+
+    async def _place_elevenlabs(self, body: dict[str, Any]) -> str:
+        response = await self._client().post(
+            f"{ELEVENLABS_API}{OUTBOUND_CALL_PATH}",
+            headers={"xi-api-key": self._ctx.settings.elevenlabs_api_key},
+            json=body,
+            timeout=20.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if not payload.get("success", False):
+            raise RuntimeError(str(payload.get("message", "call was not started")))
+        return str(payload.get("conversation_id") or "")
+
+    async def _place_agentphone(self, request_id: str, body: dict[str, Any]) -> str:
+        response = await self._client().post(
+            f"{AGENTPHONE_API}{AGENTPHONE_CALLS_PATH}",
+            headers={"Authorization": f"Bearer {self._ctx.settings.agentphone_api_key}"},
+            json=body,
+            timeout=20.0,
+        )
+        if response.is_error:
+            # AgentPhone explains a refusal in the body (no payment method, number still
+            # activating, a call already in progress). Keep that for the dashboard.
+            raise RuntimeError(f"AgentPhone answered {response.status_code}: {response.text[:200]}")
+        call_id = str(response.json().get("id") or "")
+        if not call_id:
+            raise RuntimeError("AgentPhone returned no call id")
+        with self._ctx.db.session() as session:
+            session.add(PhoneSessionRow(call_id=call_id, request_id=request_id, created=utcnow()))
+            session.commit()
+        return call_id
+
+    async def start_approval_call(self, request_id: str) -> CallRow:
+        """Call the owner about a pending request, through the provider in CALL_PROVIDER.
+        Dry-run unless calls are fully enabled for that provider."""
+        ctx, settings = self._ctx, self._ctx.settings
+        row = self._require(request_id)
+        provider = settings.call_provider
+        if provider == "agentphone":
+            body = self._agentphone_body(row)
+        else:
+            body = self._elevenlabs_body(row, await ctx.vault.spent_today())
         call = CallRow(
             request_id=request_id, ts=utcnow(), dry_run=not settings.calls_live, status=""
         )
@@ -278,26 +365,25 @@ class Approvals:
         if not settings.calls_live:
             call.status = "started"
             call.detail = "dry run: no call placed"
+            loggable = {
+                key: value for key, value in body.items() if key not in ("to_number", "toNumber")
+            }
             log.info(
-                "DRY RUN approval call for request %s to %s: %s",
+                "DRY RUN approval call (provider %s; missing %s) for request %s to %s: %s",
+                provider,
+                ", ".join(settings.call_blockers) or "nothing",
                 request_id,
                 mask_number(settings.owner_phone_number) or "(no owner number set)",
-                json.dumps(variables),
+                json.dumps(loggable),
             )
         else:
             try:
-                response = await self._client().post(
-                    f"{ELEVENLABS_API}{OUTBOUND_CALL_PATH}",
-                    headers={"xi-api-key": settings.elevenlabs_api_key},
-                    json=body,
-                    timeout=20.0,
-                )
-                response.raise_for_status()
-                payload = response.json()
-                if not payload.get("success", False):
-                    raise RuntimeError(str(payload.get("message", "call was not started")))
+                if provider == "agentphone":
+                    call.conversation_id = await self._place_agentphone(request_id, body)
+                else:
+                    call.conversation_id = await self._place_elevenlabs(body)
                 call.status = "started"
-                call.conversation_id = str(payload.get("conversation_id") or "")
+                call.detail = f"placed through {provider}"
             except (httpx.HTTPError, RuntimeError, ValueError) as exc:
                 call.status = "failed"
                 call.detail = f"{type(exc).__name__}: {exc}"[:300]
@@ -559,6 +645,231 @@ class Approvals:
         request_id = variables.get("request_id")
         return self.get(str(request_id)) if request_id else None
 
+    # ------------------------------------------------------------------ AgentPhone webhook
+
+    def verify_agentphone(
+        self, raw_body: bytes, signature: str | None, timestamp: str | None
+    ) -> bool:
+        """`X-Webhook-Signature: sha256=<hex>` is HMAC-SHA256 of `"<timestamp>." + body` with
+        the webhook secret. A timestamp more than five minutes away is refused, so a recorded
+        delivery cannot be replayed later."""
+        secret = self._ctx.settings.agentphone_webhook_secret
+        if not secret or not signature or not timestamp:
+            return False
+        if not (timestamp.isascii() and timestamp.isdigit() and len(timestamp) <= 12):
+            return False
+        if abs(time.time() - int(timestamp)) > AGENTPHONE_TOLERANCE_S:
+            return False
+        expected = hmac.new(
+            secret.encode(), f"{timestamp}.".encode() + raw_body, hashlib.sha256
+        ).hexdigest()
+        return hmac.compare_digest(f"sha256={expected}".encode(), signature.strip().encode())
+
+    def _phone_session(self, data: dict[str, Any]) -> PhoneSessionRow | None:
+        """The session for a call this server placed. Anything else gets no session, so an
+        inbound call to the number, or a call placed by someone else, can approve nothing."""
+        call_id = str(data.get("callId") or "")
+        if not call_id:
+            return None
+        settings = self._ctx.settings
+        with self._ctx.db.session() as session:
+            found = session.get(PhoneSessionRow, call_id)
+            if found is not None:
+                return found
+            # AgentPhone's documents do not promise that the id in a webhook equals the id
+            # returned when the call was placed. If it differs, adopt the call only when it
+            # is outbound, to the owner's number, and exactly one placed call is waiting.
+            if not (
+                str(data.get("direction") or "") == "outbound"
+                and settings.owner_phone_number
+                and str(data.get("to") or "") == settings.owner_phone_number
+            ):
+                return None
+            cutoff = utcnow() - timedelta(seconds=settings.approval_expiry_s)
+            waiting: list[PhoneSessionRow] = []
+            for candidate in session.exec(
+                select(PhoneSessionRow).where(
+                    col(PhoneSessionRow.created) >= cutoff, col(PhoneSessionRow.turns) == 0
+                )
+            ).all():
+                approval = session.get(ApprovalRow, candidate.request_id)
+                if approval is not None and approval.status == "pending":
+                    waiting.append(candidate)
+            if len(waiting) != 1:
+                return None
+            log.warning(
+                "AgentPhone call id %s was not the id returned at placement; matched it to "
+                "request %s by direction and number",
+                call_id,
+                waiting[0].request_id,
+            )
+            # Move the session to the id the webhook uses, so only one call can hold it.
+            adopted = PhoneSessionRow(
+                call_id=call_id, request_id=waiting[0].request_id, created=utcnow()
+            )
+            session.delete(waiting[0])
+            session.add(adopted)
+            session.commit()
+            return adopted
+
+    def _save_session(self, phone: PhoneSessionRow) -> None:
+        with self._ctx.db.session() as session:
+            session.add(phone)
+            session.commit()
+
+    async def phone_turn(self, data: dict[str, Any]) -> AsyncIterator[dict[str, Any]]:
+        """One thing the owner said on an AgentPhone call. Yields what to say back, as the
+        chunks of an NDJSON reply: `interim` chunks first, then one final chunk.
+
+        The script is fixed: the greeting stated the request; the first reply is the risk
+        officer's objection and the ask; after that the amount and the word are collected and
+        handed to `approve`, which is the only thing that can say yes."""
+        phone = self._phone_session(data)
+        if phone is None:
+            yield {"text": call_script.NOT_OUR_CALL, "hangup": True}
+            return
+        row = self._require(phone.request_id)
+        request_id = row.request_id
+        amount = from_micro(row.amount_micro)
+        reason_phrase = REASON_PHRASES.get(Reason(row.reason), "the vault flagged it")
+        phone.turns += 1
+        self._save_session(phone)
+
+        def closing(text: str) -> dict[str, Any]:
+            phone.state = "done"
+            self._save_session(phone)
+            return {"text": text, "hangup": True}
+
+        if row.status != "pending":
+            yield closing(call_script.already_resolved(row.status))
+            return
+        if row.voice_ok:
+            yield closing(call_script.AWAITING_PASSKEY)
+            return
+        if utcnow() > as_utc(row.expires_at):
+            await self._expire(request_id)
+            yield closing(call_script.EXPIRED)
+            return
+        if phone.turns > MAX_PHONE_TURNS:
+            await self.deny(request_id, via="call_too_long")
+            yield closing(call_script.TOO_LONG)
+            return
+
+        heard = call_script.hear(str(data.get("transcript") or ""), CHALLENGE_WORDS)
+        if heard.intent == "freeze":
+            yield {"text": call_script.CHECKING, "interim": True}
+            await self.freeze(via="voice")
+            await self.deny(request_id, via="voice")
+            yield closing(call_script.FROZEN)
+            return
+        if heard.intent == "deny":
+            await self.deny(request_id, via="voice")
+            yield closing(call_script.DENIED)
+            return
+
+        if phone.state == "stated":
+            # Whatever was said, the objection comes before anything can be approved.
+            phone.state = "asking"
+            phone.amount_heard = phone.word_heard = ""
+            self._save_session(phone)
+            yield {"text": call_script.objection(row.case_against), "interim": True}
+            yield {"text": call_script.ask(row.passkey_required)}
+            return
+
+        if heard.intent == "repeat":
+            yield {
+                "text": call_script.restatement(amount, row.payee_label, reason_phrase),
+                "interim": True,
+            }
+            yield {"text": call_script.objection(row.case_against), "interim": True}
+            yield {"text": call_script.ask(row.passkey_required)}
+            return
+
+        if len(heard.words) > 1:
+            # Listing several words in one breath is a guess at the word, not the word.
+            phone.amount_heard = phone.word_heard = ""
+            self._save_session(phone)
+            result = await self.approve(request_id, amount, "", via="voice")
+            if result.error == "too_many_attempts":
+                yield closing(call_script.TOO_MANY_ATTEMPTS)
+                return
+            tries_left = MAX_ATTEMPTS - self._require(request_id).attempts
+            yield {"text": call_script.TOO_MANY_WORDS, "interim": True}
+            yield {"text": call_script.mismatch("challenge_mismatch", tries_left)}
+            return
+
+        if heard.amount is not None:
+            phone.amount_heard = f"{heard.amount:f}"
+        if heard.words:
+            phone.word_heard = heard.words[0]
+        self._save_session(phone)
+        if not (phone.amount_heard and phone.word_heard):
+            if heard.amount_unclear:
+                yield {"text": call_script.AMOUNT_UNCLEAR}
+            elif phone.amount_heard:
+                yield {"text": call_script.need_word(Decimal(phone.amount_heard))}
+            elif phone.word_heard:
+                yield {"text": call_script.NEED_AMOUNT}
+            else:
+                yield {"text": call_script.NEED_BOTH}
+            return
+
+        said_amount, said_word = Decimal(phone.amount_heard), phone.word_heard
+        phone.amount_heard = phone.word_heard = ""
+        self._save_session(phone)
+        yield {"text": call_script.CHECKING, "interim": True}
+        result = await self.approve(request_id, said_amount, said_word, via="voice")
+        if result.ok and result.status == "approved":
+            yield closing(call_script.approved(amount, row.payee_label))
+        elif result.ok and result.status == "awaiting_passkey":
+            yield closing(call_script.AWAITING_PASSKEY)
+        elif result.error in ("amount_mismatch", "challenge_mismatch"):
+            tries_left = MAX_ATTEMPTS - self._require(request_id).attempts
+            yield {"text": call_script.mismatch(result.error, tries_left)}
+        elif result.error == "too_many_attempts":
+            yield closing(call_script.TOO_MANY_ATTEMPTS)
+        elif result.error == "expired":
+            yield closing(call_script.EXPIRED)
+        elif result.error == "already_resolved":
+            yield closing(call_script.already_resolved(result.status or "resolved"))
+        else:
+            yield closing(call_script.NOT_RECORDED)
+
+    async def phone_call_ended(self, data: dict[str, Any]) -> str:
+        """`agent.call_ended`. A call that ends without an approval denies the request."""
+        phone = self._phone_session(data)
+        if phone is None:
+            return "ignored: not a call this server placed"
+        row = self.get(phone.request_id)
+        if row is None:
+            return "ignored: no matching request"
+        answered = phone.turns > 0
+        phone.state = "done"
+        self._save_session(phone)
+        if row.status == "pending" and not row.voice_ok:
+            if answered:
+                await self._no_decision(
+                    row, status="denied", via="call_ended", call_status="ended_without_decision"
+                )
+                return "denied: call ended without a decision"
+            reason = str(data.get("disconnectionReason") or data.get("status") or "unknown")[:60]
+            await self._no_decision(
+                row, status="denied", via="no_answer", call_status=f"no_answer ({reason})"
+            )
+            return "denied: call was not answered"
+        row.call_status = "ended"
+        self._save(row)
+        await self._ctx.bus.publish(
+            "call.ended",
+            CallData(
+                request_id=row.request_id,
+                dry_run=False,
+                status="ended",
+                detail=f"Request is {row.status}.",
+            ),
+        )
+        return "recorded"
+
     # ------------------------------------------------------------------ dashboard views
 
     def _require(self, request_id: str) -> ApprovalRow:
@@ -680,6 +991,54 @@ async def elevenlabs_webhook(
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail="body is not JSON") from exc
     return OkResponse(ok=True, status=await ctx.approvals.handle_webhook(payload))
+
+
+async def _ndjson(chunks: AsyncIterator[dict[str, Any]]) -> AsyncIterator[bytes]:
+    """One JSON object per line. If the script fails part-way, say so and hang up: a caller
+    left in silence might assume the request went through."""
+    try:
+        async for chunk in chunks:
+            yield json.dumps(chunk).encode() + b"\n"
+    except Exception:
+        log.exception("the approval call script failed")
+        yield json.dumps({"text": call_script.FAILED, "hangup": True}).encode() + b"\n"
+
+
+@router.post("/voice/hooks/agentphone", tags=["webhooks"], response_model=None)
+async def agentphone_webhook(
+    request: Request,
+    ctx: Ctx,
+    x_webhook_signature: Annotated[str | None, Header()] = None,
+    x_webhook_timestamp: Annotated[str | None, Header()] = None,
+) -> Response:
+    """AgentPhone webhook. A voice turn (`agent.message` on the `voice` channel) is answered
+    with what to say next, as NDJSON. `agent.call_ended` closes the call: ended without an
+    approval means denied. Every delivery must carry a valid signature."""
+    raw = await request.body()
+    if not ctx.settings.agentphone_webhook_secret:
+        raise HTTPException(status_code=503, detail="AGENTPHONE_WEBHOOK_SECRET is not set")
+    if not ctx.approvals.verify_agentphone(raw, x_webhook_signature, x_webhook_timestamp):
+        raise HTTPException(status_code=401, detail="bad signature")
+    try:
+        event = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise HTTPException(status_code=400, detail="body is not JSON") from exc
+    if not isinstance(event, dict):
+        raise HTTPException(status_code=400, detail="body is not a JSON object")
+    kind, channel = event.get("event"), event.get("channel")
+    data = event.get("data")
+    if not isinstance(data, dict):
+        data = {}
+    expected_agent = ctx.settings.agentphone_agent_id
+    if event.get("test") or (expected_agent and event.get("agentId") != expected_agent):
+        return JSONResponse({"ok": True, "status": "ignored"})
+    if kind == "agent.message" and channel == "voice":
+        return StreamingResponse(
+            _ndjson(ctx.approvals.phone_turn(data)), media_type="application/x-ndjson"
+        )
+    if kind == "agent.call_ended":
+        return JSONResponse({"ok": True, "status": await ctx.approvals.phone_call_ended(data)})
+    return JSONResponse({"ok": True, "status": "ignored"})
 
 
 dashboard = APIRouter(prefix="/api", tags=["approvals"])

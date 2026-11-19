@@ -95,6 +95,8 @@ export const stats: StatsResponse = {
   trading_enabled: false,
   max_order_usd: 2,
   calls_live: false,
+  call_provider: "dry_run",
+  agent_tools_live: false,
   using_p1_stubs: true,
   passkey_threshold_usd: 1000,
   passkey_registered: false,

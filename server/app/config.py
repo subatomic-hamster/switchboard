@@ -8,8 +8,9 @@ from __future__ import annotations
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,9 @@ FIXTURES_DIR = SERVER_ROOT / "fixtures"
 # The real-money ceiling is a constant in code, not only a setting: a setting can lower it,
 # nothing can raise it.
 HARD_MAX_ORDER_USD = Decimal("2")
+
+# Who places the approval call. `dry_run` places none.
+CallProvider = Literal["dry_run", "agentphone", "elevenlabs_twilio"]
 
 
 class Settings(BaseSettings):
@@ -74,15 +78,25 @@ class Settings(BaseSettings):
     xai_api_key: str = ""
     forecast_models: str = ""
 
-    # ElevenLabs
+    # ElevenLabs: dashboard speech, and the agent used by the elevenlabs_twilio provider
+    # and the browser widget
     elevenlabs_api_key: str = ""
     elevenlabs_agent_id: str = ""
     elevenlabs_phone_number_id: str = ""
     elevenlabs_webhook_secret: str = ""
     elevenlabs_operator_voice_id: str = ""
     elevenlabs_risk_officer_voice_id: str = ""
+    elevenlabs_tts_model: str = "eleven_flash_v2_5"
+    elevenlabs_stt_model: str = "scribe_v3"
+
+    # AgentPhone: the approval call when CALL_PROVIDER=agentphone
+    agentphone_api_key: str = ""
+    agentphone_agent_id: str = ""
+    agentphone_number_id: str = ""
+    agentphone_webhook_secret: str = ""
 
     # phone calls
+    call_provider: CallProvider = "dry_run"
     owner_phone_number: str = ""
     calls_enabled: bool = False
     voice_token: str = ""
@@ -98,16 +112,51 @@ class Settings(BaseSettings):
     def effective_max_order_usd(self) -> Decimal:
         return min(self.max_order_usd, HARD_MAX_ORDER_USD)
 
+    @field_validator("call_provider", mode="before")
+    @classmethod
+    def _blank_provider_is_dry_run(cls, value: object) -> object:
+        """A blank CALL_PROVIDER means dry run; a misspelt one still stops the server."""
+        if isinstance(value, str):
+            return value.strip().lower() or "dry_run"
+        return value
+
+    @property
+    def call_blockers(self) -> list[str]:
+        """The settings still missing before the chosen provider could place a call."""
+        needed: dict[str, str] = {}
+        if self.call_provider == "agentphone":
+            needed = {
+                "AGENTPHONE_API_KEY": self.agentphone_api_key,
+                "AGENTPHONE_AGENT_ID": self.agentphone_agent_id,
+                "AGENTPHONE_NUMBER_ID": self.agentphone_number_id,
+                # Without the secret a caller's turn cannot be verified, so the call would
+                # be silence. It exists only once the webhook has been registered.
+                "AGENTPHONE_WEBHOOK_SECRET": self.agentphone_webhook_secret,
+            }
+        elif self.call_provider == "elevenlabs_twilio":
+            needed = {
+                "ELEVENLABS_API_KEY": self.elevenlabs_api_key,
+                "ELEVENLABS_AGENT_ID": self.elevenlabs_agent_id,
+                "ELEVENLABS_PHONE_NUMBER_ID": self.elevenlabs_phone_number_id,
+            }
+        else:
+            return ["CALL_PROVIDER"]
+        needed["OWNER_PHONE_NUMBER"] = self.owner_phone_number
+        missing = [name for name, value in needed.items() if not value]
+        if not self.calls_enabled:
+            missing.append("CALLS_ENABLED")
+        return missing
+
     @property
     def calls_live(self) -> bool:
         """True only when a real outbound call can and may be placed."""
-        return bool(
-            self.calls_enabled
-            and self.elevenlabs_api_key
-            and self.elevenlabs_agent_id
-            and self.elevenlabs_phone_number_id
-            and self.owner_phone_number
-        )
+        return not self.call_blockers
+
+    @property
+    def agent_tools_live(self) -> bool:
+        """True when the live call is hosted by the ElevenLabs agent, which has the rule
+        tools. The AgentPhone call is a fixed script that only handles an approval."""
+        return self.calls_live and self.call_provider == "elevenlabs_twilio"
 
     @property
     def database_file(self) -> Path:

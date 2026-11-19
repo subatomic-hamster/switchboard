@@ -357,8 +357,9 @@ async def propose_rule(body: RuleProposeRequest, ctx: Ctx) -> RuleProposal:
 
 @router.post("/{proposal_id}/confirm", response_model=OkResponse)
 async def confirm_rule(proposal_id: str, body: RuleWord, ctx: Ctx) -> OkResponse:
-    """Dry-run only: stand in for the spoken confirmation. Refused when calls are live."""
-    if ctx.settings.calls_live:
+    """Stand in for the spoken confirmation. Refused only when the live call is hosted by
+    the ElevenLabs agent, which has the rule tools; the AgentPhone call script does not."""
+    if ctx.settings.agent_tools_live:
         raise HTTPException(status_code=403, detail="calls are live; confirm on the phone")
     return await ctx.rules.confirm(proposal_id, body.challenge, via="dashboard (dry run)")
 

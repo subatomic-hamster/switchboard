@@ -712,7 +712,8 @@ export interface paths {
         put?: never;
         /**
          * Confirm Rule
-         * @description Dry-run only: stand in for the spoken confirmation. Refused when calls are live.
+         * @description Stand in for the spoken confirmation. Refused only when the live call is hosted by
+         *     the ElevenLabs agent, which has the rule tools; the AgentPhone call script does not.
          */
         post: operations["confirm_rule_api_rules__proposal_id__confirm_post"];
         delete?: never;
@@ -833,6 +834,28 @@ export interface paths {
          * @description The kill switch. Freezing needs no challenge: stopping all spending is always safe.
          */
         post: operations["voice_freeze_api_voice_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/hooks/agentphone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agentphone Webhook
+         * @description AgentPhone webhook. A voice turn (`agent.message` on the `voice` channel) is answered
+         *     with what to say next, as NDJSON. `agent.call_ended` closes the call: ended without an
+         *     approval means denied. Every delivery must carry a valid signature.
+         */
+        post: operations["agentphone_webhook_api_voice_hooks_agentphone_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2068,9 +2091,21 @@ export interface components {
         };
         /** StatsResponse */
         StatsResponse: {
+            /**
+             * Agent Tools Live
+             * @description True when the live call is hosted by the ElevenLabs agent, which can also confirm rules. The AgentPhone call only handles an approval.
+             * @default false
+             */
+            agent_tools_live: boolean;
             approvals: components["schemas"]["ApprovalStats"];
             /** Budget Remaining Usd */
             budget_remaining_usd: number;
+            /**
+             * Call Provider
+             * @description dry_run, agentphone or elevenlabs_twilio
+             * @default dry_run
+             */
+            call_provider: string;
             /** Calls Live */
             calls_live: boolean;
             /** Calls Today */
@@ -3722,6 +3757,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    agentphone_webhook_api_voice_hooks_agentphone_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-webhook-signature"?: string | null;
+                "x-webhook-timestamp"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

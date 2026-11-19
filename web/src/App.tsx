@@ -16,6 +16,11 @@ import { useEventStream } from "./events";
 import { canSpeak, speak, stopSpeaking } from "./speech";
 import type { ApprovalView, IntentResponse, StatsResponse, Wallet } from "./types";
 
+const CALL_PROVIDER_NAME: Record<string, string> = {
+  agentphone: "AgentPhone",
+  elevenlabs_twilio: "ElevenLabs and Twilio",
+};
+
 const STREAM_LABEL = {
   connecting: "Connecting…",
   live: "Live",
@@ -71,6 +76,11 @@ export function App() {
           {stats && !stats.calls_live && (
             <span className="badge" title="No phone call is placed">
               Calls: dry run
+            </span>
+          )}
+          {stats?.calls_live && (
+            <span className="badge" title="Over-limit requests ring the owner's phone">
+              Calls: live through {CALL_PROVIDER_NAME[stats.call_provider] ?? stats.call_provider}
             </span>
           )}
           {stats && !stats.trading_enabled && <span className="badge">Trading: off</span>}
@@ -135,7 +145,7 @@ export function App() {
           <EventFeed events={stream.events} />
           <SafetyPanel stats={stats} onChanged={refresh}>
             <RulesBox
-              callsLive={stats?.calls_live ?? false}
+              callsLive={stats?.agent_tools_live ?? false}
               refreshKey={lastId}
               onChanged={refresh}
             />

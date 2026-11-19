@@ -102,11 +102,16 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         log.info(
-            "switchboard up: stubs=%s trading_enabled=%s calls_live=%s",
+            "switchboard up: stubs=%s trading_enabled=%s calls_live=%s call_provider=%s",
             settings.use_p1_stubs,
             settings.trading_enabled,
             settings.calls_live,
+            settings.call_provider,
         )
+        if settings.call_provider != "dry_run" and not settings.calls_live:
+            log.info(
+                "calls stay in dry run until these are set: %s", ", ".join(settings.call_blockers)
+            )
         await ctx.approvals.resume()
         if settings.anthropic_api_key:
             # The first structured-output call compiles the schema and is slow; do it now.
@@ -175,6 +180,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             trading_enabled=ctx.settings.trading_enabled,
             max_order_usd=ctx.settings.effective_max_order_usd,
             calls_live=ctx.settings.calls_live,
+            call_provider=ctx.settings.call_provider,
+            agent_tools_live=ctx.settings.agent_tools_live,
             using_p1_stubs=ctx.settings.use_p1_stubs,
             passkey_threshold_usd=ctx.settings.passkey_threshold_usd,
             passkey_registered=ctx.passkeys.registered(),

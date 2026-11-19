@@ -52,6 +52,7 @@ async def test_mock_demo_refuses_to_run_when_calls_are_live() -> None:
     application = create_app(
         make_settings(
             calls_enabled=True,
+            call_provider="elevenlabs_twilio",
             elevenlabs_api_key="k",
             elevenlabs_agent_id="a",
             elevenlabs_phone_number_id="p",

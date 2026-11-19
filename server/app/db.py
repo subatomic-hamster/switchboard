@@ -90,6 +90,22 @@ class CallRow(SQLModel, table=True):
     detail: str = ""
 
 
+class PhoneSessionRow(SQLModel, table=True):
+    """One AgentPhone call, and how far its scripted approval conversation has got.
+
+    `amount_heard` and `word_heard` are what the caller has said so far, kept so the amount
+    and the word can arrive in separate turns. The expected word is never stored here.
+    """
+
+    call_id: str = Field(primary_key=True)
+    request_id: str = Field(index=True)
+    created: datetime
+    state: str = "stated"
+    turns: int = 0
+    amount_heard: str = ""
+    word_heard: str = ""
+
+
 class LedgerRow(SQLModel, table=True):
     """One line per movement of money or position, for the daily summary and reconciliation."""
 

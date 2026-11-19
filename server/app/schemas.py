@@ -515,6 +515,14 @@ class StatsResponse(Model):
     trading_enabled: bool
     max_order_usd: Money
     calls_live: bool
+    call_provider: str = Field(
+        default="dry_run", description="dry_run, agentphone or elevenlabs_twilio"
+    )
+    agent_tools_live: bool = Field(
+        default=False,
+        description="True when the live call is hosted by the ElevenLabs agent, which can "
+        "also confirm rules. The AgentPhone call only handles an approval.",
+    )
     using_p1_stubs: bool
     passkey_threshold_usd: Money
     passkey_registered: bool

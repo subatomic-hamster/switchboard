@@ -37,6 +37,12 @@ def make_settings(**overrides: object) -> Settings:
         "google_ai_api_key": "",
         "xai_api_key": "",
         "elevenlabs_api_key": "",
+        "call_provider": "dry_run",
+        "agentphone_api_key": "",
+        "agentphone_agent_id": "",
+        "agentphone_number_id": "",
+        "agentphone_webhook_secret": "",
+        "owner_phone_number": "",
     }
     base.update(overrides)
     return Settings(_env_file=None, **base)  # type: ignore[arg-type]
@@ -52,6 +58,12 @@ def _no_ambient_keys(monkeypatch: pytest.MonkeyPatch) -> None:
         "GOOGLE_AI_API_KEY",
         "XAI_API_KEY",
         "ELEVENLABS_API_KEY",
+        "AGENTPHONE_API_KEY",
+        "AGENTPHONE_AGENT_ID",
+        "AGENTPHONE_NUMBER_ID",
+        "AGENTPHONE_WEBHOOK_SECRET",
+        "CALL_PROVIDER",
+        "OWNER_PHONE_NUMBER",
         "CALLS_ENABLED",
         "TRADING_ENABLED",
     ):

@@ -348,6 +348,7 @@ async def test_dashboard_can_always_deny(client: httpx.AsyncClient, ctx: AppCont
 
 LIVE = {
     "calls_enabled": True,
+    "call_provider": "elevenlabs_twilio",
     "elevenlabs_api_key": "xi-test-key",
     "elevenlabs_agent_id": "agent_test",
     "elevenlabs_phone_number_id": "phnum_test",
