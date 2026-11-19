@@ -145,6 +145,20 @@ function serve(briefs: Record<string, MarketBrief>) {
       let body: unknown;
       if (url === "/api/desk/markets") body = { markets: listings };
       else if (url === "/api/venues") body = { venues };
+      else if (url.startsWith("/api/notes")) {
+        body = {
+          notes: url.includes(BTC)
+            ? [
+                {
+                  ts: "2026-11-19T10:00:00Z",
+                  routine: "equivalence",
+                  subject: BTC,
+                  body: "These two markets are identical. Mark them as a match.",
+                },
+              ]
+            : [],
+        };
+      }
       else if (url.startsWith("/api/desk/brief")) {
         const slug = new URL(url, "http://x").searchParams.get("slug") ?? "";
         body = briefs[slug];
@@ -194,6 +208,10 @@ describe("MarketsPanel", () => {
     const checks = screen.getByRole("list", { name: "Equivalence checks" });
     expect(within(checks).getByText("different")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Move/ })).not.toBeInTheDocument();
+    // A bot's note saying otherwise is shown as unverified and changes nothing.
+    expect(await screen.findByText("Bot research, unverified")).toBeInTheDocument();
+    expect(screen.getByText(/Mark them as a match/)).toBeInTheDocument();
+    expect(screen.getByText("Not the same bet")).toBeInTheDocument();
     expect(
       screen.queryByRole("table", { name: "What the move costs, two ways" }),
     ).not.toBeInTheDocument();

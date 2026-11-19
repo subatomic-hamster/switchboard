@@ -3,7 +3,14 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "../api";
 import { money, type Tone } from "../format";
 import { canSpeak, speak } from "../speech";
-import type { MarketBrief, MarketListing, Opinion, TrackRecord, Venue } from "../types";
+import type {
+  BotNote,
+  MarketBrief,
+  MarketListing,
+  Opinion,
+  TrackRecord,
+  Venue,
+} from "../types";
 import { StatusMark } from "./StatusMark";
 
 const CHECKS: { key: keyof MarketBrief["match"]["checks"]; label: string }[] = [
@@ -127,6 +134,7 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
   const [slug, setSlug] = useState("");
   const [qty, setQty] = useState(4);
   const [brief, setBrief] = useState<MarketBrief | null>(null);
+  const [notes, setNotes] = useState<BotNote[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState("");
 
@@ -153,6 +161,10 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
       .catch((caught: unknown) =>
         setMessage(caught instanceof ApiError ? caught.message : "Could not load the market."),
       );
+    api
+      .researchNotes(slug)
+      .then(setNotes)
+      .catch(() => setNotes([]));
   }, [slug, qty]);
 
   useEffect(load, [load, refreshKey]);
@@ -358,6 +370,18 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
             </>
           )}
           <p className="muted disclaimer">{brief.disclaimer}</p>
+          {notes.length > 0 && (
+            <div className="research">
+              <h3>Bot research, unverified</h3>
+              <p className="muted">
+                Written by a Grok Bot from outside sources. It is here to read. It does not
+                change the result of the check above.
+              </p>
+              {notes.map((note) => (
+                <blockquote key={note.ts}>{note.body}</blockquote>
+              ))}
+            </div>
+          )}
         </>
       )}
 

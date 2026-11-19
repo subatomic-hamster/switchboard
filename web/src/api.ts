@@ -1,5 +1,6 @@
 import type {
   ApprovalView,
+  BotNote,
   DailySummary,
   ExecuteResponse,
   ForecastList,
@@ -99,6 +100,12 @@ export const api = {
   cancelRule: (proposalId: string) =>
     post<OkResponse>(`/api/rules/${encodeURIComponent(proposalId)}/cancel`, {}),
   summary: () => request<DailySummary>("/api/summary"),
+  researchNotes: async (slug: string) =>
+    (
+      await request<{ notes: BotNote[] }>(
+        `/api/notes?routine=equivalence&subject=${encodeURIComponent(slug)}`,
+      )
+    ).notes,
   hostile: (content: string) => post<HostileResult>("/api/hostile", { content }),
   revealForecast: (receiptId: string, outcome: boolean) =>
     post<Opinion>(`/api/forecasts/${encodeURIComponent(receiptId)}/reveal`, { outcome }),

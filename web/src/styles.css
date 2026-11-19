@@ -917,3 +917,19 @@ table.grid .num {
   align-items: baseline;
   margin-top: 6px;
 }
+
+.research {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.research blockquote {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--line);
+  color: var(--text-2);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
