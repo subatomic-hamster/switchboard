@@ -166,6 +166,8 @@ async def test_missed_call_is_escalated_to_the_bot_webhook() -> None:
         assert route.call_count == 1
         sent = json.loads(route.calls.last.request.content)
         assert sent["event"] == "missed_approval_call"
+        # No key is configured here, so no credential of any kind goes out.
+        assert "authorization" not in route.calls.last.request.headers
         assert sent["request_id"] == request["request_id"]
         assert sent["amount_usd"] == 250
         assert sent["outcome"] == "denied"
@@ -186,6 +188,28 @@ async def test_missed_call_is_escalated_to_the_bot_webhook() -> None:
         assert summary["missed_calls"] == 1
         assert "1 request was denied because no decision was given." in summary["spoken"]
     await ctx.aclose()
+
+
+@respx.mock
+async def test_the_routines_key_is_sent_to_its_webhook_and_only_over_https() -> None:
+    """A Grok Bot routine's webhook wants its own key as a bearer token. It is not the bot
+    token, which opens this server's routes, and it never goes to a plain http address."""
+    key = "routine-key-for-tests"
+    secure = respx.post(HOOK).mock(return_value=httpx.Response(200))
+    plain = respx.post("http://insecure.example.test/hook").mock(return_value=httpx.Response(200))
+    for url in (HOOK, "http://insecure.example.test/hook"):
+        application, ctx = await _missed_call_app(
+            grok_missed_call_webhook_url=url, grok_missed_call_webhook_key=key
+        )
+        transport = httpx.ASGITransport(app=application)
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as http:
+            await _run(http, OVER_CAP)
+            await asyncio.sleep(0.2)
+        await ctx.aclose()
+    assert secure.call_count == 1
+    assert secure.calls.last.request.headers["authorization"] == f"Bearer {key}"
+    assert BOT_TOKEN not in str(secure.calls.last.request.headers)
+    assert plain.call_count == 0
 
 
 @respx.mock

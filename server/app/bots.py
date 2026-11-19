@@ -147,8 +147,12 @@ class Bots:
         }
         if self._http is None:
             self._http = httpx.AsyncClient()
+        # The routine's own key, which Grok Bot shows next to its webhook address. It is sent
+        # to that address only, and only over https (checked above).
+        key = self._ctx.settings.grok_missed_call_webhook_key
+        headers = {"Authorization": f"Bearer {key}"} if key else {}
         try:
-            response = await self._http.post(url, json=payload, timeout=15.0)
+            response = await self._http.post(url, json=payload, headers=headers, timeout=15.0)
             response.raise_for_status()
         except httpx.HTTPError as exc:
             log.warning("missed-call escalation failed: %s", type(exc).__name__)

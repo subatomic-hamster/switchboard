@@ -43,6 +43,8 @@ def make_settings(**overrides: object) -> Settings:
         "agentphone_number_id": "",
         "agentphone_webhook_secret": "",
         "owner_phone_number": "",
+        "grok_missed_call_webhook_url": "",
+        "grok_missed_call_webhook_key": "",
     }
     base.update(overrides)
     return Settings(_env_file=None, **base)  # type: ignore[arg-type]
@@ -64,6 +66,8 @@ def _no_ambient_keys(monkeypatch: pytest.MonkeyPatch) -> None:
         "AGENTPHONE_WEBHOOK_SECRET",
         "CALL_PROVIDER",
         "OWNER_PHONE_NUMBER",
+        "GROK_MISSED_CALL_WEBHOOK_URL",
+        "GROK_MISSED_CALL_WEBHOOK_KEY",
         "CALLS_ENABLED",
         "TRADING_ENABLED",
     ):

@@ -104,6 +104,8 @@ class Settings(BaseSettings):
     # Grok Bots
     bot_token: str = ""
     grok_missed_call_webhook_url: str = ""
+    # A Grok Bot routine's webhook is called with its own key as a bearer token.
+    grok_missed_call_webhook_key: str = ""
 
     # demo: divide stubbed transfer times by this so the ring view is watchable
     demo_time_scale: float = Field(default=4.0, gt=0)

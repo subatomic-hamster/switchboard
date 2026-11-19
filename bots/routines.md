@@ -1,8 +1,13 @@
 # Grok Bot routines
 
-Four routines. Grok Bot routines cannot be created by API, so each one is set up by hand in
-the Grok Bot interface from the text below. The routine text is meant to be pasted as it is,
-after replacing the two placeholders.
+Four routines, all on one Bot named `Switchboard`.
+
+**How a routine is made.** There is no API and no command-line tool for it (checked against
+xAI's documentation on 19 November 2026: the REST reference, the Management API and the
+`grok` CLI have nothing for routines). A routine is made by asking the Bot in its chat. On
+grok.com the Bot's details panel has "Create a routine", which only starts that chat. So each
+routine below is a message you send to the Bot: say what the trigger is, then paste the
+routine text. None of this has been run from this branch; it needs the public address first.
 
 ## What a bot can and cannot do
 
@@ -17,17 +22,27 @@ after replacing the two placeholders.
 
 1. The server must be reachable from the internet over HTTPS. Start a tunnel
    (`cloudflared tunnel --url http://localhost:8787`) and note its address. Below it is
-   written `<BASE>`.
-2. Open `.env` and copy the value of `BOT_TOKEN`. Below it is written `<BOT_TOKEN>`. Paste it
-   into the routines in the Grok Bot interface only. Do not commit it and do not post it.
-3. Check the token works:
+   written `<BASE>`. A quick tunnel gets a new address every time it starts, and every
+   routine has the address in its text, so for anything longer than one sitting use an
+   address that stays the same.
+2. Make a new Bot on grok.com (sidebar, Bots, New bot) and name it `Switchboard`. A Bot of its
+   own keeps these chats apart from anything personal, which matters because the chat is what
+   gets exported.
+3. Give the Bot the token as a secret, not in a message. Open `.env`, copy the value of
+   `BOT_TOKEN`, and save it on the Bot as a secret named `SWITCHBOARD_BOT_TOKEN` (xAI's
+   documentation calls this a secure secret card; it is masked). In the commands you run
+   yourself below, `<BOT_TOKEN>` is that value. Leave the routine text saying "the secret SWITCHBOARD_BOT_TOKEN": do not
+   paste the value into the chat, do not commit it and do not post it.
+4. Check the token works, from your own terminal:
 
    ```
    curl -H "Authorization: Bearer <BOT_TOKEN>" <BASE>/api/bots/summary
    ```
 
-The exact names of buttons in the Grok Bot interface may differ from the wording here; the
-steps describe what to set, not where each control sits.
+What is documented: a Bot has a cloud computer with a shell and a browser, so it can make
+these requests; a schedule is given in plain words and runs at most every five minutes; a
+Bot holds up to 50 routines; the 20 most recent runs are kept. The exact names of buttons may
+differ from the wording here; the steps describe what to set, not where each control sits.
 
 ---
 
@@ -36,7 +51,7 @@ steps describe what to set, not where each control sits.
 | | |
 |---|---|
 | Trigger | Webhook. The server calls the routine when an approval call gets no decision. |
-| Server sends | `POST <routine webhook URL>` with a JSON body, described below |
+| Server sends | `POST <routine webhook URL>` with `Authorization: Bearer <routine key>` and a JSON body, described below |
 | Routine calls | `GET <BASE>/api/bots/missed-calls?hours=1` |
 | Result | One short direct message to the owner |
 
@@ -67,7 +82,7 @@ request was already denied and nothing was sent. Your only job is to tell the ow
 Steps:
 1. Read the JSON body that triggered you.
 2. Confirm it against the server: GET <BASE>/api/bots/missed-calls?hours=1 with the header
-   "Authorization: Bearer <BOT_TOKEN>". Find the entry whose request_id matches. If there is
+   "Authorization: Bearer " followed by the secret SWITCHBOARD_BOT_TOKEN. Find the entry whose request_id matches. If there is
    no matching entry, stop and send nothing.
 3. Send the owner one direct message of at most three sentences: the amount, where it was
    going, the reason code, and that it was denied and nothing was sent. Tell them to ask
@@ -81,11 +96,13 @@ Rules:
 
 **Setup:**
 
-1. Create a routine named `Switchboard: missed call`.
-2. Set its trigger to webhook. Copy the webhook URL it gives you.
-3. Paste the routine text, replacing `<BASE>` and `<BOT_TOKEN>`.
-4. Put the webhook URL in `.env` as `GROK_MISSED_CALL_WEBHOOK_URL` and restart the server. It
-   must start with `https://`; the server refuses to send to anything else.
+1. Message the Bot: "Add a routine named Switchboard: missed call, triggered by a webhook",
+   followed by the routine text with `<BASE>` replaced.
+2. Open the routine on desktop. It shows the address to post to and a key.
+3. Put them in `.env` as `GROK_MISSED_CALL_WEBHOOK_URL` and `GROK_MISSED_CALL_WEBHOOK_KEY`
+   and restart the server. The address must start with `https://`; the server refuses to
+   send to anything else, and sends the key nowhere else.
+4. The routine's "Test" button runs it with no body; it should stop and send nothing.
 5. Test without a phone: with calls in dry run, set `APPROVAL_EXPIRY_S=20` in `.env`, restart,
    ask the dashboard to "Send 250 from my Arc wallet to Sam's Arc wallet", send it, and wait
    20 seconds without approving. The request expires and the routine should run. Set
@@ -108,7 +125,7 @@ You are the daily reporter for Switchboard, a service that moves its owner's mon
 limits a contract enforces.
 
 Steps:
-1. GET <BASE>/api/bots/summary?hours=24 with the header "Authorization: Bearer <BOT_TOKEN>".
+1. GET <BASE>/api/bots/summary?hours=24 with the header "Authorization: Bearer " followed by the secret SWITCHBOARD_BOT_TOKEN.
 2. Send the owner the "spoken" field exactly as it is. It is written to be read aloud.
 3. Under it, add at most four lines of figures from the same response: transfers and
    sent_total_usd, approvals_asked with approved and denied, blocked by reason, missed_calls.
@@ -122,10 +139,9 @@ Rules:
 
 **Setup:**
 
-1. Create a routine named `Switchboard: daily summary`.
-2. Set its trigger to a schedule: daily, at the time you want the summary.
-3. Paste the routine text, replacing `<BASE>` and `<BOT_TOKEN>`.
-4. Run it once by hand and check the message matches
+1. Message the Bot: "Add a routine named Switchboard: daily summary that runs every day at
+   18:00" (or the time you want), followed by the routine text with `<BASE>` replaced.
+2. Run it once by hand and check the message matches
    `curl -H "Authorization: Bearer <BOT_TOKEN>" <BASE>/api/bots/summary`.
 
 The dashboard reads the same summary aloud without a bot: `GET /api/summary`.
@@ -167,7 +183,7 @@ Steps:
    - "Different or unclear": every difference you found, each with its source.
    - "Not checked": what you could not confirm.
 4. POST it to <BASE>/api/bots/equivalence with the header
-   "Authorization: Bearer <BOT_TOKEN>" and the JSON body
+   "Authorization: Bearer " followed by the secret SWITCHBOARD_BOT_TOKEN and the JSON body
    {"subject": "<the Polymarket US slug>", "body": "<your note>"}.
 
 Rules:
@@ -180,12 +196,12 @@ Rules:
 
 **Setup:**
 
-1. Create a routine named `Switchboard: equivalence research`.
-2. Give it X search and browsing.
-3. Paste the routine text, replacing `<BASE>` and `<BOT_TOKEN>`.
-4. Run it with the input `aec-nba-hou-den-2026-11-20` and
+1. Message the Bot: "Add a routine named Switchboard: equivalence research that I run by
+   asking you", followed by the routine text with `<BASE>` replaced.
+2. It needs X search and the browser, which the Bot has.
+3. Run it with the input `aec-nba-hou-den-2026-11-20` and
    `GEMI-NBA-2611210300-HOU-DEN-M-HOU` (or a game listed on both venues today).
-5. Check the note arrived: `curl "<BASE>/api/notes?subject=aec-nba-hou-den-2026-11-20"`.
+4. Check the note arrived: `curl "<BASE>/api/notes?subject=aec-nba-hou-den-2026-11-20"`.
 
 ---
 
@@ -204,7 +220,7 @@ You are the bookkeeper for Switchboard. Once a day you check that the record of 
 adds up.
 
 Steps:
-1. GET <BASE>/api/bots/ledger?hours=24 with the header "Authorization: Bearer <BOT_TOKEN>".
+1. GET <BASE>/api/bots/ledger?hours=24 with the header "Authorization: Bearer " followed by the secret SWITCHBOARD_BOT_TOKEN.
 2. Check three things:
    a. "consistent" is true. It means the transfers in the ledger for the last 24 hours add up
       to what the vault says was spent.
@@ -226,10 +242,9 @@ Rules:
 
 **Setup:**
 
-1. Create a routine named `Switchboard: reconciliation`.
-2. Set its trigger to a schedule: daily.
-3. Paste the routine text, replacing `<BASE>` and `<BOT_TOKEN>`.
-4. Run it once by hand and check the note:
+1. Message the Bot: "Add a routine named Switchboard: reconciliation that runs every day at
+   18:30", followed by the routine text with `<BASE>` replaced.
+2. Run it once by hand and check the note:
    `curl "<BASE>/api/notes?routine=reconciliation"`.
 
 ---
@@ -238,7 +253,9 @@ Rules:
 
 The hackathon asks for a Grok Bot chat export. After each routine has run at least once:
 
-1. Open the routine's chat in the Grok Bot interface and export or copy the conversation.
+1. Open the Bot's chat and copy the conversation for that routine. xAI's documentation does
+   not describe an export button, and only the 20 most recent runs are kept, so copy it soon
+   after the run.
 2. Save it under `bots/exports/` as `missed-call.md`, `daily-summary.md`,
    `equivalence-research.md` and `reconciliation.md`.
 3. Read each file before committing and remove the bot token if it appears anywhere in it.

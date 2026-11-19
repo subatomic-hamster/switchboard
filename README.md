@@ -483,7 +483,7 @@ the shell. A blank value always means dry run or fixtures, never a failure to st
 | `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`, `ELEVENLABS_WEBHOOK_SECRET`, `ELEVENLABS_*_VOICE_ID` | The ElevenLabs agent: the browser widget fallback, and the `elevenlabs_twilio` call |
 | `VOICE_TOKEN`, `BOT_TOKEN` | Bearer tokens for the voice tools and for bot routes. Generate long random values |
 | `PUBLIC_BASE_URL` | The server's public HTTPS address (a tunnel), for webhooks and voice tools |
-| `GROK_MISSED_CALL_WEBHOOK_URL` | Where to report a missed call |
+| `GROK_MISSED_CALL_WEBHOOK_URL`, `GROK_MISSED_CALL_WEBHOOK_KEY` | The missed-call routine's webhook address and key |
 | `POLICY_*`, `PASSKEY_THRESHOLD_USD`, `APPROVAL_EXPIRY_S`, `MAX_CALLS_PER_DAY` | The limits |
 | `TRADING_ENABLED`, `MAX_ORDER_USD` | The real-money guards. Leave as they are |
 | `USE_P1_STUBS` | `true` until P1's modules are wired in |
