@@ -130,14 +130,21 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
     Then `uv run python -m scripts.widget_page <request id> --open` holds the approval
     conversation in the ElevenLabs widget. This path has not been run: the agent does not
     exist yet.
-11. **Set up the four Grok Bot routines** from `bots/routines.md`, run each once, and save
-    the chats under `bots/exports/`. You asked me to do this in Chrome, by API or by CLI.
-    There is no API or CLI for it, and I did not make them in Chrome yet, for two reasons.
-    Every routine has the server's public address in its text, and there is none until the
-    tunnel is open (item 5). And the Bot needs `BOT_TOKEN`, which I do not type into a web
-    page: you save it on the Bot yourself, as a secret. Once the address exists I can make
-    the `Switchboard` Bot and send it the four routines in Chrome; making a Bot shows xAI's
-    Grok Bot terms, so I will ask before that click.
+11. **Finish the Grok Bot routines.** Made on 19 November, on your say, in your signed-in
+    Chrome: a Bot named `Switchboard` on grok.com (making it accepted xAI's Grok Bot terms),
+    with `Switchboard: daily summary` (daily, about 18:00 ET), `Switchboard: reconciliation`
+    (daily, about 18:30 ET) and `Switchboard: missed call` (webhook) as routines. The Bot
+    saved `Switchboard: equivalence research` as a skill you run by asking, because a routine
+    needs a schedule or a trigger. None has run successfully yet. Yours to do:
+    - **Paste `BOT_TOKEN` into the secret card** the Bot put in its chat ("Switchboard bot
+      token", then "Send securely"). I do not type secrets into web pages. Until then every
+      run says the token is missing.
+    - **Copy the missed-call routine's webhook address and key** from the Bot's Routines into
+      `.env` as `GROK_MISSED_CALL_WEBHOOK_URL` and `GROK_MISSED_CALL_WEBHOOK_KEY`, and restart.
+    - **Keep the server and the tunnel running** when the routines fire. Their text carries
+      the quick tunnel's address, which changes when the tunnel restarts; then tell the Bot
+      the new address for each one.
+    - Run each once and save the chats under `bots/exports/`.
 12. **Record the demo video.** `uv run python -m app.demo_mock` paces a full run for the screen
     (it needs `CALLS_ENABLED=false`); the call audio needs items 1 to 8.
 13. **Decide the wording for Kalshi, Limitless and Phantom.** You asked for them to be
@@ -420,3 +427,9 @@ agreement because they touch the shared interface.
     setting `GROK_MISSED_CALL_WEBHOOK_KEY`, to that address only and only over https.
     `bots/routines.md` was rewritten to match, and has the bot token saved on the Bot as a
     secret instead of pasted into the routine text.
+55. **The Grok Bot was set up by chat, in Chrome.** There is no API or CLI, so I created the
+    `Switchboard` Bot on grok.com and sent it the routine texts from `bots/routines.md` as
+    messages, with the server's address filled in and the token referred to only by the name
+    of its secret. I typed no token anywhere; the Bot asked for it with a secret card, which
+    is left for you. One difference from the plan's four routines: research on demand is a
+    skill, not a routine.

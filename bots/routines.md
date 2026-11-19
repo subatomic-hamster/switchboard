@@ -7,7 +7,9 @@ xAI's documentation on 19 November 2026: the REST reference, the Management API 
 `grok` CLI have nothing for routines). A routine is made by asking the Bot in its chat. On
 grok.com the Bot's details panel has "Create a routine", which only starts that chat. So each
 routine below is a message you send to the Bot: say what the trigger is, then paste the
-routine text. None of this has been run from this branch; it needs the public address first.
+routine text. This was done once on 19 November. Two things learned: the Bot asks for the
+token itself with a secret card when told it needs one, and a routine must have a schedule
+or a trigger, so the on-demand research routine is saved as a skill instead.
 
 ## What a bot can and cannot do
 
