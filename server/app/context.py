@@ -17,6 +17,7 @@ from app.ports import AnchorPort, MarketsPort, TransferPort, VaultPort
 from app.wallets import WalletBook
 
 if TYPE_CHECKING:
+    from app.passkey import Passkeys
     from app.planner import Planner
     from app.voice import Approvals
 
@@ -67,6 +68,7 @@ class AppContext:
     # Services are attached by app.main.build_context once the context exists.
     planner: Planner = field(init=False)
     approvals: Approvals = field(init=False)
+    passkeys: Passkeys = field(init=False)
 
     async def aclose(self) -> None:
         await self.tasks.aclose()

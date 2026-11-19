@@ -17,7 +17,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import events, voice
+from app import events, passkey, voice
 from app.chain import stub as chain_stub
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
@@ -84,6 +84,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     bus.on("stream.stale", track_stream)
     ctx.planner = Planner(ctx, IntentParser(wallets, make_llm_call(settings)))
     ctx.approvals = voice.Approvals(ctx)
+    ctx.passkeys = passkey.Passkeys(ctx)
     return ctx
 
 
@@ -119,6 +120,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(markets_stub.router)
     app.include_router(voice.router)
     app.include_router(voice.dashboard)
+    app.include_router(passkey.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:
@@ -160,7 +162,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             calls_live=ctx.settings.calls_live,
             using_p1_stubs=ctx.settings.use_p1_stubs,
             passkey_threshold_usd=ctx.settings.passkey_threshold_usd,
-            passkey_registered=False,
+            passkey_registered=ctx.passkeys.registered(),
         )
 
     @app.post("/api/freeze", response_model=OkResponse, tags=["meta"])

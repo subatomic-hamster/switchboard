@@ -263,6 +263,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/passkey/assert/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assert Options
+         * @description Options for `navigator.credentials.get()`, bound to one approval request.
+         */
+        post: operations["assert_options_api_passkey_assert_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/passkey/assert/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assert Verify
+         * @description Verify the assertion; with the spoken approval, this completes a large approval.
+         */
+        post: operations["assert_verify_api_passkey_assert_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/passkey/register/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register Options
+         * @description Options for `navigator.credentials.create()`.
+         */
+        post: operations["register_options_api_passkey_register_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/passkey/register/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register Verify */
+        post: operations["register_verify_api_passkey_register_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/passkey/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Passkey Status */
+        get: operations["passkey_status_api_passkey_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/plans/{plan_id}/execute": {
         parameters: {
             query?: never;
@@ -566,6 +660,23 @@ export interface components {
             /** Voice Ok */
             voice_ok: boolean;
         };
+        /** AssertOptionsRequest */
+        AssertOptionsRequest: {
+            /** Request Id */
+            request_id: string;
+        };
+        /** AssertVerifyRequest */
+        AssertVerifyRequest: {
+            /**
+             * Credential
+             * @description PublicKeyCredential.toJSON() from the browser
+             */
+            credential: {
+                [key: string]: unknown;
+            };
+            /** Request Id */
+            request_id: string;
+        };
         /** BlockedData */
         BlockedData: {
             /** Amount Usd */
@@ -837,6 +948,13 @@ export interface components {
             spoken_quote: string;
         };
         /**
+         * JsonBody
+         * @description A WebAuthn credential as the browser serialises it.
+         */
+        JsonBody: {
+            [key: string]: unknown;
+        };
+        /**
          * JsonObject
          * @description An untyped JSON object, used where a third party defines the body.
          */
@@ -969,6 +1087,11 @@ export interface components {
             /** Label */
             label: string;
         };
+        /** PasskeyStatus */
+        PasskeyStatus: {
+            /** Registered */
+            registered: boolean;
+        };
         /** Policy */
         Policy: {
             /** Allowlist */
@@ -1024,6 +1147,16 @@ export interface components {
          * @enum {string}
          */
         Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
+        /** RegisterVerifyRequest */
+        RegisterVerifyRequest: {
+            /**
+             * Credential
+             * @description PublicKeyCredential.toJSON() from the browser
+             */
+            credential: {
+                [key: string]: unknown;
+            };
+        };
         /** Route */
         Route: {
             /** Cost Usd */
@@ -1777,6 +1910,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assert_options_api_passkey_assert_options_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssertOptionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JsonBody"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assert_verify_api_passkey_assert_verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssertVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_options_api_passkey_register_options_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JsonBody"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    register_verify_api_passkey_register_verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                origin?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passkey_status_api_passkey_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyStatus"];
                 };
             };
         };
