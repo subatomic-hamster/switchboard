@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -192,6 +192,22 @@ async def buy_btc(s: Stage) -> dict[str, Any]:
     done = await post(s, f"/api/plans/{plan['plan_id']}/execute", {"route_id": "cheapest"})
     assert done["status"] == "executing"
     return dict(plan)
+
+
+@respx.mock
+async def test_a_closed_btc_window_settles_and_is_no_longer_offered() -> None:
+    async with stage() as s:
+        await buy_btc(s)
+        await post(s, "/api/demo/offer")
+        labels = [x["label"] for x in (await get(s, "/api/demo/suggestions"))["suggestions"]]
+        assert "Move BTC 5-min to Gemini" in labels
+        s.ctx.demo._now = lambda: NOW + timedelta(minutes=10)
+        held = next(
+            p for p in (await get(s, "/api/demo/portfolio"))["positions"] if p["id"] == BTC_POS
+        )
+        assert held["status"] == "lost"  # last bid 0.15, below even
+        labels = [x["label"] for x in (await get(s, "/api/demo/suggestions"))["suggestions"]]
+        assert "Move BTC 5-min to Gemini" not in labels
 
 
 async def offer_and_move_rockets(s: Stage) -> None:

@@ -501,11 +501,12 @@ class DemoDesk:
     # ------------------------------------------------------------------ live data
 
     async def _refresh_price(self, p: _Pos) -> None:
-        if (
-            p.venue == PM_INTL
-            or p.status != "open"
-            or time.monotonic() - self._pcache.get(p.id, -1e9) < PRICE_TTL_S
-        ):
+        if p.venue == PM_INTL or p.status != "open":
+            return
+        if p.ends_at is not None and p.ends_at <= self._now():
+            self._close(p)
+            return
+        if time.monotonic() - self._pcache.get(p.id, -1e9) < PRICE_TTL_S:
             return
         try:
             book = await (self._pm.book(p.slug) if p.venue == PM_US else self._gem.book(p.symbol))
@@ -515,6 +516,26 @@ class DemoDesk:
             if book.best_bid:
                 p.price = book.best_bid.price
         self._pcache[p.id] = time.monotonic()
+
+    def _close(self, p: _Pos) -> None:
+        """A window that has ended: won when the last price was at least even, paid $1 a
+        contract to the venue. ponytail: the last quoted price stands in for the official
+        result, which posts minutes later; read the settled market if the stage needs it."""
+        p.status = "won" if p.price >= Decimal("0.5") else "lost"
+        if p.status == "won":
+            payout = _money(p.contracts)
+            self._balances[p.venue] = self._balances.get(p.venue, Decimal(0)) + payout
+            self._record(
+                DemoAction(
+                    ts=self._now(),
+                    kind="win",
+                    title=f"{p.venue} win: {p.title}",
+                    detail=f"{p.contracts.normalize():f} contracts paid $1 each",
+                    amount_usd=payout,
+                    from_=p.venue,
+                    to=p.venue,
+                )
+            )
 
     async def _search(self, query: str) -> list[dict[str, Any]]:
         try:
@@ -714,7 +735,10 @@ class DemoDesk:
                     )
                 )
             if any(
-                p.slug.startswith(BTC_PREFIX) and p.venue == PM_US and p.status == "open"
+                p.slug.startswith(BTC_PREFIX)
+                and p.venue == PM_US
+                and p.status == "open"
+                and (p.ends_at is None or p.ends_at > self._now())
                 for p in self._pos
             ):
                 out.append(

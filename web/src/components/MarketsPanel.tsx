@@ -113,12 +113,14 @@ function OpinionBlock({ opinion }: { opinion: Opinion }) {
 export interface MarketsPanelProps {
   /** A market chosen elsewhere (a spoken "move my Rockets position…"). */
   selectedSlug?: string | null;
+  /** Contracts held in that market, when known: the move starts with all of them. */
+  selectedQty?: number;
   /** Bumps when an event arrives, so receipts and briefs refresh. */
   refreshKey: number;
 }
 
 /** Move a position: one price per venue, a one-line verdict, how to sell, and the opinion. */
-export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
+export function MarketsPanel({ selectedSlug, selectedQty, refreshKey }: MarketsPanelProps) {
   const [markets, setMarkets] = useState<MarketListing[]>([]);
   const [slug, setSlug] = useState("");
   const [qty, setQty] = useState(4);
@@ -140,7 +142,8 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
 
   useEffect(() => {
     if (selectedSlug) setSlug(selectedSlug);
-  }, [selectedSlug]);
+    if (selectedQty) setQty(Math.floor(selectedQty));
+  }, [selectedSlug, selectedQty]);
 
   const load = useCallback(() => {
     if (!slug || !(qty > 0)) return;

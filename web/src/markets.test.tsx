@@ -214,8 +214,10 @@ describe("MarketsPanel", () => {
 
   it("refuses a look-alike and offers no move", async () => {
     serve({ [NBA]: matchBrief, [BTC]: refuseBrief });
-    render(<MarketsPanel refreshKey={0} selectedSlug={BTC} />);
+    render(<MarketsPanel refreshKey={0} selectedSlug={BTC} selectedQty={30.27} />);
     expect(await screen.findByText("Not the same bet")).toBeInTheDocument();
+    // The move starts with every whole contract held.
+    expect(screen.getByRole("spinbutton")).toHaveValue(30);
     expect(screen.getByText(/who decides the outcome differs/)).toBeInTheDocument();
     const checks = screen.getByRole("list", { name: "Equivalence checks" });
     expect(within(checks).getByText("different")).toBeInTheDocument();

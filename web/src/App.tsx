@@ -210,7 +210,16 @@ export function App() {
             />
           </div>
         </div>
-        {tab === "markets" && <MarketsPanel selectedSlug={marketSlug} refreshKey={lastId} />}
+        {tab === "markets" && (
+          <MarketsPanel
+            selectedSlug={marketSlug}
+            selectedQty={
+              demo.portfolio?.positions.find((p) => p.slug === marketSlug && p.status === "open")
+                ?.contracts
+            }
+            refreshKey={lastId}
+          />
+        )}
         {tab === "controls" && (
           <ControlsPage stats={stats} refreshKey={lastId} onChanged={refresh} demo={demo.on === true} />
         )}
