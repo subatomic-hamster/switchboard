@@ -434,6 +434,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/escrow/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Claim
+         * @description Public: the secret is the credential. Pays `to` through the commit-reveal claim.
+         */
+        post: operations["claim_api_escrow_claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/create": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create
+         * @description Local only. Hold USDC for a recipient with no wallet; returns the claim secret and link.
+         */
+        post: operations["create_api_escrow_create_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Request
+         * @description Local only. Ask `payer` (or anyone) to pay the agent wallet.
+         */
+        post: operations["create_request_api_escrow_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/requests/{request_id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pay Request
+         * @description Local only. The agent wallet pays a request, within the per-transfer limit.
+         */
+        post: operations["pay_request_api_escrow_requests__request_id__pay_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/{escrow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Local only. Amount, expiry and whether it is settled; never the secret.
+         */
+        get: operations["status_api_escrow__escrow_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/{escrow_id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refund
+         * @description Local only. Return an unclaimed deposit to its refund address after expiry.
+         */
+        post: operations["refund_api_escrow__escrow_id__refund_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/history": {
         parameters: {
             query?: never;
@@ -1545,6 +1665,15 @@ export interface components {
             /** Transfer Id */
             transfer_id: string;
         };
+        /** ClaimEscrow */
+        ClaimEscrow: {
+            /** Escrow Id */
+            escrow_id: string;
+            /** Secret */
+            secret: string;
+            /** To */
+            to: string;
+        };
         /** ConnectQuote */
         ConnectQuote: {
             /** Amount Usd */
@@ -1833,6 +1962,30 @@ export interface components {
              */
             token_hint: string;
         };
+        /** CreateEscrow */
+        CreateEscrow: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Expiry S
+             * @default 604800
+             */
+            expiry_s: number;
+            /** Refund To */
+            refund_to?: string | null;
+        };
+        /** CreateRequest */
+        CreateRequest: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /** Payer */
+            payer?: string | null;
+        };
         /** DailySummary */
         DailySummary: {
             /** Approvals Approved */
@@ -1876,10 +2029,85 @@ export interface components {
             outcome: components["schemas"]["Outcome"];
             reason?: components["schemas"]["Reason"] | null;
         };
+        /** EscrowCreated */
+        EscrowCreated: {
+            /** Claim Hash */
+            claim_hash: string;
+            /** Claim Link */
+            claim_link: string;
+            /** Escrow Id */
+            escrow_id: string;
+            /**
+             * Expiry
+             * Format: date-time
+             */
+            expiry: string;
+            /**
+             * Secret
+             * @description Shown once. Anyone with it can claim until expiry.
+             */
+            secret: string;
+            /** Tx Hash */
+            tx_hash: string;
+        };
+        /**
+         * EscrowData
+         * @description A deposit held for a recipient with no wallet: waiting, paid out, or refunded.
+         */
+        EscrowData: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Escrow Id */
+            escrow_id: string;
+            /** Expiry */
+            expiry?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "deposited" | "claimed" | "refunded";
+            /**
+             * To
+             * @default
+             */
+            to: string;
+        };
+        /** EscrowStatus */
+        EscrowStatus: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Escrow Id */
+            escrow_id: string;
+            /**
+             * Expiry
+             * Format: date-time
+             */
+            expiry: string;
+            /** Refund To */
+            refund_to: string;
+            /** Settled */
+            settled: boolean;
+        };
+        /** EscrowUpdatedEvent */
+        EscrowUpdatedEvent: {
+            data: components["schemas"]["EscrowData"];
+            /** Id */
+            id: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "escrow.updated";
+        };
         /** EventHistory */
         EventHistory: {
             /** Events */
-            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"])[];
+            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"] | components["schemas"]["EscrowUpdatedEvent"] | components["schemas"]["PaymentUpdatedEvent"])[];
         };
         /** ExecuteRequest */
         ExecuteRequest: {
@@ -2451,6 +2679,56 @@ export interface components {
              */
             wallets: string[];
         };
+        /**
+         * PaymentData
+         * @description A payment request, and whether it has been paid.
+         */
+        PaymentData: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Memo
+             * @default
+             */
+            memo: string;
+            /**
+             * Payer
+             * @default
+             */
+            payer: string;
+            /** Request Id */
+            request_id: string;
+            /** Requester */
+            requester: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "requested" | "paid";
+        };
+        /** PaymentRequestCreated */
+        PaymentRequestCreated: {
+            /** Request Id */
+            request_id: string;
+            /** Tx Hash */
+            tx_hash: string;
+        };
+        /** PaymentUpdatedEvent */
+        PaymentUpdatedEvent: {
+            data: components["schemas"]["PaymentData"];
+            /** Id */
+            id: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "payment.updated";
+        };
         /** Policy */
         Policy: {
             /** Allowlist */
@@ -2906,6 +3184,11 @@ export interface components {
              * @enum {string}
              */
             type: "transfer.sent";
+        };
+        /** TxResult */
+        TxResult: {
+            /** Tx Hash */
+            tx_hash: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -3739,6 +4022,198 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MarketMoveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    claim_api_escrow_claim_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimEscrow"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TxResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_api_escrow_create_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEscrow"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscrowCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_request_api_escrow_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentRequestCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pay_request_api_escrow_requests__request_id__pay_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TxResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_escrow__escrow_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                escrow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscrowStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refund_api_escrow__escrow_id__refund_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                escrow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TxResult"];
                 };
             };
             /** @description Validation Error */

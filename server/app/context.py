@@ -20,6 +20,7 @@ from app.wallets import WalletBook
 
 if TYPE_CHECKING:
     from app.bots import Bots
+    from app.chain.escrow import ChainEscrow
     from app.connectors import Connectors
     from app.forecast import Forecaster
     from app.holds import HoldingVault
@@ -74,6 +75,8 @@ class AppContext:
     transfers: TransferPort
     markets: MarketsPort
     anchor: AnchorPort
+    # The real Escrow client; None on stubs or until ESCROW_ADDRESS is set (routes answer 503).
+    escrow: ChainEscrow | None = None
     stream_stale: bool = False
     # Set by the real Stream webhook (app/chain/stream.py); the Phase 4 dead man's switch reads it.
     last_stream_delivery: datetime | None = None
