@@ -32,6 +32,8 @@ from app.events import _sse
 from app.main import create_app
 from app.markets.match import evaluate
 from tests.conftest import make_settings
+from tests.test_agentphone import LIVE as PHONE
+from tests.test_agentphone import _say
 from tests.test_markets_real import Venues
 
 NOW = datetime(2026, 11, 20, 15, 1, tzinfo=UTC)
@@ -728,3 +730,62 @@ async def test_150_dollars_from_ethereum_to_sams_solana_plans_and_executes() -> 
             150,
             "Sam's Solana wallet",
         )
+
+
+# ------------------------------------------------------------------------------- calling in
+
+
+async def call(s: Stage, said: str, call_id: str = "in_1") -> str:
+    """One thing a caller says on a call in to the AgentPhone number; the reply as one string."""
+    chunks = await _say(
+        s.client, said, call_id=call_id, direction="inbound", **{"from": "+15550000000"}
+    )
+    return " ".join(chunk["text"] for chunk in chunks) + (
+        " [hangup]" if chunks[-1].get("hangup") else ""
+    )
+
+
+@respx.mock
+async def test_calling_in_sends_buys_adds_and_moves_with_a_yes() -> None:
+    async with stage(**PHONE) as s:
+        assert "What would you like to do?" in await call(s, "")
+        assert "Switchboard here" in await call(s, "Hello?")
+        # A send: the quote, then a yes runs it inside the limits.
+        quote = await call(s, "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet")
+        assert "Go ahead?" in quote and "Sam" in quote
+        assert "Anything else?" in await call(s, "yes please")
+        assert (await balances(s))["Ethereum wallet"] == 100
+        # A buy, and what it now holds.
+        quote = await call(
+            s, "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market"
+        )
+        assert "16 cents" in quote and "Go ahead?" in quote
+        done = await call(s, "yes")
+        assert "You now hold 173.64" in done and "16 percent chance" in done
+        # More of a position already held, at a blended average.
+        quote = await call(s, "Add 20 dollars to my Rockets position")
+        assert "Rockets" in quote and "Go ahead?" in quote
+        assert "You now hold 3" in await call(s, "go ahead")
+        rockets = next(
+            p for p in (await get(s, "/api/demo/portfolio"))["positions"] if p["id"] == ROCKETS
+        )
+        assert rockets["contracts"] > 320 and 0.44 < rockets["avg_price"] < 0.48
+        # A move the code says no to is not offered.
+        assert "won't move it" in await call(s, "Move my Bitcoin hourly position to Gemini")
+        # A move it says yes to waits for a yes, then runs.
+        await post(s, "/api/demo/offer")
+        ask = await call(s, "Move my Rockets position to Gemini")
+        assert "Shall I move all" in ask
+        assert "now sit on Gemini" in await call(s, "yes")
+        held = (await get(s, "/api/demo/portfolio"))["positions"]
+        assert any(p["venue"] == "Gemini" and p["slug"] == NBA for p in held)
+        assert (await call(s, "that's all, bye")).endswith("[hangup]")
+
+
+@respx.mock
+async def test_calling_in_a_no_runs_nothing() -> None:
+    async with stage(**PHONE) as s:
+        await call(s, "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet")
+        assert "I won't" in await call(s, "no, cancel that")
+        assert "Anything else?" not in await call(s, "yes")  # nothing left to say yes to
+        assert (await balances(s))["Ethereum wallet"] == 250

@@ -35,7 +35,7 @@ from app.markets.gemini import GeminiClient
 from app.markets.polymarket import POLYMARKET_TAKER_RATE, PolymarketClient
 from app.markets.real import RealMarkets
 from app.markets.stub import UnknownMarket, taker_fee
-from app.schemas import MarketBuyIntent, MarketMatchResponse, Model, Money, OkResponse
+from app.schemas import Chain, MarketBuyIntent, MarketMatchResponse, Model, Money, OkResponse
 
 log = logging.getLogger("switchboard.demo")
 
@@ -59,7 +59,7 @@ CHAIN_PLACE = {
     "arc-testnet": "Arc wallet",
 }
 BTC_PHRASE = re.compile(r"\b(?:bitcoin|btc)\W+(?:hourly|(?:1|one)\W*hour)\b", re.I)
-BUY_VERB = re.compile(r"\b(?:put|buy|bet|invest|stake)\b", re.I)
+BUY_VERB = re.compile(r"\b(?:put|buy|bet|invest|stake|add)\b", re.I)
 MOVE_SENTENCE = re.compile(r"\bmove\b.*\bposition\b.*\bto (gemini|polymarket(?: us)?)\b", re.I)
 MONTHS = {
     "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
@@ -911,21 +911,39 @@ class DemoDesk:
                 best = (score, p.slug)
         return best[1] if best else None
 
+    def held(self, slug: str) -> _Pos | None:
+        """The open scripted Polymarket US position in this market, if any."""
+        return next(
+            (p for p in self._pos if p.slug == slug and p.venue == PM_US and p.status == "open"),
+            None,
+        )
+
     async def parse_buy(self, text: str) -> MarketBuyIntent | None:
         """A rules-based read of "put 30 dollars from my Ethereum wallet into the Bitcoin
-        hourly market on Polymarket". None when the sentence is something else."""
-        market = BTC_PHRASE.search(text)
+        hourly market on Polymarket", or "add 20 dollars to my Rockets position" (a Polymarket
+        US position already held). None when the sentence is something else."""
         lowered = text.lower()
-        if not market or not BUY_VERB.search(text) or "gemini" in lowered or "position" in lowered:
+        if not BUY_VERB.search(text) or re.search(r"\bmove\b", lowered) or "gemini" in lowered:
             return None
-        amount = read_amount(text[: market.start()])
+        market = BTC_PHRASE.search(text)
+        held = None
+        if market is None:
+            slug = self.slug_for(text)
+            held = self.held(slug) if slug else None
+            if held is None or held.slug.startswith(BTC_PREFIX):
+                return None
+        amount = read_amount(text[: market.start()] if market else text)
         if amount is None or amount <= 0:
             raise IntentError("How much should I put in? I did not catch an amount.")
         after_from = re.search(r"\bfrom\b(.*)", lowered)
         chain = _chain_in(after_from[1]) if after_from else None
+        if held is not None and chain is None:
+            chain = Chain.ETH_SEPOLIA  # adding to a bet: the wallet the winnings land in
         wallet = self._ctx.wallets.find("me", chain) if chain else None
         if wallet is None:
             raise IntentError("Which wallet should it come from, Ethereum, Solana or Arc?")
+        if held is not None:
+            return await self._buy_more(held, amount, wallet.label.removeprefix("my "))
         start, end, slug = current_window(self._now())
         try:
             book = await self._pm.book(slug)
@@ -954,35 +972,70 @@ class DemoDesk:
             ends_at=end,
         )
 
+    async def _buy_more(self, held: _Pos, amount: Decimal, from_place: str) -> MarketBuyIntent:
+        try:
+            book = await self._pm.book(held.slug)
+        except (VenueError, UnknownMarket) as exc:
+            raise IntentError(f"I could not price {held.title} just now.") from exc
+        if book.best_ask is None:
+            raise IntentError(f"Nobody is offering {held.title} contracts right now.")
+        ask = book.best_ask.price
+        per = ask + taker_fee(POLYMARKET_TAKER_RATE, Decimal(1), ask)
+        contracts = (amount / per).quantize(CENT, rounding=ROUND_DOWN)
+        if contracts <= 0:
+            raise IntentError("That is too small to buy a contract.")
+        return MarketBuyIntent(
+            venue=PM_US,
+            slug=held.slug,
+            title=held.title,
+            side=held.side,
+            amount_usd=amount,
+            price=ask,
+            contracts=contracts,
+            fee_usd=_money(taker_fee(POLYMARKET_TAKER_RATE, contracts, ask)),
+            from_place=from_place,
+            ends_at=held.ends_at,
+        )
+
     async def fill_buy(self, buy: MarketBuyIntent) -> tuple[bool, str]:
-        """Simulated fill of a confirmed market_buy. Returns (filled, detail)."""
+        """Simulated fill of a confirmed market_buy: a new position, or more of one already
+        held at a blended average. Returns (filled, detail)."""
         if buy.ends_at is not None and buy.ends_at <= self._now():
-            return False, "That hour's market has closed. Ask again for the next one."
+            return False, "That market has closed. Ask again for the next one."
         cost = _money(buy.contracts * buy.price + buy.fee_usd)
         if self._balances.get(buy.from_place, Decimal(0)) < cost:
             return False, f"Your {buy.from_place} does not have ${cost}."
         self._balances[buy.from_place] -= cost
-        self._bought_btc = True
-        self._pos.append(
-            _Pos(
-                self._next_id(),
-                PM_US,
-                buy.slug,
-                buy.title,
-                buy.side,
-                buy.contracts,
-                buy.price,
-                buy.price,
-                f"https://polymarket.us/market/{buy.slug}",
-                ends_at=buy.ends_at,
+        btc = buy.slug.startswith(BTC_PREFIX)
+        self._bought_btc = self._bought_btc or btc
+        held = self.held(buy.slug)
+        if held is not None:
+            total = held.contracts + buy.contracts
+            held.avg = ((held.avg * held.contracts + buy.price * buy.contracts) / total).quantize(
+                Decimal("0.0001")
             )
-        )
+            held.contracts = total
+        else:
+            self._pos.append(
+                _Pos(
+                    self._next_id(),
+                    PM_US,
+                    buy.slug,
+                    buy.title,
+                    buy.side,
+                    buy.contracts,
+                    buy.price,
+                    buy.price,
+                    f"https://polymarket.us/market/{buy.slug}",
+                    ends_at=buy.ends_at,
+                )
+            )
         self._track(buy.slug)
         self._record(
             DemoAction(
                 ts=self._now(),
                 kind="bet",
-                title="Bet on Bitcoin going up this hour",
+                title="Bet on Bitcoin going up this hour" if btc else f"Added to {buy.title}",
                 detail=f"{buy.contracts.normalize():f} contracts at "
                 f"{(buy.price * 100).normalize():f} cents",
                 amount_usd=cost,
@@ -991,12 +1044,13 @@ class DemoDesk:
             )
         )
         if isinstance(self._ctx.markets, RealMarkets):
-            # List the new window on Markets now, not at the next timed refresh.
+            # List a new market on Markets now, not at the next timed refresh.
             await self._ctx.markets.refresh()
         await self._changed(
-            "Bought Bitcoin hourly", f"{buy.contracts.normalize():f} Up for ${cost}."
+            "Bought Bitcoin hourly" if btc else f"Added to {buy.title}",
+            f"{buy.contracts.normalize():f} {buy.side} for ${cost}.",
         )
-        return True, f"Bought {buy.contracts.normalize():f} Up contracts (simulated)."
+        return True, f"Bought {buy.contracts.normalize():f} {buy.side} contracts (simulated)."
 
     # ------------------------------------------------------------------ insight
 

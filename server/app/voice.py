@@ -66,6 +66,7 @@ from app.db import (
     utcnow,
 )
 from app.events import StoredEvent
+from app.phone_line import PhoneLine
 from app.planner import say_money, say_time
 from app.schemas import (
     ApprovalList,
@@ -140,6 +141,7 @@ class Approvals:
         self._ctx = ctx
         self._http = http
         self.missed_call_hooks: list[MissedCallHook] = []
+        self._line: PhoneLine | None = None
         ctx.bus.on("approval.requested", self._on_requested)
         ctx.bus.on("approval.resolved", self._on_resolved)
 
@@ -744,6 +746,13 @@ class Approvals:
         word are collected and handed to `approve`, which is the only thing that can say yes."""
         phone = self._phone_session(data)
         if phone is None:
+            if self._ctx.demo is not None and str(data.get("direction") or "") != "outbound":
+                # Demo mode: a call in is the owner asking for something (app.phone_line).
+                if self._line is None:
+                    self._line = PhoneLine(self._ctx)
+                async for chunk in self._line.turn(data):
+                    yield chunk
+                return
             yield {"text": call_script.NOT_OUR_CALL, "hangup": True}
             return
         row = self._require(phone.request_id)

@@ -39,6 +39,22 @@ offer, and Settle Rockets as a win.
 7. "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet to cover my debt" → the
    cheapest and fastest routes with fees and times → Send → the transfer runs through its legs.
 
+## Calling in
+
+With `CALLS_ENABLED=true` and the AgentPhone webhook registered, call the AgentPhone number and
+talk to the agent (`app/phone_line.py`). Say what you want; it reads back the quote or the
+verdict, and runs it only after a yes ("no" cancels, "bye" hangs up):
+
+- "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet"
+- "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market" (then what you hold,
+  the market's odds and the payout)
+- "Add 20 dollars to my Rockets position"
+- "Move my Rockets position to Gemini" (with the offer on: go, then a yes moves it) or "Move my
+  Bitcoin hourly position to Gemini" (against: not offered)
+
+Demo mode only, and any caller is treated as the owner: caller ID can be faked, so off demo
+mode an inbound call is refused. A send over the cap still needs the usual approval call.
+
 ## API (all local-only, all 404 unless `DEMO_MODE=true`)
 
 `GET /api/demo/portfolio`

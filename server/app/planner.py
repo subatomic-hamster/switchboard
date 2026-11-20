@@ -386,6 +386,13 @@ class Planner:
             raise PlanError("unknown plan")
         return int(plan_id[2:])
 
+    def market_buy(self, plan_id: str) -> MarketBuyIntent | None:
+        """The buy a market_buy plan quoted, or None for any other plan."""
+        row = self._load(plan_id)
+        if row.kind != "market_buy":
+            return None
+        return MarketBuyIntent.model_validate_json(row.request_json)
+
     def _load(self, plan_id: str) -> PlanRow:
         with self._ctx.db.session() as session:
             row = session.get(PlanRow, self._row_id(plan_id))
