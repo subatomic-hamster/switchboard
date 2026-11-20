@@ -46,7 +46,7 @@ GROK_TIMEOUT_S = 8.0
 NBA = "aec-nba-hou-den-2026-11-20"
 ATM = "atc-lal-get-atm-2026-11-22-atm"
 ATM_SYMBOL = "GEMI-LALIGA-2611222000-ATM-GET-M-ATM"
-BTC_PREFIX = "cpc-btc-updown-5m-"
+BTC_PREFIX = "cpc-btc-updown-1h-"
 PM_US, PM_INTL, GEMINI = "Polymarket US", "Polymarket", "Gemini"
 OFFER_PCT = Decimal(3)
 OFFER_MINUTES = 10
@@ -58,7 +58,7 @@ CHAIN_PLACE = {
     "solana-devnet": "Solana wallet",
     "arc-testnet": "Arc wallet",
 }
-BTC_PHRASE = re.compile(r"\b(?:bitcoin|btc)\W+(?:5|five)\W*(?:min|minute)s?\b", re.I)
+BTC_PHRASE = re.compile(r"\b(?:bitcoin|btc)\W+(?:hourly|(?:1|one)\W*hour)\b", re.I)
 BUY_VERB = re.compile(r"\b(?:put|buy|bet|invest|stake)\b", re.I)
 MOVE_SENTENCE = re.compile(r"\bmove\b.*\bposition\b.*\bto (gemini|polymarket(?: us)?)\b", re.I)
 MONTHS = {
@@ -384,11 +384,10 @@ def find_similar(
 
 
 def current_window(now: datetime) -> tuple[datetime, datetime, str]:
-    """The BTC 5-minute window in progress; the next one when under a minute is left."""
-    start = now.replace(minute=now.minute // 5 * 5, second=0, microsecond=0)
-    end = start + timedelta(minutes=5)
-    if (end - now).total_seconds() < 60:
-        start, end = end, end + timedelta(minutes=5)
+    """The hourly BTC window in progress. Hourly, so the stage never waits for one to open;
+    the next hour is listed only once it starts."""
+    start = now.replace(minute=0, second=0, microsecond=0)
+    end = start + timedelta(hours=1)
     return start, end, f"{BTC_PREFIX}{start:%Y-%m-%d-%H%M}z"
 
 
@@ -700,10 +699,10 @@ class DemoDesk:
         if not self._bought_btc:
             out.append(
                 DemoSuggestion(
-                    label="Put $30 into BTC 5-min",
-                    text="Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute "
+                    label="Put $30 into BTC hourly",
+                    text="Put 30 dollars from my Ethereum wallet into the Bitcoin hourly "
                     "market on Polymarket",
-                    why="The next 5-minute Bitcoin window is open on Polymarket US.",
+                    why="This hour's Bitcoin up-or-down market is open on Polymarket US.",
                 )
             )
         sends = [
@@ -742,8 +741,8 @@ class DemoDesk:
             ):
                 out.append(
                     DemoSuggestion(
-                        label="Move BTC 5-min to Gemini",
-                        text="Move my Bitcoin 5 minute position to Gemini",
+                        label="Move BTC hourly to Gemini",
+                        text="Move my Bitcoin hourly position to Gemini",
                         why="Gemini has a rebate on now. Check it is the same bet first.",
                     )
                 )
@@ -913,8 +912,8 @@ class DemoDesk:
         return best[1] if best else None
 
     async def parse_buy(self, text: str) -> MarketBuyIntent | None:
-        """A rules-based read of "put 30 dollars from my Ethereum wallet into the Bitcoin 5
-        minute market on Polymarket". None when the sentence is something else."""
+        """A rules-based read of "put 30 dollars from my Ethereum wallet into the Bitcoin
+        hourly market on Polymarket". None when the sentence is something else."""
         market = BTC_PHRASE.search(text)
         lowered = text.lower()
         if not market or not BUY_VERB.search(text) or "gemini" in lowered or "position" in lowered:
@@ -927,16 +926,12 @@ class DemoDesk:
         wallet = self._ctx.wallets.find("me", chain) if chain else None
         if wallet is None:
             raise IntentError("Which wallet should it come from, Ethereum, Solana or Arc?")
-        now = self._now()
-        start, end, slug = current_window(now)
+        start, end, slug = current_window(self._now())
         try:
             book = await self._pm.book(slug)
         except UnknownMarket as exc:
-            # A window is listed only once it starts, and the one still running is all but
-            # decided in its last minute, so wait rather than buy that.
-            wait = max(1, round((start - now).total_seconds()))
             raise IntentError(
-                f"The next 5-minute window opens in {wait} seconds. Try again then."
+                "This hour's Bitcoin market is not listed yet. Try again in a moment."
             ) from exc
         if book.best_ask is None:
             raise IntentError("Nobody is offering contracts in that window right now.")
@@ -962,7 +957,7 @@ class DemoDesk:
     async def fill_buy(self, buy: MarketBuyIntent) -> tuple[bool, str]:
         """Simulated fill of a confirmed market_buy. Returns (filled, detail)."""
         if buy.ends_at is not None and buy.ends_at <= self._now():
-            return False, "That 5-minute window has closed. Ask again for the next one."
+            return False, "That hour's market has closed. Ask again for the next one."
         cost = _money(buy.contracts * buy.price + buy.fee_usd)
         if self._balances.get(buy.from_place, Decimal(0)) < cost:
             return False, f"Your {buy.from_place} does not have ${cost}."
@@ -987,7 +982,7 @@ class DemoDesk:
             DemoAction(
                 ts=self._now(),
                 kind="bet",
-                title="Bet on Bitcoin going up in 5 minutes",
+                title="Bet on Bitcoin going up this hour",
                 detail=f"{buy.contracts.normalize():f} contracts at "
                 f"{(buy.price * 100).normalize():f} cents",
                 amount_usd=cost,
@@ -999,7 +994,7 @@ class DemoDesk:
             # List the new window on Markets now, not at the next timed refresh.
             await self._ctx.markets.refresh()
         await self._changed(
-            "Bought Bitcoin 5-min", f"{buy.contracts.normalize():f} Up for ${cost}."
+            "Bought Bitcoin hourly", f"{buy.contracts.normalize():f} Up for ${cost}."
         )
         return True, f"Bought {buy.contracts.normalize():f} Up contracts (simulated)."
 
@@ -1075,18 +1070,32 @@ class DemoDesk:
                 checks = self._check_rows(match)
                 facts["checks"] = [c.model_dump() for c in checks]
                 rebate = self.rebate_pct()
-                if match.verdict == "refuse":
+                if match.verdict == "refuse" and match.gemini_symbol is None:
+                    # Nothing on Gemini to compare against: the five rows would all read
+                    # "could not be verified", so show none and say why.
                     verdict = "against"
-                    headline = "Against: it is not the same bet on Gemini"
+                    headline = "Against: Gemini has no matching market"
+                    checks = []
+                    facts["checks"] = []
                     if pos.slug.startswith(BTC_PREFIX):
-                        alternative = "Roll into the next Polymarket 5-minute window instead."
-                    why = next((c.detail for c in checks if not c.same), "A check failed.")
+                        alternative = (
+                            "Keep it on Polymarket US. Gemini's Bitcoin windows are 5 and 15 "
+                            "minutes long and settle on a different index, so they are other bets."
+                        )
                     fallback = (
-                        f"{why}. In a short window, a gap between the two sources can decide the "
-                        "bet, and a rebate does not pay for that. I would not move it."
+                        f"Gemini lists no market that is the same bet as {title}, so there is "
+                        "nothing to move it into, rebate or not. I would not move it."
                         + (f" {alternative}" if alternative else "")
                     )
                     facts["alternative"] = alternative
+                elif match.verdict == "refuse":
+                    verdict = "against"
+                    headline = "Against: it is not the same bet on Gemini"
+                    why = next((c.detail for c in checks if not c.same), "A check failed.")
+                    fallback = (
+                        f"{why}. A gap between the two sources can decide the bet, and a rebate "
+                        "does not pay for that. I would not move it."
+                    )
                 elif rebate:
                     verdict = "go"
                     headline = "Go: same bet, cheaper with the rebate"

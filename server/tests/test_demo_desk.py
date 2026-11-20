@@ -1,4 +1,4 @@
-"""Demo mode (app/demo_desk.py): routes, portfolio, suggestions, the BTC 5-minute buy, moves with
+"""Demo mode (app/demo_desk.py): routes, portfolio, suggestions, the hourly BTC buy, moves with
 the rebate, the insight verdicts, settling, and the Ethereum to Solana send. No network: both
 venues, the Polymarket data API and OpenRouter are faked with respx."""
 
@@ -35,14 +35,15 @@ from tests.conftest import make_settings
 from tests.test_markets_real import Venues
 
 NOW = datetime(2026, 11, 20, 15, 1, tzinfo=UTC)
-BTC = "cpc-btc-updown-5m-2026-11-20-1500z"
+BTC = "cpc-btc-updown-1h-2026-11-20-1500z"
+BTC5 = "cpc-btc-updown-5m-2026-11-20-1500z"
 BTC_SYMBOL = "GEMI-BTC05M2611201505-UP"
 OPENROUTER = "https://openrouter.ai/api/v1/chat/completions"
 ROCKETS, ATLETICO, BTC_POS = "demo-1", "demo-2", "demo-3"
 LINKED_SLUG = "houston-rockets-vs.-denver-nuggets"
 
-BTC_PM = {
-    "slug": BTC,
+BTC5_PM = {
+    "slug": BTC5,
     "question": "BTC Up or Down 5m",
     "title": "BTC Up or Down 5m",
     "description": "This market will settle to Up if the Bitcoin price at 10:05AM ET on Nov 20, "
@@ -59,6 +60,21 @@ BTC_PM = {
         "windowStart": "2026-11-20T15:00:00Z",
         "windowEnd": "2026-11-20T15:05:00Z",
         "strike": None,
+    },
+}
+# The hourly window the demo buys. Gemini has no hourly Bitcoin series to match it.
+BTC_PM = {
+    **BTC5_PM,
+    "slug": BTC,
+    "question": "BTC Up or Down Hourly",
+    "title": "BTC Up or Down Hourly",
+    "description": "This market will settle to Up if the Bitcoin price at 11:00AM ET on Nov 20, "
+    "2026 is greater than or equal to the price at 10:00AM ET. Outcome sourced from CF "
+    "Benchmarks' Bitcoin Real-Time Index (BRTI)",
+    "assetPriceTerms": {
+        **BTC5_PM["assetPriceTerms"],  # type: ignore[dict-item]
+        "horizon": "1h",
+        "windowEnd": "2026-11-20T16:00:00Z",
     },
 }
 BTC_EVENT = {
@@ -187,7 +203,7 @@ async def balances(s: Stage) -> dict[str, float]:
 
 
 async def buy_btc(s: Stage) -> dict[str, Any]:
-    text = "Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute market on Polymarket"
+    text = "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market on Polymarket"
     plan = await post(s, "/api/intent", {"text": text})
     done = await post(s, f"/api/plans/{plan['plan_id']}/execute", {"route_id": "cheapest"})
     assert done["status"] == "executing"
@@ -195,13 +211,13 @@ async def buy_btc(s: Stage) -> dict[str, Any]:
 
 
 @respx.mock
-async def test_btc_buy_in_the_last_minute_waits_for_the_next_window() -> None:
+async def test_btc_buy_before_the_hour_is_listed_says_so() -> None:
     async with stage() as s:
-        s.ctx.demo._now = lambda: datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC)
-        text = "Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute market"
+        s.ctx.demo._now = lambda: datetime(2026, 11, 20, 16, 0, 5, tzinfo=UTC)
+        text = "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market"
         response = await s.client.post("/api/intent", json={"text": text})
         assert response.status_code == 422
-        assert "opens in 30 seconds" in response.json()["detail"]
+        assert "not listed yet" in response.json()["detail"]
 
 
 @respx.mock
@@ -210,14 +226,14 @@ async def test_a_closed_btc_window_settles_and_is_no_longer_offered() -> None:
         await buy_btc(s)
         await post(s, "/api/demo/offer")
         labels = [x["label"] for x in (await get(s, "/api/demo/suggestions"))["suggestions"]]
-        assert "Move BTC 5-min to Gemini" in labels
-        s.ctx.demo._now = lambda: NOW + timedelta(minutes=10)
+        assert "Move BTC hourly to Gemini" in labels
+        s.ctx.demo._now = lambda: NOW + timedelta(hours=1)
         held = next(
             p for p in (await get(s, "/api/demo/portfolio"))["positions"] if p["id"] == BTC_POS
         )
         assert held["status"] == "lost"  # last bid 0.15, below even
         labels = [x["label"] for x in (await get(s, "/api/demo/suggestions"))["suggestions"]]
-        assert "Move BTC 5-min to Gemini" not in labels
+        assert "Move BTC hourly to Gemini" not in labels
 
 
 async def offer_and_move_rockets(s: Stage) -> None:
@@ -398,18 +414,18 @@ def test_similar_market_picks_the_same_kind_of_event_and_the_team_held() -> None
     assert search_terms("Will there be no change in Fed interest rates?", "Yes") == ["Fed"]
 
 
-def test_current_window_rolls_over_with_under_a_minute_left() -> None:
-    mid = current_window(datetime(2026, 11, 20, 15, 1, 20, tzinfo=UTC))
-    assert mid[2] == BTC and mid[1] - mid[0] == (mid[1] - mid[0]).__class__(minutes=5)
-    late = current_window(datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC))
-    assert late[2] == f"{BTC_PREFIX}2026-11-20-1505z"
+def test_current_window_is_the_hour_in_progress() -> None:
+    start, end, slug = current_window(datetime(2026, 11, 20, 15, 1, 20, tzinfo=UTC))
+    assert slug == BTC and end - start == timedelta(hours=1)
+    late = current_window(datetime(2026, 11, 20, 15, 59, 30, tzinfo=UTC))
+    assert late[2] == f"{BTC_PREFIX}2026-11-20-1500z"
 
 
 # --------------------------------------------------------------------------- match and buy
 
 
 def test_btc_5m_pair_is_different_on_source_only() -> None:
-    result = evaluate(BTC_PM, [BTC_EVENT])
+    result = evaluate(BTC5_PM, [BTC_EVENT])
     checks = result.response.checks
     assert (checks.event, checks.direction, checks.time) == ("same", "same", "same")
     assert checks.strike == "n/a" and checks.source == "different"
@@ -418,10 +434,10 @@ def test_btc_5m_pair_is_different_on_source_only() -> None:
 
 
 @respx.mock
-async def test_btc_5m_is_matched_through_gemini_and_tracked() -> None:
+async def test_btc_hourly_has_no_gemini_twin_and_is_tracked() -> None:
     async with stage() as s:
         match = await get(s, "/api/markets/match", slug=BTC)
-        assert match["verdict"] == "refuse" and match["checks"]["source"] == "different"
+        assert match["verdict"] == "refuse" and match["gemini_symbol"] is None
         await buy_btc(s)
         assert BTC in s.ctx.markets._tracked  # type: ignore[attr-defined]
         # Listed on Markets right after the buy, not at the next timed refresh.
@@ -438,12 +454,13 @@ async def test_market_buy_plans_from_the_live_ask_then_fills() -> None:
         assert buy["venue"] == "Polymarket US" and buy["slug"] == BTC and buy["side"] == "Up"
         assert buy["price"] == 0.16 and buy["contracts"] == 173.64 and buy["fee_usd"] == 2.22
         assert buy["from_place"] == "Ethereum wallet" and buy["amount_usd"] == 30
-        assert buy["ends_at"].startswith("2026-11-20T15:05:00")
+        assert buy["ends_at"].startswith("2026-11-20T16:00:00")
+        assert buy["title"] == "Bitcoin up or down, 15:00 to 16:00 UTC"
         assert "simulated" in plan["spoken_quote"]
         data = await get(s, "/api/demo/portfolio")
         assert {b["place"]: b["usd"] for b in data["balances"]}["Ethereum wallet"] == 220
         held = next(p for p in data["positions"] if p["id"] == BTC_POS)
-        assert held["slug"] == BTC and held["ends_at"].startswith("2026-11-20T15:05:00")
+        assert held["slug"] == BTC and held["ends_at"].startswith("2026-11-20T16:00:00")
         assert held["contracts"] == 173.64 and held["price"] == 0.15
         first = (await get(s, "/api/demo/recent"))["actions"][0]
         assert first["kind"] == "bet" and first["from"] == "Ethereum wallet"
@@ -459,9 +476,9 @@ async def test_market_buy_plans_from_the_live_ask_then_fills() -> None:
 @respx.mock
 async def test_market_buy_needs_a_wallet_and_enough_money() -> None:
     async with stage() as s:
-        text = "Put 30 dollars into the Bitcoin 5 minute market on Polymarket"
+        text = "Put 30 dollars into the Bitcoin hourly market on Polymarket"
         assert (await s.client.post("/api/intent", json={"text": text})).status_code == 422
-        big = "Put 900 dollars from my Ethereum wallet into the Bitcoin 5 minute market"
+        big = "Put 900 dollars from my Ethereum wallet into the Bitcoin 1 hour market"
         plan = await post(s, "/api/intent", {"text": big})
         done = await s.client.post(f"/api/plans/{plan['plan_id']}/execute", json={})
         assert done.status_code == 409 and "does not have" in done.json()["detail"]
@@ -486,17 +503,17 @@ async def test_demo_updated_goes_out_as_its_own_sse_event_name() -> None:
 async def test_suggestions_change_across_buy_offer_move_and_settle() -> None:
     async with stage() as s:
         seen = [labels(await get(s, "/api/demo/suggestions"))]
-        assert seen[0][0] == "Put $30 into BTC 5-min" and "Send $40 to Sam again" in seen[0]
+        assert seen[0][0] == "Put $30 into BTC hourly" and "Send $40 to Sam again" in seen[0]
         first = (await get(s, "/api/demo/suggestions"))["suggestions"][0]
         assert first["text"].startswith("Put 30 dollars from my Ethereum wallet")
         assert first["why"]
         await buy_btc(s)
         seen.append(labels(await get(s, "/api/demo/suggestions")))
-        assert "Put $30 into BTC 5-min" not in seen[1]
+        assert "Put $30 into BTC hourly" not in seen[1]
         await post(s, "/api/demo/offer")
         seen.append(labels(await get(s, "/api/demo/suggestions")))
         assert "Move Rockets to Gemini (3% rebate)" in seen[2]
-        assert "Move BTC 5-min to Gemini" in seen[2]
+        assert "Move BTC hourly to Gemini" in seen[2]
         await post(s, "/api/desk/move", {"slug": NBA, "qty": 320, "mode": "take"})
         seen.append(labels(await get(s, "/api/demo/suggestions")))
         assert "Move Rockets to Gemini (3% rebate)" not in seen[3]
@@ -540,8 +557,8 @@ async def test_move_sentences_from_the_cards_resolve_to_the_right_position() -> 
         cases = {
             "Move my Rockets position to Gemini": NBA,
             "Move my Rockets vs Nuggets · Nov 21 position to Gemini": NBA,
-            "Move my Bitcoin 5 minute position to Gemini": BTC,
-            "Move my BTC Up or Down 5m position to Gemini": BTC,
+            "Move my Bitcoin hourly position to Gemini": BTC,
+            "Move my BTC Up or Down Hourly position to Gemini": BTC,
             "Move my Houston Rockets vs. Denver Nuggets position to Gemini": LINKED_SLUG,
         }
         for text, slug in cases.items():
@@ -565,17 +582,15 @@ async def test_move_sentences_from_the_cards_resolve_to_the_right_position() -> 
 
 
 @respx.mock
-async def test_btc_5m_insight_is_against_from_the_real_source_check() -> None:
+async def test_btc_hourly_insight_is_against_with_no_gemini_twin() -> None:
     async with stage() as s:
         await buy_btc(s)
         data = await get(s, "/api/demo/insight", position_id=BTC_POS)
         assert data["verdict"] == "against" and data["source"] == "fallback"
-        assert data["alternative"] == "Roll into the next Polymarket 5-minute window instead."
-        source = next(c for c in data["checks"] if c["field"] == "Who decides the outcome")
-        assert source["same"] is False
-        assert "CF Benchmarks" in source["detail"] and "Lukka" in source["detail"]
-        assert len(data["checks"]) == 5 and sum(c["same"] for c in data["checks"]) == 4
-        assert "Roll into the next" in data["body"]
+        assert data["headline"] == "Against: Gemini has no matching market"
+        assert data["checks"] == []  # nothing to compare, so no unverifiable rows
+        assert data["alternative"].startswith("Keep it on Polymarket US.")
+        assert "nothing to move it into" in data["body"]
         assert (await s.client.get("/api/demo/insight?position_id=nope")).status_code == 404
 
 
@@ -629,7 +644,7 @@ async def test_insight_falls_back_when_grok_fails_or_answers_oddly(reply: httpx.
         respx.post(OPENROUTER).mock(return_value=reply)
         data = await get(s, "/api/demo/insight", position_id=BTC_POS)
         assert data["source"] == "fallback" and data["model"] == ""
-        assert data["verdict"] == "against" and "Roll into the next" in data["body"]
+        assert data["verdict"] == "against" and "Keep it on Polymarket US" in data["body"]
 
 
 @respx.mock

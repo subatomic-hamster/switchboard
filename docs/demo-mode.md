@@ -7,10 +7,12 @@ is placed and no testnet funds move. The real-rails build is unchanged when `DEM
 ## Start
 
 ```
-cd server && DEMO_MODE=true USE_P1_STUBS=true USE_REAL_TRANSFERS=false USE_REAL_MARKETS=true \
-  DATABASE_PATH=./data/demo.sqlite POLICY_TRANSFER_CAP_USD=500 POLICY_DAILY_BUDGET_USD=2000 \
-  MAX_CALLS_PER_DAY=50 uv run python -m app
+cd server && DEMO_MODE=true uv run python -m app
 ```
+
+Demo mode forces, over anything in `.env`: stub vault and transfers, live market data, no orders,
+its own database (`./data/demo.sqlite`), and raised limits ($500 a send, $2,000 a day, 50 calls).
+`DEMO_TRADER_WALLET` (in `.env`) pins the linked account; blank picks one from the leaderboard.
 
 Open http://127.0.0.1:8787/ (or the Vite dev server). Controls → Demo has Reset, Show the Gemini
 offer, and Settle Rockets as a win.
@@ -20,14 +22,17 @@ offer, and Settle Rockets as a win.
 1. Home shows live suggestions, your positions with live odds (a linked Polymarket account's
    real positions plus the scripted ones; linked ones show a similar Gemini market), and recent
    money actions.
-2. "Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute market on Polymarket"
-   → plan card (live price, contracts, fee) → Confirm → position appears with live odds.
+2. "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market on Polymarket"
+   → plan card (live price, contracts, fee) → Confirm → position appears with live odds. It is
+   this hour's up-or-down market, so there is no waiting for a window to open; avoid the last
+   few minutes of the hour, when the price is all but decided. (The first seconds of an hour,
+   before the new market is listed, say so.)
 3. Controls → Demo → Show the Gemini offer (3% rebate for 10 minutes). A banner and new
    suggestions appear on Home.
-4. "Move my Bitcoin 5 minute position to Gemini" → Research says **against**: Polymarket US
-   settles on CF Benchmarks BRTI, Gemini on Lukka's index; in a 5-minute window the gap between
-   indexes can decide the bet, and the rebate does not pay for that. Suggests the next Polymarket
-   window instead. (This is the real five-field check, not a script.)
+4. "Move my Bitcoin hourly position to Gemini" → Research says **against**: Gemini has no
+   hourly Bitcoin market (only 5- and 15-minute windows settled on Lukka's index, and daily
+   prices), so there is nothing that is the same bet to move into, rebate or not. Markets shows
+   the refusal. (This is the real match, not a script.)
 5. "Move my Rockets position to Gemini" → same bet on both (5 of 5 checks), the rebate makes the
    move cheaper → Move → the position now sits on Gemini.
 6. Controls → Demo → Settle Rockets as a win → winnings land in the Ethereum wallet.
