@@ -13,8 +13,8 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import func, select
 
@@ -48,8 +48,10 @@ from app.holds import HoldingVault
 from app.intent import IntentError, IntentParser, make_llm_call
 from app.local_only import LocalOnly
 from app.markets import stub as markets_stub
+from app.markets.book import VenueError
+from app.markets.real import RealMarkets
 from app.planner import PlanError, Planner
-from app.ports import AnchorPort, VaultPort
+from app.ports import AnchorPort, MarketsPort, VaultPort
 from app.schemas import (
     ExecuteRequest,
     ExecuteResponse,
@@ -106,9 +108,10 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
                 "so no approval.requested event will arrive"
             )
         log.warning(
-            "real vault on chain %s; %smarkets are STUBS",
+            "real vault on chain %s; transfers %s, markets %s",
             settings.arc_chain_id,
-            "" if settings.use_real_transfers else "transfers and ",
+            "real (CCTP)" if settings.use_real_transfers else "STUB",
+            "live data" if settings.use_real_markets else "STUB",
         )
     # Real transfers need the real vault: the stub vault pays nobody, so there is nothing to carry.
     real_transfers = settings.use_real_transfers and not settings.use_p1_stubs
@@ -142,6 +145,17 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
             escrow = ChainEscrow(settings)
         else:
             log.warning("ESCROW_ADDRESS is not set: /api/escrow routes answer 503")
+    # Real markets record each move through the anchor, so the Ledger when one is set.
+    markets: MarketsPort = (
+        RealMarkets(bus, settings, anchor, first_id=first_id)
+        if settings.use_real_markets
+        else markets_stub.StubMarkets(bus, settings, first_id=first_id)
+    )
+    if settings.use_real_markets:
+        log.warning(
+            "markets are LIVE public data from Polymarket US and Gemini; orders are %s",
+            "ENABLED" if settings.trading_enabled else "dry-run",
+        )
     ctx = AppContext(
         settings=settings,
         db=database,
@@ -154,7 +168,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
             if real_transfers
             else chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id)
         ),
-        markets=markets_stub.StubMarkets(bus, settings, first_id=first_id),
+        markets=markets,
         anchor=anchor,
         escrow=escrow,
     )
@@ -203,10 +217,14 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         if settings.anthropic_api_key:
             # The first structured-output call compiles the schema and is slow; do it now.
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")
+        if isinstance(ctx.markets, RealMarkets):
+            ctx.tasks.spawn(ctx.markets.refresh_loop(), "markets-refresh")
         # The MCP SDK answers requests inside a task group that lives as long as the app.
         async with gateway.server.session_manager.run():
             yield
         await ctx.aclose()
+        if isinstance(ctx.markets, RealMarkets):
+            await ctx.markets.aclose()
 
     app = FastAPI(
         title="Switchboard",
@@ -217,6 +235,11 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.state.ctx = ctx
     app.state.mcp = gateway
     app.add_middleware(LocalOnly)
+
+    @app.exception_handler(VenueError)
+    async def venue_down(_: Request, exc: VenueError) -> JSONResponse:
+        """A venue is unreachable: say which one, instead of a 500."""
+        return JSONResponse(status_code=503, content={"detail": str(exc), "venue": exc.venue})
 
     app.include_router(events.router)
     app.include_router(chain_stub.router)
@@ -294,9 +317,20 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
         return WalletList(wallets=ctx.wallets.wallets)
 
     @app.get("/api/venues", response_model=VenueList, tags=["meta"])
-    async def venues() -> VenueList:
+    async def venues(ctx: CtxDep) -> VenueList:
         """Prediction-market venues and how real each one is right now."""
-        return VenueList(venues=VENUES)
+        if not ctx.settings.use_real_markets:
+            return VenueList(venues=VENUES)
+        orders = "orders live" if ctx.settings.trading_enabled else "orders dry-run"
+        note = f"live public data, {orders}"
+        return VenueList(
+            venues=[
+                v.model_copy(update={"status": "connected", "note": note})
+                if v.id in ("polymarket", "gemini")
+                else v
+                for v in VENUES
+            ]
+        )
 
     _mount_dashboard(app, WEB_DIST)
     return app

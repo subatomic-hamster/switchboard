@@ -1,0 +1,57 @@
+{
+ "synthetic": true,
+ "note": "SYNTHETIC. Not a recorded response. No Polymarket US team-total or game-total market (slugs starting 'tsc-') was listed for the New Orleans at Chicago game on 2026-11-20, so these three markets are hand-built to follow the slug shape in docs/implementation-plan.md ('tsc-nfl-...-tt-...-45pt5' and '...-total-45pt5'). The field names follow the real Polymarket US market objects recorded in the sibling files; the values for sportsMarketType, question and description are guesses. They are tested against the REAL Gemini events recorded in nfl_no_chi.json (game total NFL-2611221800-NO-CHI-T and team total NFL-2611221800-NO-CHI-TT). The 46.5 team-total line is deliberately unrealistic: it makes the question text and the line identical to the game total, which is the look-alike the plan warns about.",
+ "polymarket": [
+  {
+   "slug": "tsc-nfl-no-chi-2026-11-22-tt-chi-14pt5",
+   "question": "Chicago Bears team total over 14.5 points?",
+   "title": "Over 14.5",
+   "description": "This market will settle to Yes if the Chicago Bears score over 14.5 points in the New Orleans Saints vs Chicago Bears game scheduled for November 22, 2026 at 1:00PM CT, overtime included.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "total",
+   "sportsMarketType": "football_team_total",
+   "gameStartTime": "2026-11-22T18:00:00Z",
+   "assetPriceTerms": null,
+   "marketSides": [
+    {"long": true, "description": "Over", "price": "0.9", "team": {"name": "Chicago Bears", "abbreviation": "chi", "league": "nfl", "ordering": "home"}},
+    {"long": false, "description": "Under", "price": "0.1", "team": {"name": "Chicago Bears", "abbreviation": "chi", "league": "nfl", "ordering": "home"}}
+   ]
+  },
+  {
+   "slug": "tsc-nfl-no-chi-2026-11-22-tt-no-46pt5",
+   "question": "Will the total points be over 46.5?",
+   "title": "Over 46.5",
+   "description": "This market will settle to Yes if the New Orleans Saints score over 46.5 points in the New Orleans Saints vs Chicago Bears game scheduled for November 22, 2026 at 1:00PM CT, overtime included.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "total",
+   "sportsMarketType": "football_team_total",
+   "gameStartTime": "2026-11-22T18:00:00Z",
+   "assetPriceTerms": null,
+   "marketSides": [
+    {"long": true, "description": "Over", "price": "0.02", "team": {"name": "New Orleans Saints", "abbreviation": "no", "league": "nfl", "ordering": "away"}},
+    {"long": false, "description": "Under", "price": "0.98", "team": {"name": "New Orleans Saints", "abbreviation": "no", "league": "nfl", "ordering": "away"}}
+   ]
+  },
+  {
+   "slug": "tsc-nfl-no-chi-2026-11-22-total-46pt5",
+   "question": "Will the total points be over 46.5?",
+   "title": "Over 46.5",
+   "description": "This market will settle to Yes if the New Orleans Saints and Chicago Bears combine to score over 46.5 points in the game scheduled for November 22, 2026 at 1:00PM CT, overtime included.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "total",
+   "sportsMarketType": "football_game_total",
+   "gameStartTime": "2026-11-22T18:00:00Z",
+   "assetPriceTerms": null,
+   "marketSides": [
+    {"long": true, "description": "Over", "price": "0.57", "team": null},
+    {"long": false, "description": "Under", "price": "0.43", "team": null}
+   ]
+  }
+ ]
+}

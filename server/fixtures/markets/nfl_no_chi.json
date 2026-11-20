@@ -1,0 +1,1791 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/aec-nfl-no-chi-2026-11-22",
+  "https://api.gemini.com/v1/prediction-markets/events/NFL-2611221800-NO-CHI-M",
+  "https://api.gemini.com/v1/prediction-markets/events/NFL-2611221800-NO-CHI-T",
+  "https://api.gemini.com/v1/prediction-markets/events/NFL-2611221800-NO-CHI-TT"
+ ],
+ "polymarket": [
+  {
+   "id": "2304822",
+   "slug": "aec-nfl-no-chi-2026-11-22",
+   "question": "Who will win in the upcoming football event New Orleans Saints vs Chicago Bears scheduled for November 22, 2026 at 6:00 PM UTC?",
+   "description": "This market will settle to the winner of the New Orleans Saints vs Chicago Bears professional football game scheduled for November 22, 2026 at 1:00PM ET (as of the listing of the event's first instrument). Overtime is included if played. If the game ends in a tie, the market will settle to $0.50. If the game is delayed, postponed, suspended or otherwise rescheduled to a date and time not within two days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from the relevant governing body.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "moneyline",
+   "sportsMarketType": "football_team_full_game_winner",
+   "gameStartTime": "2026-11-22T18:00:00Z",
+   "endDate": "2026-12-06T23:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.1550",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.1575",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.0025,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Saints",
+     "price": "0.1575",
+     "team": {
+      "name": "New Orleans Saints",
+      "abbreviation": "no",
+      "league": "nfl",
+      "ordering": "away"
+     }
+    },
+    {
+     "long": false,
+     "description": "Bears",
+     "price": "0.845",
+     "team": {
+      "name": "Chicago Bears",
+      "abbreviation": "chi",
+      "league": "nfl",
+      "ordering": "home"
+     }
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "467970",
+   "title": "New Orleans vs Chicago",
+   "ticker": "NFL-2611221800-NO-CHI-M",
+   "status": "active",
+   "category": "Sports",
+   "template": "sports-game",
+   "startTime": "2026-11-22T18:00:00.000Z",
+   "expiryDate": "2026-11-24T06:00:00.000Z",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Am. football"
+   },
+   "participants": [
+    {
+     "id": "446",
+     "name": "Chicago Bears",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "452",
+     "name": "New Orleans Saints",
+     "abbreviation": "NO",
+     "side": "away"
+    }
+   ],
+   "description": "New Orleans vs Chicago",
+   "volume": "1698.38",
+   "contracts": [
+    {
+     "label": "Chicago",
+     "ticker": "CHI",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-M-CHI",
+     "status": "active",
+     "marketState": "open",
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.85",
+       "no": "0.16"
+      },
+      "sell": {
+       "yes": "0.84",
+       "no": "0.15"
+      },
+      "bestBid": "0.84",
+      "bestAsk": "0.85",
+      "lastTradePrice": "0.85"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if Chicago wins the Pro Football game\n between Chicago and New Orleans scheduled for November 22, 2026 at 1:00 PM ET. If the game ends in a draw/tie, the market will resolve according to 50/50 draw resolution rules. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing the event, ESPN, Fox Sports, and the broadcast partner of the event\n. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Revie"
+    },
+    {
+     "label": "New Orleans",
+     "ticker": "NO",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-M-NO",
+     "status": "active",
+     "marketState": "open",
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.16",
+       "no": "0.85"
+      },
+      "sell": {
+       "yes": "0.15",
+       "no": "0.84"
+      },
+      "bestBid": "0.15",
+      "bestAsk": "0.16",
+      "lastTradePrice": "0.16"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans wins the Pro Football game\n between New Orleans and Chicago scheduled for November 22, 2026 at 1:00 PM ET. If the game ends in a draw/tie, the market will resolve according to 50/50 draw resolution rules. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing the event, ESPN, Fox Sports, and the broadcast partner of the event\n. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome R"
+    }
+   ]
+  },
+  {
+   "id": "468462",
+   "title": "New Orleans vs Chicago: Total Points",
+   "ticker": "NFL-2611221800-NO-CHI-T",
+   "status": "active",
+   "category": "Sports",
+   "template": "sports-total",
+   "startTime": "2026-11-22T18:00:00.000Z",
+   "expiryDate": "2026-11-24T06:00:00.000Z",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Am. football"
+   },
+   "participants": [
+    {
+     "id": "446",
+     "name": "Chicago Bears",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "452",
+     "name": "New Orleans Saints",
+     "abbreviation": "NO",
+     "side": "away"
+    }
+   ],
+   "description": "How many points will be scored?",
+   "volume": "39.4",
+   "contracts": [
+    {
+     "label": "More than 40.5 points scored",
+     "ticker": "O40",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O40",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "40.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.76",
+       "no": "0.28"
+      },
+      "sell": {
+       "yes": "0.72",
+       "no": "0.24"
+      },
+      "bestBid": "0.72",
+      "bestAsk": "0.76"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 40.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 43.5 points scored",
+     "ticker": "O43",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O43",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "43.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.7",
+       "no": "0.36"
+      },
+      "sell": {
+       "yes": "0.64",
+       "no": "0.3"
+      },
+      "bestBid": "0.64",
+      "bestAsk": "0.7"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 43.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 46.5 points scored",
+     "ticker": "O46",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O46",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "46.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.6",
+       "no": "0.46"
+      },
+      "sell": {
+       "yes": "0.54",
+       "no": "0.4"
+      },
+      "bestBid": "0.54",
+      "bestAsk": "0.6"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 46.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 47.5 points scored",
+     "ticker": "O47",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O47",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "47.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.56",
+       "no": "0.49"
+      },
+      "sell": {
+       "yes": "0.51",
+       "no": "0.44"
+      },
+      "bestBid": "0.51",
+      "bestAsk": "0.56"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 47.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 48.5 points scored",
+     "ticker": "O48",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O48",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "48.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.51",
+       "no": "0.51"
+      },
+      "sell": {
+       "yes": "0.49",
+       "no": "0.49"
+      },
+      "bestBid": "0.49",
+      "bestAsk": "0.51"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 48.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 49.5 points scored",
+     "ticker": "O49",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O49",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "49.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.49",
+       "no": "0.55"
+      },
+      "sell": {
+       "yes": "0.45",
+       "no": "0.51"
+      },
+      "bestBid": "0.45",
+      "bestAsk": "0.49",
+      "lastTradePrice": "0.49"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 49.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 50.5 points scored",
+     "ticker": "O50",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O50",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "50.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.46",
+       "no": "0.58"
+      },
+      "sell": {
+       "yes": "0.42",
+       "no": "0.54"
+      },
+      "bestBid": "0.42",
+      "bestAsk": "0.46"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 50.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 51.5 points scored",
+     "ticker": "O51",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O51",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "51.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.43",
+       "no": "0.63"
+      },
+      "sell": {
+       "yes": "0.37",
+       "no": "0.57"
+      },
+      "bestBid": "0.37",
+      "bestAsk": "0.43"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 51.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 52.5 points scored",
+     "ticker": "O52",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O52",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "52.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.41",
+       "no": "0.64"
+      },
+      "sell": {
+       "yes": "0.36",
+       "no": "0.59"
+      },
+      "bestBid": "0.36",
+      "bestAsk": "0.41"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 52.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 55.5 points scored",
+     "ticker": "O55",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O55",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "55.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.33",
+       "no": "0.73"
+      },
+      "sell": {
+       "yes": "0.27",
+       "no": "0.67"
+      },
+      "bestBid": "0.27",
+      "bestAsk": "0.33"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 55.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 58.5 points scored",
+     "ticker": "O58",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O58",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "58.5"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.25",
+       "no": "0.79"
+      },
+      "sell": {
+       "yes": "0.21",
+       "no": "0.75"
+      },
+      "bestBid": "0.21",
+      "bestAsk": "0.25"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 58.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 67.5 points scored",
+     "ticker": "O67",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O67",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "67.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 67.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 64.5 points scored",
+     "ticker": "O64",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O64",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "64.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 64.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 70.5 points scored",
+     "ticker": "O70",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O70",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "70.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 70.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 61.5 points scored",
+     "ticker": "O61",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O61",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "61.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 61.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 37.5 points scored",
+     "ticker": "O37",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O37",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "37.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 37.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 31.5 points scored",
+     "ticker": "O31",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O31",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "31.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 31.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 34.5 points scored",
+     "ticker": "O34",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O34",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "34.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 34.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    },
+    {
+     "label": "More than 28.5 points scored",
+     "ticker": "O28",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-T-O28",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "28.5"
+     },
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if New Orleans and Chicago collectively score over 28.5 total points in the NFL game between New Orleans and Chicago scheduled for 2026-11-22 at 12:00 p.m. CT. Otherwise, it resolves to No. The Underlying is the total points scored by both teams for the specified game. Source Agencies, in order, are the league governing the event (NFL), ESPN, Fox Sports, and the official broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules]("
+    }
+   ]
+  },
+  {
+   "id": "471730",
+   "title": "New Orleans vs Chicago: Team Total",
+   "ticker": "NFL-2611221800-NO-CHI-TT",
+   "status": "active",
+   "category": "Sports",
+   "template": "sports-team-totals",
+   "startTime": "2026-11-22T18:00:00.000Z",
+   "expiryDate": "2026-11-24T06:00:00.000Z",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Am. football"
+   },
+   "participants": [
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "7b112545-38e6-483c-a55c-96cf6ee49cb8",
+     "name": "Chicago",
+     "abbreviation": "CHI",
+     "side": "home"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    },
+    {
+     "id": "0d855753-ea21-4953-89f9-0e20aff9eb73",
+     "name": "New Orleans",
+     "abbreviation": "NO",
+     "side": "away"
+    }
+   ],
+   "description": "How many points will each team score?",
+   "volume": "0",
+   "contracts": [
+    {
+     "label": "Chicago scores more than 14.5 points",
+     "ticker": "CHIO14",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO14",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "14.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.1"
+      },
+      "sell": {
+       "yes": "0.9",
+       "no": "0.01"
+      },
+      "bestBid": "0.9",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 14.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "Chicago scores more than 10.5 points",
+     "ticker": "CHIO10",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO10",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "10.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.08"
+      },
+      "sell": {
+       "yes": "0.92",
+       "no": "0.01"
+      },
+      "bestBid": "0.92",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 10.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 3.5 points",
+     "ticker": "NOO3",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO3",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "3.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.11"
+      },
+      "sell": {
+       "yes": "0.89",
+       "no": "0.01"
+      },
+      "bestBid": "0.89",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 3.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does"
+    },
+    {
+     "label": "Chicago scores more than 17.5 points",
+     "ticker": "CHIO17",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO17",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "17.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.14"
+      },
+      "sell": {
+       "yes": "0.86",
+       "no": "0.01"
+      },
+      "bestBid": "0.86",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 17.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "Chicago scores more than 7.5 points",
+     "ticker": "CHIO7",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO7",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "7.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.07"
+      },
+      "sell": {
+       "yes": "0.93",
+       "no": "0.01"
+      },
+      "bestBid": "0.93",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 7.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does not"
+    },
+    {
+     "label": "Chicago scores more than 3.5 points",
+     "ticker": "CHIO3",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO3",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "3.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.99",
+       "no": "0.06"
+      },
+      "sell": {
+       "yes": "0.94",
+       "no": "0.01"
+      },
+      "bestBid": "0.94",
+      "bestAsk": "0.99"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 3.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does not"
+    },
+    {
+     "label": "New Orleans scores more than 7.5 points",
+     "ticker": "NOO7",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO7",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "7.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.94",
+       "no": "0.17"
+      },
+      "sell": {
+       "yes": "0.83",
+       "no": "0.06"
+      },
+      "bestBid": "0.83",
+      "bestAsk": "0.94"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 7.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does"
+    },
+    {
+     "label": "Chicago scores more than 20.5 points",
+     "ticker": "CHIO20",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO20",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "20.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.92",
+       "no": "0.2"
+      },
+      "sell": {
+       "yes": "0.8",
+       "no": "0.08"
+      },
+      "bestBid": "0.8",
+      "bestAsk": "0.92"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 20.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "Chicago scores more than 21.5 points",
+     "ticker": "CHIO21",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO21",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "21.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.9",
+       "no": "0.23"
+      },
+      "sell": {
+       "yes": "0.77",
+       "no": "0.1"
+      },
+      "bestBid": "0.77",
+      "bestAsk": "0.9"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 21.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 10.5 points",
+     "ticker": "NOO10",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO10",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "10.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.85",
+       "no": "0.27"
+      },
+      "sell": {
+       "yes": "0.73",
+       "no": "0.15"
+      },
+      "bestBid": "0.73",
+      "bestAsk": "0.85"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 10.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "Chicago scores more than 24.5 points",
+     "ticker": "CHIO24",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO24",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "24.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.77",
+       "no": "0.33"
+      },
+      "sell": {
+       "yes": "0.67",
+       "no": "0.23"
+      },
+      "bestBid": "0.67",
+      "bestAsk": "0.77"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 24.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "Chicago scores more than 28.5 points",
+     "ticker": "CHIO28",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO28",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "28.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.63",
+       "no": "0.48"
+      },
+      "sell": {
+       "yes": "0.52",
+       "no": "0.37"
+      },
+      "bestBid": "0.52",
+      "bestAsk": "0.63"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 28.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "Chicago scores more than 30.5 points",
+     "ticker": "CHIO30",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO30",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "30.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.56",
+       "no": "0.55"
+      },
+      "sell": {
+       "yes": "0.45",
+       "no": "0.44"
+      },
+      "bestBid": "0.45",
+      "bestAsk": "0.56"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 30.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 17.5 points",
+     "ticker": "NOO17",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO17",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "17.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.55",
+       "no": "0.55"
+      },
+      "sell": {
+       "yes": "0.45",
+       "no": "0.45"
+      },
+      "bestBid": "0.45",
+      "bestAsk": "0.55"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 17.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 18.5 points",
+     "ticker": "NOO18",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO18",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "18.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.54",
+       "no": "0.56"
+      },
+      "sell": {
+       "yes": "0.44",
+       "no": "0.46"
+      },
+      "bestBid": "0.44",
+      "bestAsk": "0.54"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 18.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "Chicago scores more than 31.5 points",
+     "ticker": "CHIO31",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO31",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "31.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.5",
+       "no": "0.61"
+      },
+      "sell": {
+       "yes": "0.39",
+       "no": "0.5"
+      },
+      "bestBid": "0.39",
+      "bestAsk": "0.5"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 31.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 20.5 points",
+     "ticker": "NOO20",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO20",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "20.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.45",
+       "no": "0.66"
+      },
+      "sell": {
+       "yes": "0.34",
+       "no": "0.55"
+      },
+      "bestBid": "0.34",
+      "bestAsk": "0.45"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 20.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 21.5 points",
+     "ticker": "NOO21",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO21",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "21.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.41",
+       "no": "0.7"
+      },
+      "sell": {
+       "yes": "0.3",
+       "no": "0.59"
+      },
+      "bestBid": "0.3",
+      "bestAsk": "0.41"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 21.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "Chicago scores more than 35.5 points",
+     "ticker": "CHIO35",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO35",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "35.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.34",
+       "no": "0.75"
+      },
+      "sell": {
+       "yes": "0.25",
+       "no": "0.66"
+      },
+      "bestBid": "0.25",
+      "bestAsk": "0.34"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 35.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 24.5 points",
+     "ticker": "NOO24",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO24",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "24.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.3",
+       "no": "0.82"
+      },
+      "sell": {
+       "yes": "0.18",
+       "no": "0.7"
+      },
+      "bestBid": "0.18",
+      "bestAsk": "0.3"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 24.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "Chicago scores more than 38.5 points",
+     "ticker": "CHIO38",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO38",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "38.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.25",
+       "no": "0.85"
+      },
+      "sell": {
+       "yes": "0.15",
+       "no": "0.75"
+      },
+      "bestBid": "0.15",
+      "bestAsk": "0.25"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 38.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 28.5 points",
+     "ticker": "NOO28",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO28",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "28.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.2",
+       "no": "0.92"
+      },
+      "sell": {
+       "yes": "0.08",
+       "no": "0.8"
+      },
+      "bestBid": "0.08",
+      "bestAsk": "0.2"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 28.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "Chicago scores more than 42.5 points",
+     "ticker": "CHIO42",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-CHIO42",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "42.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "Chicago Bears",
+      "externalIds": {
+       "sportradar": "7b112545-38e6-483c-a55c-96cf6ee49cb8"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.17",
+       "no": "0.92"
+      },
+      "sell": {
+       "yes": "0.08",
+       "no": "0.83"
+      },
+      "bestBid": "0.08",
+      "bestAsk": "0.17"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if Chicago scores more than 42.5 points in the NFL game against New Orleans scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by Chicago during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it does no"
+    },
+    {
+     "label": "New Orleans scores more than 31.5 points",
+     "ticker": "NOO31",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO31",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "31.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.14",
+       "no": "0.99"
+      },
+      "sell": {
+       "yes": "0.01",
+       "no": "0.86"
+      },
+      "bestBid": "0.01",
+      "bestAsk": "0.14"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 31.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 35.5 points",
+     "ticker": "NOO35",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO35",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "35.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.1"
+      },
+      "sell": {
+       "no": "0.9"
+      },
+      "bestAsk": "0.1"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 35.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 38.5 points",
+     "ticker": "NOO38",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO38",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "38.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.08"
+      },
+      "sell": {
+       "no": "0.92"
+      },
+      "bestAsk": "0.08"
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 38.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 14.5 points",
+     "ticker": "NOO14",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO14",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "14.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 14.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    },
+    {
+     "label": "New Orleans scores more than 42.5 points",
+     "ticker": "NOO42",
+     "instrumentSymbol": "GEMI-NFL-2611221800-NO-CHI-TT-NOO42",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "over",
+      "value": "42.5"
+     },
+     "target": {
+      "type": "team",
+      "name": "New Orleans Saints",
+      "externalIds": {
+       "sportradar": "0d855753-ea21-4953-89f9-0e20aff9eb73"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {},
+      "sell": {}
+     },
+     "expiryDate": "2026-11-24T06:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This contract resolves to Yes if New Orleans scores more than 42.5 points in the NFL game against Chicago scheduled for November 22, 2026 at 1:00 PM. The Underlying is the total number of points scored by New Orleans during the entire game, including any overtime period, as documented by NFL.com and the NFL's official Game Statistics and Information System (GSIS). If those sources are unavailable, ESPN, then NBC, CBS, FOX, Amazon Prime Video, Peacock, Netflix, or the official broadcast or streaming partner may be used. Otherwise, this contract resolves to No. If the game is postponed and begins within seven days of its scheduled kickoff, it resolves using the official final result; if it doe"
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {},
+  "gemini": {}
+ }
+}

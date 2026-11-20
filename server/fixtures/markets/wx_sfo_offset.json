@@ -1,0 +1,251 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/tc-temp-sfohigh-2026-11-20-gte56lt57f",
+  "https://gateway.polymarket.us/v1/market/slug/tc-temp-sfohigh-2026-11-20-gte58lt59f",
+  "https://api.gemini.com/v1/prediction-markets/events/WXHIGH-SFO-2611210459"
+ ],
+ "polymarket": [
+  {
+   "id": "2670366",
+   "slug": "tc-temp-sfohigh-2026-11-20-gte56lt57f",
+   "question": "Highest temperature in San Francisco on November 20?",
+   "title": "56 to 57",
+   "description": "Will the highest temperature recorded at San Francisco International Airport (KSFO) in San Francisco for 2026-11-20 as reported by the National Weather Service's Climatological Report (Daily) be between 56F and 57F? Outcome verified from NWS Climatological Report.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "futures",
+   "sportsMarketType": "futures",
+   "gameStartTime": "2026-11-20T08:00:00Z",
+   "endDate": "2026-11-21T13:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.2400",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.3300",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.3300",
+     "team": null
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": "0.76",
+     "team": null
+    }
+   ]
+  },
+  {
+   "id": "2670368",
+   "slug": "tc-temp-sfohigh-2026-11-20-gte58lt59f",
+   "question": "Highest temperature in San Francisco on November 20?",
+   "title": "58 to 59",
+   "description": "Will the highest temperature recorded at San Francisco International Airport (KSFO) in San Francisco for 2026-11-20 as reported by the National Weather Service's Climatological Report (Daily) be between 58F and 59F? Outcome verified from NWS Climatological Report.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "futures",
+   "sportsMarketType": "futures",
+   "gameStartTime": "2026-11-20T08:00:00Z",
+   "endDate": "2026-11-21T13:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.4200",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.4600",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.4600",
+     "team": null
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": "0.58",
+     "team": null
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "480762",
+   "title": "Highest temperature in San Francisco on November 20, 2026?",
+   "ticker": "WXHIGH-SFO-2611210459",
+   "status": "active",
+   "category": "Weather",
+   "expiryDate": "2026-11-21T04:59:59.000Z",
+   "series": "WXHIGH",
+   "participants": [],
+   "description": "Highest temperature in San Francisco on November 20, 2026?",
+   "volume": "0",
+   "contracts": [
+    {
+     "label": "57°F to 58°F",
+     "ticker": "57TO58",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-57TO58",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.52",
+       "no": "0.5"
+      },
+      "sell": {
+       "yes": "0.5",
+       "no": "0.48"
+      },
+      "bestBid": "0.5",
+      "bestAsk": "0.52"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    },
+    {
+     "label": "59°F to 60°F",
+     "ticker": "59TO60",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-59TO60",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.42",
+       "no": "0.62"
+      },
+      "sell": {
+       "yes": "0.38",
+       "no": "0.58"
+      },
+      "bestBid": "0.38",
+      "bestAsk": "0.42"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    },
+    {
+     "label": "55°F to 56°F",
+     "ticker": "55TO56",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-55TO56",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.06",
+       "no": "0.97"
+      },
+      "sell": {
+       "yes": "0.03",
+       "no": "0.94"
+      },
+      "bestBid": "0.03",
+      "bestAsk": "0.06"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    },
+    {
+     "label": "61°F to 62°F",
+     "ticker": "61TO62",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-61TO62",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.05",
+       "no": "0.98"
+      },
+      "sell": {
+       "yes": "0.02",
+       "no": "0.95"
+      },
+      "bestBid": "0.02",
+      "bestAsk": "0.05"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    },
+    {
+     "label": "54°F or below",
+     "ticker": "LO54",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-LO54",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "below",
+      "value": "54"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.04"
+      },
+      "sell": {
+       "no": "0.96"
+      },
+      "bestAsk": "0.04"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    },
+    {
+     "label": "63°F or above",
+     "ticker": "HI63",
+     "instrumentSymbol": "GEMI-WXHIGH-SFO-2611210459-HI63",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "above",
+      "value": "63"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.01"
+      },
+      "sell": {
+       "no": "0.99"
+      },
+      "bestAsk": "0.01"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at San Francisco Airport, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for San Francisco Airport, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at San Francisco Airport on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If "
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {},
+  "gemini": {}
+ }
+}

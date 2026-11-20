@@ -1,0 +1,385 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/aec-nba-hou-den-2026-11-20",
+  "https://api.gemini.com/v1/prediction-markets/events/NBA-2611210300-HOU-DEN-M",
+  "https://gateway.polymarket.us/v1/markets/aec-nba-hou-den-2026-11-20/book",
+  "https://api.gemini.com/v1/book/GEMI-NBA-2611210300-HOU-DEN-M-HOU"
+ ],
+ "polymarket": [
+  {
+   "id": "2222768",
+   "slug": "aec-nba-hou-den-2026-11-20",
+   "question": "Who will win in the upcoming basketball event HOU Rockets vs DEN Nuggets scheduled for November 21, 2026 at 3:00 AM UTC?",
+   "description": "This market will settle to the winner of the HOU Rockets vs DEN Nuggets professional basketball game scheduled for November 20, 2026 at 10:00PM ET (as of the listing of the event's first instrument). Overtime is included if played. If the game is delayed, postponed, suspended or otherwise rescheduled to a date and time not within two days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from the relevant governing body.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "moneyline",
+   "sportsMarketType": "basketball_team_full_game_winner",
+   "gameStartTime": "2026-11-21T03:00:00Z",
+   "endDate": "2026-12-05T03:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.4700",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.4800",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Rockets",
+     "price": "0.4800",
+     "team": {
+      "name": "Houston Rockets",
+      "abbreviation": "hou",
+      "league": "nba",
+      "ordering": "away"
+     }
+    },
+    {
+     "long": false,
+     "description": "Nuggets",
+     "price": "0.53",
+     "team": {
+      "name": "Denver Nuggets",
+      "abbreviation": "den",
+      "league": "nba",
+      "ordering": "home"
+     }
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "475112",
+   "title": "Houston vs Denver",
+   "ticker": "NBA-2611210300-HOU-DEN-M",
+   "status": "active",
+   "category": "Sports",
+   "template": "sports-game",
+   "startTime": "2026-11-21T03:00:00.000Z",
+   "expiryDate": "2026-11-22T15:00:00.000Z",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Basketball"
+   },
+   "participants": [
+    {
+     "id": "474",
+     "name": "Denver Nuggets",
+     "abbreviation": "DEN",
+     "side": "home"
+    },
+    {
+     "id": "476",
+     "name": "Houston Rockets",
+     "abbreviation": "HOU",
+     "side": "away"
+    }
+   ],
+   "description": "Houston vs Denver",
+   "volume": "943.47",
+   "contracts": [
+    {
+     "label": "Denver",
+     "ticker": "DEN",
+     "instrumentSymbol": "GEMI-NBA-2611210300-HOU-DEN-M-DEN",
+     "status": "active",
+     "marketState": "open",
+     "target": {
+      "type": "team",
+      "name": "Denver Nuggets",
+      "externalIds": {
+       "sportradar": "583ed102-fb46-11e1-82cb-f4ce4684ea4c"
+      }
+     },
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.53",
+       "no": "0.48"
+      },
+      "sell": {
+       "yes": "0.52",
+       "no": "0.47"
+      },
+      "bestBid": "0.52",
+      "bestAsk": "0.53",
+      "lastTradePrice": "0.53"
+     },
+     "expiryDate": "2026-11-22T15:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "If Denver wins the Pro Basketball game between Denver and Houston originally scheduled for November 20, 2026 at 10:00 PM ET, this market will resolve to Yes. Otherwise, it will resolve to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing body, ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules.](https://assets.gemini.com/predictions/terms_and_condit"
+    },
+    {
+     "label": "Houston",
+     "ticker": "HOU",
+     "instrumentSymbol": "GEMI-NBA-2611210300-HOU-DEN-M-HOU",
+     "status": "active",
+     "marketState": "open",
+     "target": {
+      "type": "team",
+      "name": "Houston Rockets",
+      "externalIds": {
+       "sportradar": "583ecb3a-fb46-11e1-82cb-f4ce4684ea4c"
+      }
+     },
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.48",
+       "no": "0.53"
+      },
+      "sell": {
+       "yes": "0.47",
+       "no": "0.52"
+      },
+      "bestBid": "0.47",
+      "bestAsk": "0.48",
+      "lastTradePrice": "0.48"
+     },
+     "expiryDate": "2026-11-22T15:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "If Houston wins the Pro Basketball game between Houston and Denver originally scheduled for November 20, 2026 at 10:00 PM ET, this market will resolve to Yes. Otherwise, it will resolve to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing body, ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules.](https://assets.gemini.com/predictions/terms_and_condi"
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {
+   "aec-nba-hou-den-2026-11-20": {
+    "marketData": {
+     "marketSlug": "aec-nba-hou-den-2026-11-20",
+     "bids": [
+      {
+       "px": {
+        "value": "0.4700",
+        "currency": "USD"
+       },
+       "qty": "134158.9300"
+      },
+      {
+       "px": {
+        "value": "0.4600",
+        "currency": "USD"
+       },
+       "qty": "104076.2400"
+      },
+      {
+       "px": {
+        "value": "0.4500",
+        "currency": "USD"
+       },
+       "qty": "1304.0000"
+      },
+      {
+       "px": {
+        "value": "0.4400",
+        "currency": "USD"
+       },
+       "qty": "14012.6900"
+      },
+      {
+       "px": {
+        "value": "0.4300",
+        "currency": "USD"
+       },
+       "qty": "236.0000"
+      },
+      {
+       "px": {
+        "value": "0.4200",
+        "currency": "USD"
+       },
+       "qty": "4804.9400"
+      },
+      {
+       "px": {
+        "value": "0.4100",
+        "currency": "USD"
+       },
+       "qty": "150.0000"
+      },
+      {
+       "px": {
+        "value": "0.4000",
+        "currency": "USD"
+       },
+       "qty": "1000.0000"
+      },
+      {
+       "px": {
+        "value": "0.3800",
+        "currency": "USD"
+       },
+       "qty": "600.0000"
+      },
+      {
+       "px": {
+        "value": "0.3200",
+        "currency": "USD"
+       },
+       "qty": "230.0000"
+      },
+      {
+       "px": {
+        "value": "0.3100",
+        "currency": "USD"
+       },
+       "qty": "18331.2600"
+      },
+      {
+       "px": {
+        "value": "0.3000",
+        "currency": "USD"
+       },
+       "qty": "32.0100"
+      }
+     ],
+     "offers": [
+      {
+       "px": {
+        "value": "0.4800",
+        "currency": "USD"
+       },
+       "qty": "115506.8000"
+      },
+      {
+       "px": {
+        "value": "0.4900",
+        "currency": "USD"
+       },
+       "qty": "131701.2700"
+      },
+      {
+       "px": {
+        "value": "0.5000",
+        "currency": "USD"
+       },
+       "qty": "3161.5200"
+      },
+      {
+       "px": {
+        "value": "0.5100",
+        "currency": "USD"
+       },
+       "qty": "10670.0000"
+      },
+      {
+       "px": {
+        "value": "0.5200",
+        "currency": "USD"
+       },
+       "qty": "10838.0000"
+      },
+      {
+       "px": {
+        "value": "0.5300",
+        "currency": "USD"
+       },
+       "qty": "4873.0900"
+      },
+      {
+       "px": {
+        "value": "0.5400",
+        "currency": "USD"
+       },
+       "qty": "150.0000"
+      },
+      {
+       "px": {
+        "value": "0.5500",
+        "currency": "USD"
+       },
+       "qty": "26.0000"
+      },
+      {
+       "px": {
+        "value": "0.5600",
+        "currency": "USD"
+       },
+       "qty": "500.0000"
+      },
+      {
+       "px": {
+        "value": "0.5700",
+        "currency": "USD"
+       },
+       "qty": "100.0000"
+      },
+      {
+       "px": {
+        "value": "0.6200",
+        "currency": "USD"
+       },
+       "qty": "17739.0000"
+      },
+      {
+       "px": {
+        "value": "0.8800",
+        "currency": "USD"
+       },
+       "qty": "1.4900"
+      }
+     ],
+     "state": "MARKET_STATE_OPEN",
+     "transactTime": "2026-11-20T06:15:23.282776590Z"
+    }
+   }
+  },
+  "gemini": {
+   "GEMI-NBA-2611210300-HOU-DEN-M-HOU": {
+    "bids": [
+     {
+      "price": "0.47",
+      "amount": "540.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.46",
+      "amount": "2230.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.45",
+      "amount": "900.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.44",
+      "amount": "50.0",
+      "timestamp": "1795155340"
+     }
+    ],
+    "asks": [
+     {
+      "price": "0.48",
+      "amount": "2868.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.49",
+      "amount": "410.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.5",
+      "amount": "2250.0",
+      "timestamp": "1795155340"
+     }
+    ]
+   }
+  }
+ }
+}

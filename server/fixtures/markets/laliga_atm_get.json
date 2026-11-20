@@ -1,0 +1,424 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/atc-lal-get-atm-2026-11-22-atm",
+  "https://api.gemini.com/v1/prediction-markets/events/LALIGA-2611222000-ATM-GET-M",
+  "https://gateway.polymarket.us/v1/markets/atc-lal-get-atm-2026-11-22-atm/book",
+  "https://api.gemini.com/v1/book/GEMI-LALIGA-2611222000-ATM-GET-M-ATM"
+ ],
+ "polymarket": [
+  {
+   "id": "2538706",
+   "slug": "atc-lal-get-atm-2026-11-22-atm",
+   "question": "Will Club Atletico de Madrid win against Getafe CF in the La Liga match scheduled for Nov 22, 2026?",
+   "description": "This market will settle to the winner at the end of 90 minutes plus stoppage time in the Getafe CF vs Club Atlético de Madrid La Liga match scheduled for November 22, 2026 at 3:00PM ET (as of the listing of the event's first instrument). If the match is tied following 90 minutes plus stoppage time, the market will settle to Tie. If the match is delayed, postponed, suspended or otherwise rescheduled to a date and time not within two days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from La Liga.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "drawable_outcome",
+   "sportsMarketType": "soccer_team_full_time_winner",
+   "gameStartTime": "2026-11-22T20:00:00Z",
+   "endDate": "2026-12-06T20:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.6200",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.6300",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.6300",
+     "team": {
+      "name": "Club Atlético de Madrid",
+      "abbreviation": "atm",
+      "league": "lal",
+      "ordering": "home"
+     }
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": "0.38",
+     "team": {
+      "name": "Club Atlético de Madrid",
+      "abbreviation": "atm",
+      "league": "lal",
+      "ordering": "away"
+     }
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "474508",
+   "title": "Atlético vs Getafe",
+   "ticker": "LALIGA-2611222000-ATM-GET-M",
+   "status": "active",
+   "category": "Sports",
+   "template": "sports-game",
+   "startTime": "2026-11-22T20:00:00.000Z",
+   "expiryDate": "2026-11-24T08:00:00.000Z",
+   "sourceDetails": {
+    "agency": "statscore-rest-api",
+    "index": "Soccer"
+   },
+   "participants": [
+    {
+     "id": "1404",
+     "name": "Getafe CF",
+     "abbreviation": "GET",
+     "side": "home"
+    },
+    {
+     "id": "1396",
+     "name": "Atlético Madrid",
+     "abbreviation": "ATM",
+     "side": "away"
+    }
+   ],
+   "description": "Atlético vs Getafe",
+   "volume": "49.64",
+   "contracts": [
+    {
+     "label": "Atlético",
+     "ticker": "ATM",
+     "instrumentSymbol": "GEMI-LALIGA-2611222000-ATM-GET-M-ATM",
+     "status": "active",
+     "marketState": "open",
+     "sportsSide": "away",
+     "prices": {
+      "buy": {
+       "yes": "0.63",
+       "no": "0.38"
+      },
+      "sell": {
+       "yes": "0.62",
+       "no": "0.37"
+      },
+      "bestBid": "0.62",
+      "bestAsk": "0.63",
+      "lastTradePrice": "0.63"
+     },
+     "expiryDate": "2026-11-24T08:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if Atlético wins the LaLiga match between Atlético and Getafe scheduled for November 22, 2026 at 3:00 PM ET, based only on regulation time plus stoppage time and excluding extra time and penalties. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event after regulation time plus stoppage time only. Source Agencies, in order, are the league governing the event (LaLiga), ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts "
+    },
+    {
+     "label": "Tie",
+     "ticker": "D",
+     "instrumentSymbol": "GEMI-LALIGA-2611222000-ATM-GET-M-D",
+     "status": "active",
+     "marketState": "open",
+     "sportsSide": "tie",
+     "prices": {
+      "buy": {
+       "yes": "0.23",
+       "no": "0.78"
+      },
+      "sell": {
+       "yes": "0.22",
+       "no": "0.77"
+      },
+      "bestBid": "0.22",
+      "bestAsk": "0.23"
+     },
+     "expiryDate": "2026-11-24T08:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if the LaLiga match between Getafe and Atlético scheduled for November 22, 2026 at 3:00 PM ET ends in a tie after regulation time plus stoppage time, excluding extra time and penalties. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event after regulation time plus stoppage time only. Source Agencies, in order, are the league governing the event (LaLiga), ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withties, or is disqualified), the Exchange may determine payouts pursuant to t"
+    },
+    {
+     "label": "Getafe",
+     "ticker": "GET",
+     "instrumentSymbol": "GEMI-LALIGA-2611222000-ATM-GET-M-GET",
+     "status": "active",
+     "marketState": "open",
+     "sportsSide": "home",
+     "prices": {
+      "buy": {
+       "yes": "0.15",
+       "no": "0.86"
+      },
+      "sell": {
+       "yes": "0.14",
+       "no": "0.85"
+      },
+      "bestBid": "0.14",
+      "bestAsk": "0.15"
+     },
+     "expiryDate": "2026-11-24T08:00:00.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market resolves to Yes if Getafe wins the LaLiga match between Getafe and Atlético scheduled for November 22, 2026 at 3:00 PM ET, based only on regulation time plus stoppage time and excluding extra time and penalties. Otherwise, it resolves to No. The Underlying is the official result of the specified sporting event after regulation time plus stoppage time only. Source Agencies, in order, are the league governing the event (LaLiga), ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pu"
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {
+   "atc-lal-get-atm-2026-11-22-atm": {
+    "marketData": {
+     "marketSlug": "atc-lal-get-atm-2026-11-22-atm",
+     "bids": [
+      {
+       "px": {
+        "value": "0.6200",
+        "currency": "USD"
+       },
+       "qty": "6477.4200"
+      },
+      {
+       "px": {
+        "value": "0.6100",
+        "currency": "USD"
+       },
+       "qty": "4634.0000"
+      },
+      {
+       "px": {
+        "value": "0.6000",
+        "currency": "USD"
+       },
+       "qty": "1272.0000"
+      },
+      {
+       "px": {
+        "value": "0.5900",
+        "currency": "USD"
+       },
+       "qty": "769.0000"
+      },
+      {
+       "px": {
+        "value": "0.5800",
+        "currency": "USD"
+       },
+       "qty": "3141.0000"
+      },
+      {
+       "px": {
+        "value": "0.5700",
+        "currency": "USD"
+       },
+       "qty": "2347.0000"
+      },
+      {
+       "px": {
+        "value": "0.5600",
+        "currency": "USD"
+       },
+       "qty": "3624.0000"
+      },
+      {
+       "px": {
+        "value": "0.5500",
+        "currency": "USD"
+       },
+       "qty": "2483.0000"
+      },
+      {
+       "px": {
+        "value": "0.5100",
+        "currency": "USD"
+       },
+       "qty": "1058.0000"
+      },
+      {
+       "px": {
+        "value": "0.5000",
+        "currency": "USD"
+       },
+       "qty": "3866.0000"
+      },
+      {
+       "px": {
+        "value": "0.4700",
+        "currency": "USD"
+       },
+       "qty": "17.0000"
+      },
+      {
+       "px": {
+        "value": "0.1500",
+        "currency": "USD"
+       },
+       "qty": "28.0000"
+      }
+     ],
+     "offers": [
+      {
+       "px": {
+        "value": "0.6300",
+        "currency": "USD"
+       },
+       "qty": "4408.4700"
+      },
+      {
+       "px": {
+        "value": "0.6400",
+        "currency": "USD"
+       },
+       "qty": "5267.0100"
+      },
+      {
+       "px": {
+        "value": "0.6500",
+        "currency": "USD"
+       },
+       "qty": "6964.0000"
+      },
+      {
+       "px": {
+        "value": "0.6600",
+        "currency": "USD"
+       },
+       "qty": "3353.0000"
+      },
+      {
+       "px": {
+        "value": "0.6700",
+        "currency": "USD"
+       },
+       "qty": "3028.0000"
+      },
+      {
+       "px": {
+        "value": "0.6800",
+        "currency": "USD"
+       },
+       "qty": "343.0000"
+      },
+      {
+       "px": {
+        "value": "0.6900",
+        "currency": "USD"
+       },
+       "qty": "6741.0000"
+      },
+      {
+       "px": {
+        "value": "0.7000",
+        "currency": "USD"
+       },
+       "qty": "417.0000"
+      },
+      {
+       "px": {
+        "value": "0.7100",
+        "currency": "USD"
+       },
+       "qty": "455.0000"
+      },
+      {
+       "px": {
+        "value": "0.7200",
+        "currency": "USD"
+       },
+       "qty": "6815.0000"
+      },
+      {
+       "px": {
+        "value": "0.7300",
+        "currency": "USD"
+       },
+       "qty": "1179.0000"
+      },
+      {
+       "px": {
+        "value": "0.7600",
+        "currency": "USD"
+       },
+       "qty": "590.0000"
+      }
+     ],
+     "state": "MARKET_STATE_OPEN",
+     "transactTime": "2026-11-20T06:15:24.362479363Z"
+    }
+   }
+  },
+  "gemini": {
+   "GEMI-LALIGA-2611222000-ATM-GET-M-ATM": {
+    "bids": [
+     {
+      "price": "0.62",
+      "amount": "165.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.61",
+      "amount": "10.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.6",
+      "amount": "250.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.59",
+      "amount": "57.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.56",
+      "amount": "91.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.53",
+      "amount": "164.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.5",
+      "amount": "265.0",
+      "timestamp": "1795155340"
+     }
+    ],
+    "asks": [
+     {
+      "price": "0.63",
+      "amount": "510.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.64",
+      "amount": "250.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.66",
+      "amount": "57.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.69",
+      "amount": "91.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.72",
+      "amount": "164.0",
+      "timestamp": "1795155340"
+     },
+     {
+      "price": "0.75",
+      "amount": "204.0",
+      "timestamp": "1795155340"
+     }
+    ]
+   }
+  }
+ }
+}
