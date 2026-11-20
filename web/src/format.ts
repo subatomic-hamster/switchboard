@@ -62,28 +62,31 @@ export function describe(event: SwitchboardEvent): EventLine {
   switch (event.type) {
     case "transfer.sent": {
       const d = event.data;
+      const route = [d.route_id && `${d.route_id} route`, d.eta_s && `about ${duration(d.eta_s)}`]
+        .filter(Boolean)
+        .join(", ");
       return {
         tone: "good",
         label: "Sent",
-        title: `${money(d.amount_usd)} to ${d.payee_label || CHAIN_NAMES[d.to_chain]}`,
-        detail: `${CHAIN_NAMES[d.from_chain]} to ${CHAIN_NAMES[d.to_chain]}${
-          d.route_id ? `, ${d.route_id} route` : ""
-        }${d.eta_s ? `, about ${duration(d.eta_s)}` : ""}`,
+        title: `${money(d.amount_usd)} leaving ${CHAIN_NAMES[d.from_chain]} for ${CHAIN_NAMES[d.to_chain]}`,
+        detail: [d.payee_label && `to ${d.payee_label}`, route].filter(Boolean).join(", "),
       };
     }
     case "transfer.attested":
       return {
         tone: "neutral",
         label: "Attested",
-        title: `${money(event.data.amount_usd)} burned on Arc, waiting to mint on ${CHAIN_NAMES[event.data.to_chain]}`,
-        detail: event.data.detail || event.data.transfer_id,
+        title: `Circle confirmed the burn; minting on ${CHAIN_NAMES[event.data.to_chain]}`,
+        detail:
+          event.data.detail ||
+          (event.data.forwarding ? "Circle will submit the mint." : "Waiting for the mint."),
       };
     case "transfer.arrived":
       return {
         tone: "good",
         label: "Arrived",
-        title: `${money(event.data.amount_usd)} on ${CHAIN_NAMES[event.data.to_chain]}`,
-        detail: event.data.transfer_id,
+        title: `${money(event.data.amount_usd)} arrived on ${CHAIN_NAMES[event.data.to_chain]}`,
+        detail: "",
       };
     case "approval.requested": {
       const d = event.data;
@@ -225,4 +228,59 @@ export function describe(event: SwitchboardEvent): EventLine {
       };
     }
   }
+}
+
+const EVM_HASH = /^0x[0-9a-fA-F]{64}$/;
+const SOLANA_SIG = /^[1-9A-HJ-NP-Za-km-z]{64,90}$/;
+
+/** Explorer link for a real transaction hash on `chain`; null for stub or malformed hashes. */
+export function explorerLink(
+  chain: Chain,
+  hash: string | null | undefined,
+): { name: string; url: string } | null {
+  if (!hash) return null;
+  if (chain === "solana-devnet") {
+    return SOLANA_SIG.test(hash)
+      ? { name: "Solana Explorer", url: `https://explorer.solana.com/tx/${hash}?cluster=devnet` }
+      : null;
+  }
+  if (!EVM_HASH.test(hash)) return null;
+  return chain === "arc-testnet"
+    ? { name: "Arcscan", url: `https://testnet.arcscan.app/tx/${hash}` }
+    : { name: "Etherscan", url: `https://sepolia.etherscan.io/tx/${hash}` };
+}
+
+/** The explorer link for an event: sent is on the source chain, attested is the Arc burn, arrived is the mint. */
+export function eventExplorerLink(event: SwitchboardEvent) {
+  switch (event.type) {
+    case "transfer.sent":
+      return explorerLink(event.data.from_chain, event.data.tx_hash);
+    case "transfer.attested":
+      return explorerLink("arc-testnet", event.data.tx_hash);
+    case "transfer.arrived":
+      return explorerLink(event.data.to_chain, event.data.tx_hash);
+    default:
+      return null;
+  }
+}
+
+/**
+ * Drop a stream.stale=true that is followed by stale=false within a minute: that is the
+ * watchdog on a server restart, not an outage. A longer gap keeps both rows.
+ */
+export function collapseBlips(events: SwitchboardEvent[], windowMs = 60_000): SwitchboardEvent[] {
+  const drop = new Set<number>();
+  let open: SwitchboardEvent | null = null;
+  for (const e of events) {
+    if (e.type !== "stream.stale") continue;
+    if (e.data.stale) {
+      open = e;
+    } else {
+      if (open && Date.parse(e.ts) - Date.parse(open.ts) <= windowMs) {
+        drop.add(open.id).add(e.id);
+      }
+      open = null;
+    }
+  }
+  return drop.size ? events.filter((e) => !drop.has(e.id)) : events;
 }

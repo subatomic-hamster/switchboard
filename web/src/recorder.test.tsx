@@ -59,7 +59,7 @@ describe("FlightRecorder", () => {
     act(() => vi.advanceTimersByTime(1));
     expect(frames.at(-1)?.signals).toHaveLength(1);
     expect(screen.getByRole("status")).toHaveTextContent("Event 1 of 3");
-    expect(screen.getByText(/\$200 to Sam's Solana wallet/)).toBeInTheDocument();
+    expect(screen.getByText(/\$200 leaving \w+ for Solana/)).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(replayDelay(tape[0]!.ts, tape[1]!.ts, 4) + 1));
     expect(frames.at(-1)?.signals).toHaveLength(2);

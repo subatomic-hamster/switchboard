@@ -203,6 +203,15 @@ export function RingView({
                   opacity={pulseStrength}
                 />
               )}
+              {state.inFlight.some((item) => item.node === node.id) && (
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={20}
+                  className="ring-inflight"
+                  data-testid="in-flight"
+                />
+              )}
               <circle cx={point.x} cy={point.y} r={12} className="ring-node" />
               <text
                 x={point.x}
