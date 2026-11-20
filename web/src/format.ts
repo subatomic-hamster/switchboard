@@ -152,7 +152,9 @@ export function describe(event: SwitchboardEvent): EventLine {
             tone: "good",
             label: "Stream live",
             title: "The event stream recovered",
-            detail: "Spending can resume.",
+            detail: event.data.seconds_since_delivery
+              ? `Spending was paused for ${duration(event.data.seconds_since_delivery)}.`
+              : "Spending can resume.",
           };
     case "frozen":
       return event.data.frozen
@@ -269,11 +271,13 @@ export function eventExplorerLink(event: SwitchboardEvent) {
 }
 
 /**
- * Drop a stream.stale=true that is followed by stale=false within a minute: that is the
- * watchdog on a server restart, not an outage. A longer gap keeps both rows.
+ * One row per stream outage. A stale/recovered pair within a minute is the watchdog on a server
+ * restart, so both go. A longer outage keeps only the recovery row, whose
+ * seconds_since_delivery is rewritten to the outage length. An open outage keeps its stale row.
  */
 export function collapseBlips(events: SwitchboardEvent[], windowMs = 60_000): SwitchboardEvent[] {
   const drop = new Set<number>();
+  const paused = new Map<number, number>();
   let open: SwitchboardEvent | null = null;
   for (const e of events) {
     if (e.type !== "stream.stale") continue;
@@ -282,11 +286,21 @@ export function collapseBlips(events: SwitchboardEvent[], windowMs = 60_000): Sw
       if (open) drop.add(e.id);
       else open = e;
     } else {
-      if (open && Date.parse(e.ts) - Date.parse(open.ts) <= windowMs) {
-        drop.add(open.id).add(e.id);
+      if (open) {
+        const gap = Date.parse(e.ts) - Date.parse(open.ts);
+        drop.add(open.id);
+        if (gap <= windowMs) drop.add(e.id);
+        else paused.set(e.id, Math.round(gap / 1000));
       }
       open = null;
     }
   }
-  return drop.size ? events.filter((e) => !drop.has(e.id)) : events;
+  if (!drop.size) return events;
+  return events
+    .filter((e) => !drop.has(e.id))
+    .map((e) =>
+      e.type === "stream.stale" && paused.has(e.id)
+        ? { ...e, data: { ...e.data, seconds_since_delivery: paused.get(e.id) ?? 0 } }
+        : e,
+    );
 }

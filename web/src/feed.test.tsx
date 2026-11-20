@@ -184,11 +184,15 @@ describe("stream blips", () => {
   const stale = (value: boolean, ts: string) =>
     event<EventOf<"stream.stale">>("stream.stale", { stale: value, seconds_since_delivery: 0 }, ts);
 
-  it("hides a stale/recovered pair within a minute, keeps a real outage", () => {
+  it("hides a stale/recovered pair within a minute, shows a real outage as one row", () => {
     const blip = [stale(true, "2026-11-19T12:00:00+00:00"), stale(false, "2026-11-19T12:00:30+00:00")];
     expect(collapseBlips(blip)).toEqual([]);
     const outage = [stale(true, "2026-11-19T12:00:00+00:00"), stale(false, "2026-11-19T12:05:00+00:00")];
-    expect(collapseBlips(outage)).toHaveLength(2);
+    const shown = collapseBlips(outage);
+    expect(shown).toHaveLength(1);
+    expect(shown.map((e) => describeEvent(e).detail)).toEqual(["Spending was paused for 5 min."]);
+    // The input events are not changed.
+    expect(outage.map((e) => e.data)).toContainEqual({ stale: false, seconds_since_delivery: 0 });
     const open = [stale(true, "2026-11-19T12:00:00+00:00")];
     expect(collapseBlips(open)).toBe(open);
     // Two restarts with no recovery between: one row, the first.

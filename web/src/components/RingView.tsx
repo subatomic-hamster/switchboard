@@ -176,11 +176,11 @@ export function RingView({
         })}
 
         <g className="vault">
-          <rect x={CENTER.x - 34} y={CENTER.y - 26} width={68} height={52} rx={10} />
+          <rect x={CENTER.x - 48} y={CENTER.y - 32} width={96} height={64} rx={12} />
           <text x={CENTER.x} y={CENTER.y - 2} textAnchor="middle" className="vault-label">
             Vault
           </text>
-          <text x={CENTER.x} y={CENTER.y + 14} textAnchor="middle" className="node-sub">
+          <text x={CENTER.x} y={CENTER.y + 22} textAnchor="middle" className="node-sub">
             {frozen ? "frozen" : stale ? "paused" : "on Arc"}
           </text>
         </g>
