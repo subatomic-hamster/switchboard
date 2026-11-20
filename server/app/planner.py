@@ -26,6 +26,7 @@ from sqlmodel import col, select
 from app.config import FIXTURES_DIR
 from app.context import AppContext
 from app.db import LedgerRow, PlanRow, to_micro, utcnow
+from app.demo_desk import spoken_buy
 from app.events import StoredEvent
 from app.intent import IntentError, IntentParser
 from app.schemas import (
@@ -36,6 +37,7 @@ from app.schemas import (
     ExecuteResponse,
     ExecuteStatus,
     IntentResponse,
+    MarketBuyIntent,
     MarketMoveIntent,
     Outcome,
     Reason,
@@ -290,6 +292,20 @@ class Planner:
 
     async def create_plan(self, text: str, source: str = "user") -> IntentResponse:
         """Parse the sentence, plan routes, store the plan. Nothing is executed."""
+        demo = self._ctx.demo
+        if demo is not None:
+            if (buy := await demo.parse_buy(text)) is not None:
+                row = PlanRow(created=utcnow(), text=text, kind="market_buy", parser="rules")
+                row.source = source
+                row.request_json = buy.model_dump_json()
+                return IntentResponse(
+                    plan_id=self._save(row),
+                    kind="market_buy",
+                    market_buy=buy,
+                    spoken_quote=spoken_buy(buy),
+                    parser="rules",
+                )
+            text = demo.normalize_move(text)
         parsed = await self._parser.parse(text)
         row = PlanRow(created=utcnow(), text=text, kind=parsed.kind, parser=parsed.parser)
         row.source = source
@@ -348,6 +364,8 @@ class Planner:
         """Attach a market slug when the owner's words name a market we hold a listing for."""
         if move.slug:
             return move
+        if self._ctx.demo is not None and (slug := self._ctx.demo.slug_for(move.market_hint)):
+            return move.model_copy(update={"slug": slug})
         hint_words = {word for word in move.market_hint.lower().split() if len(word) > 2}
         for market in self._ctx.markets.listing():
             haystack = f"{market.title} {market.kind} {market.slug}".lower()
@@ -387,6 +405,17 @@ class Planner:
         though the vault would allow it (see `app.holds`); the vault is asked after a yes."""
         ctx = self._ctx
         row = self._load(plan_id)
+        if row.kind == "market_buy" and ctx.demo is not None:
+            if row.status != "quoted":
+                raise PlanError(f"this plan was already run (status: {row.status})")
+            filled, detail = await ctx.demo.fill_buy(
+                MarketBuyIntent.model_validate_json(row.request_json)
+            )
+            if not filled:
+                raise PlanError(detail)
+            row.status = "done"
+            self._update(row)
+            return ExecuteResponse(status=ExecuteStatus.EXECUTING, detail=detail)
         if row.kind != "transfer":
             raise PlanError("this plan is a market move; use the markets panel to run it")
         if row.status != "quoted":

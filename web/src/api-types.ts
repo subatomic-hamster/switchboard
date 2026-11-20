@@ -380,6 +380,128 @@ export interface paths {
         patch: operations["connector_update_api_connectors__connector_id__patch"];
         trace?: never;
     };
+    "/api/demo/insight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo Insight */
+        get: operations["demo_insight_api_demo_insight_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/offer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Demo Offer */
+        post: operations["demo_offer_api_demo_offer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/portfolio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Demo Portfolio
+         * @description The linked account's positions and the scripted ones, with live prices.
+         */
+        get: operations["demo_portfolio_api_demo_portfolio_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo Recent */
+        get: operations["demo_recent_api_demo_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Demo Reset */
+        post: operations["demo_reset_api_demo_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/settle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Demo Settle */
+        post: operations["demo_settle_api_demo_settle_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/demo/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo Suggestions */
+        get: operations["demo_suggestions_api_demo_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/desk/brief": {
         parameters: {
             query?: never;
@@ -475,6 +597,26 @@ export interface paths {
          * @description Local only. Hold USDC for a recipient with no wallet; returns the claim secret and link.
          */
         post: operations["create_api_escrow_create_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/escrow/peek": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Peek
+         * @description Public: the secret is the credential. Shows the claim page the amount and expiry.
+         */
+        post: operations["peek_api_escrow_peek_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2036,6 +2178,219 @@ export interface components {
             outcome: components["schemas"]["Outcome"];
             reason?: components["schemas"]["Reason"] | null;
         };
+        /** DemoAccount */
+        DemoAccount: {
+            /**
+             * Linked
+             * @default true
+             */
+            linked: boolean;
+            /** Name */
+            name: string;
+            /** Profile Url */
+            profile_url: string;
+            /**
+             * Venue
+             * @default Polymarket
+             */
+            venue: string;
+            /** Wallet */
+            wallet: string;
+        };
+        /** DemoAction */
+        DemoAction: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Asset
+             * @default USDC
+             */
+            asset: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /**
+             * From
+             * @default
+             */
+            from: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "send" | "receive" | "bet" | "move" | "swap" | "win";
+            /** Title */
+            title: string;
+            /**
+             * To
+             * @default
+             */
+            to: string;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+        };
+        /** DemoAdjacent */
+        DemoAdjacent: {
+            /** Price */
+            price?: number | null;
+            /** Symbol */
+            symbol: string;
+            /** Title */
+            title: string;
+            /** Venue */
+            venue: string;
+        };
+        /** DemoBalance */
+        DemoBalance: {
+            /** Place */
+            place: string;
+            /** Usd */
+            usd: number;
+        };
+        /** DemoCheck */
+        DemoCheck: {
+            /** Detail */
+            detail: string;
+            /** Field */
+            field: string;
+            /** Same */
+            same: boolean;
+        };
+        /** DemoInsight */
+        DemoInsight: {
+            /** Alternative */
+            alternative?: string | null;
+            /** Body */
+            body: string;
+            /** Checks */
+            checks?: components["schemas"]["DemoCheck"][];
+            /** Headline */
+            headline: string;
+            /** Model */
+            model: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "grok" | "fallback";
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "go" | "against" | "neutral";
+        };
+        /** DemoOffer */
+        DemoOffer: {
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Headline */
+            headline: string;
+            /** Rebate Pct */
+            rebate_pct: number;
+            /** Venue */
+            venue: string;
+        };
+        /** DemoPortfolio */
+        DemoPortfolio: {
+            account: components["schemas"]["DemoAccount"] | null;
+            /** Balances */
+            balances: components["schemas"]["DemoBalance"][];
+            offer: components["schemas"]["DemoOffer"] | null;
+            /** Positions */
+            positions: components["schemas"]["DemoPosition"][];
+        };
+        /** DemoPosition */
+        DemoPosition: {
+            adjacent?: components["schemas"]["DemoAdjacent"] | null;
+            /** Avg Price */
+            avg_price: number;
+            /** Contracts */
+            contracts: number;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Id */
+            id: string;
+            /** Pnl Usd */
+            pnl_usd: number;
+            /** Price */
+            price: number;
+            /** Side */
+            side: string;
+            /** Slug */
+            slug: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "won" | "lost" | "moved";
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Value Usd */
+            value_usd: number;
+            /**
+             * Venue
+             * @enum {string}
+             */
+            venue: "Polymarket US" | "Polymarket" | "Gemini";
+        };
+        /** DemoRecent */
+        DemoRecent: {
+            /** Actions */
+            actions: components["schemas"]["DemoAction"][];
+        };
+        /** DemoSuggestion */
+        DemoSuggestion: {
+            /** Label */
+            label: string;
+            /** Text */
+            text: string;
+            /** Why */
+            why: string;
+        };
+        /** DemoSuggestions */
+        DemoSuggestions: {
+            /** Suggestions */
+            suggestions: components["schemas"]["DemoSuggestion"][];
+        };
+        /**
+         * DemoUpdatedData
+         * @description Demo mode only: something on the scripted stage changed (see app/demo_desk.py).
+         */
+        DemoUpdatedData: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Title */
+            title: string;
+        };
+        /** DemoUpdatedEvent */
+        DemoUpdatedEvent: {
+            data: components["schemas"]["DemoUpdatedData"];
+            /** Id */
+            id: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "demo.updated";
+        };
         /** EscrowCreated */
         EscrowCreated: {
             /** Claim Hash */
@@ -2079,6 +2434,21 @@ export interface components {
              */
             to: string;
         };
+        /**
+         * EscrowPeek
+         * @description What the holder of a claim link may see: no refund address, no id.
+         */
+        EscrowPeek: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Expiry
+             * Format: date-time
+             */
+            expiry: string;
+            /** Settled */
+            settled: boolean;
+        };
         /** EscrowStatus */
         EscrowStatus: {
             /** Amount Usd */
@@ -2114,7 +2484,7 @@ export interface components {
         /** EventHistory */
         EventHistory: {
             /** Events */
-            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferAttestedEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"] | components["schemas"]["EscrowUpdatedEvent"] | components["schemas"]["PaymentUpdatedEvent"])[];
+            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferAttestedEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"] | components["schemas"]["EscrowUpdatedEvent"] | components["schemas"]["PaymentUpdatedEvent"] | components["schemas"]["DemoUpdatedEvent"])[];
         };
         /** ExecuteRequest */
         ExecuteRequest: {
@@ -2289,7 +2659,8 @@ export interface components {
              * @default transfer
              * @enum {string}
              */
-            kind: "transfer" | "market_move";
+            kind: "transfer" | "market_move" | "market_buy";
+            market_buy?: components["schemas"]["MarketBuyIntent"] | null;
             market_move?: components["schemas"]["MarketMoveIntent"] | null;
             /**
              * Parser
@@ -2401,6 +2772,32 @@ export interface components {
             /** Title */
             title: string;
             track_record: components["schemas"]["TrackRecord"];
+        };
+        /**
+         * MarketBuyIntent
+         * @description Demo mode: buy into a market. Priced from the live ask; nothing is really ordered.
+         */
+        MarketBuyIntent: {
+            /** Amount Usd */
+            amount_usd: number;
+            /** Contracts */
+            contracts: number;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Fee Usd */
+            fee_usd: number;
+            /** From Place */
+            from_place: string;
+            /** Price */
+            price: number;
+            /** Side */
+            side: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Venue */
+            venue: string;
         };
         /**
          * MarketListing
@@ -2735,6 +3132,13 @@ export interface components {
              * @enum {string}
              */
             type: "payment.updated";
+        };
+        /** PeekEscrow */
+        PeekEscrow: {
+            /** Escrow Id */
+            escrow_id: string;
+            /** Secret */
+            secret: string;
         };
         /** Policy */
         Policy: {
@@ -4009,6 +4413,157 @@ export interface operations {
             };
         };
     };
+    demo_insight_api_demo_insight_get: {
+        parameters: {
+            query: {
+                position_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoInsight"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_offer_api_demo_offer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+        };
+    };
+    demo_portfolio_api_demo_portfolio_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoPortfolio"];
+                };
+            };
+        };
+    };
+    demo_recent_api_demo_recent_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoRecent"];
+                };
+            };
+        };
+    };
+    demo_reset_api_demo_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+        };
+    };
+    demo_settle_api_demo_settle_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkResponse"];
+                };
+            };
+        };
+    };
+    demo_suggestions_api_demo_suggestions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoSuggestions"];
+                };
+            };
+        };
+    };
     desk_brief_api_desk_brief_get: {
         parameters: {
             query: {
@@ -4147,6 +4702,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EscrowCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    peek_api_escrow_peek_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeekEscrow"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EscrowPeek"];
                 };
             };
             /** @description Validation Error */

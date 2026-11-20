@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from collections.abc import Awaitable, Callable
 from decimal import Decimal
@@ -132,10 +133,17 @@ class RealMarkets:
             return await self._sports(pm_market)
         if isinstance(event, PriceEvent) and pm.time is not None:
             ticker = f"{event.asset.upper()}{pm.time:%y%m%d%H%M}"
+            if event.style == "up_down":
+                # Gemini's interval series: BTC05M + the window's end, e.g. BTC05M2611201505.
+                horizon = str((pm_market.get("assetPriceTerms") or {}).get("horizon", ""))
+                m = re.fullmatch(r"(\d+)m", horizon.lower())
+                ticker = f"{event.asset.upper()}{int(m[1]):02d}M{pm.time:%y%m%d%H%M}" if m else ""
             try:
-                found = [
-                    await self._cached(f"ge:{ticker}", 60, lambda: self._gem.get_event(ticker))
-                ]
+                found = (
+                    [await self._cached(f"ge:{ticker}", 60, lambda: self._gem.get_event(ticker))]
+                    if ticker
+                    else []
+                )
             except UnknownMarket:
                 found = []
             return evaluate(pm_market, found)

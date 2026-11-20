@@ -25,7 +25,8 @@ OUTPUT = WEB_DIR / "src" / "api-types.ts"
 
 def openapi_document() -> str:
     # Built with blank settings and an in-memory database: the document depends on code only.
-    app = create_app(Settings(_env_file=None), Database(None))
+    # Demo mode on, so the /api/demo routes and their types are part of the document.
+    app = create_app(Settings(_env_file=None, demo_mode=True), Database(None))
     return json.dumps(app.openapi(), indent=2, sort_keys=True)
 
 

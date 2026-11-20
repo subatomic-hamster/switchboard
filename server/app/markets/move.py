@@ -156,9 +156,11 @@ class MoveEngine:
             buy_price = gem_book.best_ask.price
             notional = max(sell_price, buy_price) * request.qty
             limit = self._settings.effective_max_order_usd
-            if notional > limit:
-                raise GuardRefused(f"order of ${notional:.2f} is over MAX_ORDER_USD (${limit})")
             dry_run = not self._settings.trading_enabled
+            # Demo mode moves a scripted 320-contract position as a dry run: nothing is sent,
+            # so the real-money cap has nothing to guard. It still applies to any live order.
+            if notional > limit and not (dry_run and self._settings.demo_mode):
+                raise GuardRefused(f"order of ${notional:.2f} is over MAX_ORDER_USD (${limit})")
             if not dry_run and not self.keys_present:
                 raise GuardRefused(
                     "TRADING_ENABLED is true but the Gemini and Polymarket US keys are not all set"

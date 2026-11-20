@@ -59,11 +59,16 @@ def cents(price: Decimal) -> str:
     return f"{value:f} cents"
 
 
-def options_for(quote: MarketQuoteResponse, qty: Decimal) -> list[MoveOption]:
-    """Sell now (taker on both sides) versus post an ask and wait (maker on the sale)."""
+def options_for(
+    quote: MarketQuoteResponse, qty: Decimal, rebate_pct: Decimal | None = None
+) -> list[MoveOption]:
+    """Sell now (taker on both sides) versus post an ask and wait (maker on the sale).
+    `rebate_pct` (demo mode's Gemini offer) is paid back on the Gemini buy leg."""
     buy_fee = quote.buy.taker_fee
-    take_cost = (quote.buy.ask - quote.sell.bid) * qty + quote.sell.taker_fee + buy_fee
-    post_cost = (quote.buy.ask - quote.sell.post_at) * qty + buy_fee
+    rebate = quote.buy.ask * qty * rebate_pct / 100 if rebate_pct else Decimal(0)
+    note = f", {rebate_pct.normalize():f}% rebate" if rebate_pct else ""
+    take_cost = (quote.buy.ask - quote.sell.bid) * qty + quote.sell.taker_fee + buy_fee - rebate
+    post_cost = (quote.buy.ask - quote.sell.post_at) * qty + buy_fee - rebate
     sale_value = quote.sell.bid * qty
 
     def pct(cost: Decimal) -> Decimal:
@@ -72,7 +77,7 @@ def options_for(quote: MarketQuoteResponse, qty: Decimal) -> list[MoveOption]:
     return [
         MoveOption(
             mode="take",
-            label="Sell now and pay the fee",
+            label=f"Sell now and pay the fee{note}",
             sell_price=quote.sell.bid,
             buy_price=quote.buy.ask,
             fees_usd=(quote.sell.taker_fee + buy_fee).quantize(CENT),
@@ -81,7 +86,7 @@ def options_for(quote: MarketQuoteResponse, qty: Decimal) -> list[MoveOption]:
         ),
         MoveOption(
             mode="post",
-            label="Post an ask and wait",
+            label=f"Post an ask and wait{note}",
             sell_price=quote.sell.post_at,
             buy_price=quote.buy.ask,
             fees_usd=buy_fee.quantize(CENT),
@@ -183,7 +188,7 @@ class MarketDesk:
         opinion: Opinion | None = None
         if match.verdict == "match":
             quote = await ctx.markets.quote("polymarket", slug, qty)
-            options = options_for(quote, qty)
+            options = options_for(quote, qty, ctx.demo.rebate_pct() if ctx.demo else None)
             answer = bid_answer(quote, listing, qty)
             opinion = ctx.forecaster.latest_for(slug, all_in_buy_price(quote, qty))
         families = ctx.forecaster.families()
