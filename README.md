@@ -279,12 +279,15 @@ Known limits of the AgentPhone call:
   voicemail would record. The word is never spoken by the server.
 
 The dashboard stays on the machine running the server. AgentPhone, ElevenLabs and the bots
-reach the server through a public tunnel, so only four prefixes are served to requests from
-outside, and each checks its own credential: `/api/voice/` (bearer token for the voice tools,
-HMAC for the two call webhooks), `/api/bots/` (bearer token), `/api/hooks/` (HMAC) and
-`/api/health`. Everything else, including the route that shows the word, is refused
-unless the request was addressed to localhost and did not come through a proxy
-(`server/app/local_only.py`).
+reach the server through a public tunnel, so only a short list of prefixes is served to
+requests from outside, and each checks its own credential: `/api/voice/` (bearer token for the
+voice tools, HMAC for the two call webhooks), `/api/bots/` (bearer token), `/api/connect/`
+(one token per connected assistant), `/api/hooks/` (HMAC), `/api/escrow/claim` and
+`/api/escrow/peek` (the link's secret), and the claim page with its script (`/claim`,
+`/assets/`, no data), plus `/api/health`. Everything else, including the route that shows the
+word, is refused unless the request was addressed to localhost and did not come through a
+proxy. A state-changing request that another web page sends from the owner's own browser is
+refused too, by its `Sec-Fetch-Site` and `Origin` headers (`server/app/local_only.py`).
 
 Against rubber-stamping: the dashboard shows the approval rate and warns when every request
 has been approved, and calls are capped per day.
