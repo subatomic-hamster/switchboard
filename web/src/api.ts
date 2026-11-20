@@ -62,7 +62,29 @@ function post<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: "POST", body: JSON.stringify(body) });
 }
 
+export interface EscrowCreated {
+  escrow_id: string;
+  secret: string;
+  claim_link: string;
+  expiry: string;
+  tx_hash: string;
+}
+
+export interface EscrowPeek {
+  amount_usd: number;
+  expiry: string;
+  settled: boolean;
+}
+
 export const api = {
+  createEscrow: (amountUsd: number, expiryS: number) =>
+    post<EscrowCreated>("/api/escrow/create", { amount_usd: amountUsd, expiry_s: expiryS }),
+  refundEscrow: (escrowId: string) =>
+    post<{ tx_hash: string }>(`/api/escrow/${encodeURIComponent(escrowId)}/refund`, {}),
+  peekEscrow: (escrowId: string, secret: string) =>
+    post<EscrowPeek>("/api/escrow/peek", { escrow_id: escrowId, secret }),
+  claimEscrow: (escrowId: string, secret: string, to: string) =>
+    post<{ tx_hash: string }>("/api/escrow/claim", { escrow_id: escrowId, secret, to }),
   intent: (text: string) => post<IntentResponse>("/api/intent", { text }),
   execute: (planId: string, routeId: "cheapest" | "fastest") =>
     post<ExecuteResponse>(`/api/plans/${encodeURIComponent(planId)}/execute`, {
