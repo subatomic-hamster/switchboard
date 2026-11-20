@@ -27,6 +27,9 @@ offer, and Settle Rockets as a win.
    this hour's up-or-down market, so there is no waiting for a window to open; avoid the last
    few minutes of the hour, when the price is all but decided. (The first seconds of an hour,
    before the new market is listed, say so.)
+   Also: "Place a bet on DOWN on the current BTC up or down 5m market" (suggestion "Bet Down on
+   BTC 5m") buys $30 of Down in the five-minute window in progress, from the Ethereum wallet. Down
+   costs one dollar less the best Up bid. It also works on a call.
 3. Controls → Demo → Show the Gemini offer (3% rebate for 10 minutes). A banner and new
    suggestions appear on Home.
 4. "Move my Bitcoin hourly position to Gemini" → Research says **against**: Gemini has no
