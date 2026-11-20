@@ -118,3 +118,8 @@ class AnchorPort(Protocol):
     """
 
     async def commit(self, commitment_hex: str, label: str) -> str: ...
+
+    async def reveal(self, anchor_ref: str, preimage: bytes) -> None:
+        """Publish the preimage of an earlier `commit`, identified by the reference it returned.
+        A reference this anchor did not issue is ignored."""
+        ...

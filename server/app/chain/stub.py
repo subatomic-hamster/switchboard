@@ -249,6 +249,9 @@ class StubAnchor:
         self.commitments.append((commitment_hex, label))
         return f"stub-anchor:{len(self.commitments)}"
 
+    async def reveal(self, anchor_ref: str, preimage: bytes) -> None:
+        """Nothing onchain to reveal."""
+
 
 router = APIRouter(prefix="/api", tags=["chain (STUB)"])
 Ctx = Annotated[AppContext, Depends(get_ctx)]

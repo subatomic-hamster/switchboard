@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     agent_private_key: str = ""
     approver_private_key: str = ""
     quicknode_stream_secret: str = ""
+    # Ledger (forecast receipts, trade records) and Escrow (claim links, payment requests).
+    # Blank keeps the stub anchor and leaves the escrow routes answering 503.
+    ledger_address: str = ""
+    escrow_address: str = ""
 
     # policy mirror (the contract is the authority once P1's vault is wired in)
     policy_transfer_cap_usd: Decimal = Decimal("200")
