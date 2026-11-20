@@ -101,7 +101,7 @@ def position(title: str, value: float, **extra: Any) -> dict[str, Any]:
         "total_pnl": 10.0,
         "slug": title.lower().replace(" ", "-"),
         "event_slug": "ev-" + title.lower().replace(" ", "-"),
-        "end_date": "2026-12-01",
+        "end_date": "2099-12-01",
         "status": "OPEN",
         **extra,
     }
@@ -300,6 +300,23 @@ def test_similar_gemini_market_needs_two_shared_words() -> None:
     hit = find_similar("Houston Rockets vs. Denver Nuggets", events)
     assert hit is not None and hit.symbol == "S1" and hit.price == Decimal("0.4")
     assert find_similar("Will the Rockets win", events) is None  # one shared word
+
+
+def test_similar_market_picks_the_same_kind_of_contract() -> None:
+    events = [
+        {
+            "title": "Toronto Raptors vs Detroit Pistons",
+            "contracts": [
+                {"label": "Total Points: More than 193.5", "instrumentSymbol": "TOT"},
+                {"label": "Point Spread: Detroit by 1.5", "instrumentSymbol": "SPR"},
+                {"label": "Toronto", "instrumentSymbol": "WIN"},
+            ],
+        }
+    ]
+    pick = lambda title: getattr(find_similar(title, events), "symbol", None)  # noqa: E731
+    assert pick("Raptors vs. Pistons") == "WIN"
+    assert pick("Spread: Raptors Pistons (-4.5)") == "SPR"
+    assert pick("Raptors vs. Pistons: O/U 220.5") == "TOT"
 
 
 def test_current_window_rolls_over_with_under_a_minute_left() -> None:

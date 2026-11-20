@@ -301,7 +301,21 @@ def find_similar(title: str, events: list[dict[str, Any]]) -> DemoAdjacent | Non
     if best is None or not best[1].get("contracts"):
         return None
     event = best[1]
-    contract = event["contracts"][0]
+    # Pick the contract of the same kind as the position: a spread, a total, or the winner.
+    lowered = title.lower()
+    kind = (
+        "spread"
+        if "spread" in lowered
+        else "total"
+        if "o/u" in lowered or "total" in lowered
+        else ""
+    )
+
+    def kind_of(contract: dict[str, Any]) -> str:
+        label = str(contract.get("label", "")).lower()
+        return "spread" if "spread" in label else "total" if "total" in label else ""
+
+    contract = next((c for c in event["contracts"] if kind_of(c) == kind), event["contracts"][0])
     prices = contract.get("prices") or {}
     raw = prices.get("bestBid") or prices.get("lastTradePrice")
     return DemoAdjacent(
@@ -504,7 +518,12 @@ class DemoDesk:
                 log.warning("demo: linked account unavailable: %s", exc)
                 self._linked_at = now  # do not retry on every poll
                 return
-            top = sorted(raw, key=lambda p: _dec(p.get("current_value")), reverse=True)[:LINKED_MAX]
+            # The data API keeps some settled markets as OPEN; drop any whose end date has passed.
+            today = datetime.now(UTC).date().isoformat()
+            live = [p for p in raw if str(p.get("end_date") or "9999")[:10] >= today]
+            top = sorted(live, key=lambda p: _dec(p.get("current_value")), reverse=True)[
+                :LINKED_MAX
+            ]
             if time.monotonic() - self._events_at > EVENTS_TTL_S:
                 self._ctx.tasks.spawn(self._load_events(), "demo-events")
                 self._events_at = time.monotonic()
@@ -647,21 +666,8 @@ class DemoDesk:
                     why="Your Rockets winnings just landed in your Ethereum wallet.",
                 )
             )
-        if len(out) < 4 and self._linked and self._linked.positions:
-            top = max(
-                self._linked.positions,
-                key=lambda p: (p.pnl or Decimal(0)) / max(p.avg * p.contracts, CENT),
-            )
-            short = top.title[:44].rstrip()
-            profit = (top.pnl or Decimal(0)) > Decimal("0.25") * top.avg * top.contracts
-            out.append(
-                DemoSuggestion(
-                    label=f"{'Take profit on' if profit else 'Research'} {short}",
-                    text=f"{'Take profit on' if profit else 'Research'} my {short} position",
-                    why="From your linked Polymarket account: "
-                    + ("it is well in profit." if profit else "your largest open position."),
-                )
-            )
+        # Every chip is a sentence the intent parser can act on; linked positions are researched
+        # from their cards instead.
         return DemoSuggestions(suggestions=out[:4])
 
     # ------------------------------------------------------------------ actions
