@@ -49,14 +49,16 @@ function TrackRecordLine({ record }: { record: TrackRecord }) {
 }
 
 function OpinionBlock({ opinion }: { opinion: Opinion }) {
+  const label = opinion.stance === "hold" ? "I'd hold" : "Moving is defensible";
+  // The spoken summary opens with the stance; the mark already shows it.
+  const summary = opinion.summary.startsWith(`${label}.`)
+    ? opinion.summary.slice(label.length + 1).trimStart()
+    : opinion.summary;
   return (
     <div className="opinion">
       <div className="opinion-head">
-        <StatusMark
-          tone={opinion.stance === "hold" ? "warning" : "good"}
-          label={opinion.stance === "hold" ? "I'd hold" : "Moving is defensible"}
-        />
-        <span>{opinion.summary}</span>
+        <StatusMark tone={opinion.stance === "hold" ? "warning" : "good"} label={label} />
+        <span>{summary}</span>
       </div>
       <details className="fold">
         <summary>What each model said</summary>
