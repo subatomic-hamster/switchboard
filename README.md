@@ -775,6 +775,7 @@ secret and venue keys). Add the others by hand, with the names above, which are 
 | [docs/prompts/](docs/prompts/) | Prompts for unattended Claude Code runs on each half |
 | [bots/routines.md](bots/routines.md) | Grok Bot routines |
 | [OVERNIGHT_LOG.md](OVERNIGHT_LOG.md) | What was built for the voice and surface half, what is blocked, decisions, and what needs a person |
+| [docs/demo-runbook.md](docs/demo-runbook.md) | The demo, beat by beat: what to say, what should happen, pre-flight checks |
 | [OVERNIGHT_LOG_P1.md](OVERNIGHT_LOG_P1.md) | The money half: deployed addresses, live checks with hashes, decisions, blocked items, how to run |
 | [server/app/chain/RAILS.md](server/app/chain/RAILS.md) | Research on CCTP, Gateway and StableFX: what is verified, inferred, unknown, with sources |
 | [server/fixtures/markets/README.md](server/fixtures/markets/README.md) | Recorded market fixtures and where each came from |
