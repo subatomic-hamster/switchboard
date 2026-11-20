@@ -29,6 +29,7 @@ from app.demo_desk import (
     search_terms,
 )
 from app.events import _sse
+from app.forecast import ForecastAnswer, Forecaster, ModelSpec
 from app.main import create_app
 from app.markets.match import evaluate
 from tests.conftest import make_settings
@@ -259,6 +260,25 @@ async def test_bet_down_on_the_current_btc_5m_market() -> None:
         # Up is still the side when the sentence says only "up or down".
         plan = await post(s, "/api/intent", {"text": "bet 10 dollars on the btc up or down 5m"})
         assert plan["market_buy"]["side"] == "Up" and plan["market_buy"]["price"] == 0.16
+
+
+@respx.mock
+async def test_forecasting_models_get_the_game_notes() -> None:
+    asked: list[str] = []
+
+    async def model(question: str) -> ForecastAnswer:
+        asked.append(question)
+        return ForecastAnswer(probability=0.45, rationale="Sengun may sit.")
+
+    async with stage() as s:
+        await s.ctx.forecaster.aclose()
+        s.ctx.forecaster = Forecaster(
+            s.ctx, models=[ModelSpec(f, f"{f}-test", model) for f in ("a", "b", "c")]
+        )
+        await s.ctx.markets.refresh()  # type: ignore[attr-defined]
+        await post(s, "/api/forecasts", {"slug": NBA, "qty": 4})
+        assert len(asked) == 3
+        assert all("Background notes:" in q and "Sengun questionable" in q for q in asked)
 
 
 async def offer_and_move_rockets(s: Stage) -> None:

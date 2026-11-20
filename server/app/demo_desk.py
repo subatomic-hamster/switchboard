@@ -44,6 +44,19 @@ DATA_API = "https://data-api.polymarket.com"
 GROK_MODEL = "x-ai/grok-4.7"
 GROK_TIMEOUT_S = 8.0
 NBA = "aec-nba-hou-den-2026-11-20"
+# What the forecasting models are told about a scripted game, beyond its price. From the
+# published injury reports of Nov 19-20, 2026 (Heavy, HoopsHype, Athlon); update for a new game.
+GAME_NOTES = {
+    NBA: (
+        "- The game is at Ball Arena in Denver: the Rockets are the away team.\n"
+        "- Rockets injury report: Alperen Sengun questionable (left eye corneal abrasion; coach "
+        "Ime Udoka unsure he plays), Steven Adams questionable (right quadriceps contusion), "
+        "Clint Capela out (sprained right ankle, a 10th straight game missed).\n"
+        "- If Sengun and Adams both sit, Houston is badly short at center against Nikola Jokic.\n"
+        "- Nuggets injury report: Julian Strawther out (left knee sprain).\n"
+        "- This season Houston is 10-5 against the spread, Denver 5-7."
+    ),
+}
 ATM = "atc-lal-get-atm-2026-11-22-atm"
 ATM_SYMBOL = "GEMI-LALIGA-2611222000-ATM-GET-M-ATM"
 BTC_PREFIX = "cpc-btc-updown-1h-"
@@ -932,6 +945,11 @@ class DemoDesk:
             if score and (best is None or score > best[0]):
                 best = (score, p.slug)
         return best[1] if best else None
+
+    @staticmethod
+    def notes_for(slug: str) -> str | None:
+        """Background the forecasting models get for a scripted market (`app.forecast`)."""
+        return GAME_NOTES.get(slug)
 
     def held(self, slug: str) -> _Pos | None:
         """The open scripted Polymarket US position in this market, if any."""
