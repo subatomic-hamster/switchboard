@@ -273,6 +273,7 @@ def test_demo_mode_overrides_real_rails_settings() -> None:
     assert settings.policy_transfer_cap_usd == Decimal("500")
     assert settings.policy_daily_budget_usd == Decimal("2000")
     assert settings.max_calls_per_day == 50
+    assert settings.approval_expiry_s == 300
     assert make_settings(use_real_transfers=True).use_real_transfers  # demo off: untouched
 
 

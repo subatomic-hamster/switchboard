@@ -183,6 +183,8 @@ class Settings(BaseSettings):
             self.policy_transfer_cap_usd = Decimal("500")
             self.policy_daily_budget_usd = Decimal("2000")
             self.max_calls_per_day = 50
+            # Long enough to answer the phone and say the amount and the word on stage.
+            self.approval_expiry_s = 300
         return self
 
     @property
