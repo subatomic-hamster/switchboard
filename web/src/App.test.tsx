@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { App } from "./App";
@@ -6,6 +6,7 @@ import { event, pendingApproval, stats } from "./test-fixtures";
 import type { ApprovalView, EventOf } from "./types";
 
 let approvals: ApprovalView[] = [];
+let stale = false;
 const posts: { url: string; body: unknown }[] = [];
 
 class FakeSource {
@@ -28,6 +29,7 @@ class FakeSource {
 
 beforeEach(() => {
   approvals = [];
+  stale = false;
   posts.length = 0;
   window.location.hash = "";
   vi.stubGlobal("EventSource", FakeSource);
@@ -47,7 +49,7 @@ beforeEach(() => {
         );
       }
       const bodies: Record<string, unknown> = {
-        "/api/stats": stats,
+        "/api/stats": { ...stats, stream_stale: stale },
         "/api/approvals": { approvals },
         "/api/wallets": { wallets: [] },
       };
@@ -60,6 +62,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 test("loads stored history into the feed on start", async () => {
+  window.location.hash = "#activity";
   render(<App />);
   expect(screen.getByText("Switchboard")).toBeInTheDocument();
   expect(await screen.findByText("The vault is frozen")).toBeInTheDocument();
@@ -100,6 +103,22 @@ test("Freeze is in the header on every tab and freezes the vault", async () => {
   await user.click(within(screen.getByRole("navigation", { name: "Main" })).getByRole("link", { name: "Markets" }));
   await user.click(await within(header).findByRole("button", { name: "Freeze" }));
   expect(posts).toContainEqual({ url: "/api/freeze", body: { frozen: true } });
+});
+
+test("the status chip is hidden when all is well and shown when spending is paused", async () => {
+  stale = false;
+  const { unmount } = render(<App />);
+  await screen.findByRole("button", { name: "Freeze" });
+  act(() => FakeSource.last?.onopen?.());
+  await waitFor(() => expect(screen.queryByText("Connecting…")).not.toBeInTheDocument());
+  expect(screen.queryByText("Live")).not.toBeInTheDocument();
+  expect(screen.queryByText("Paused")).not.toBeInTheDocument();
+  unmount();
+
+  stale = true;
+  render(<App />);
+  act(() => FakeSource.last?.onopen?.());
+  expect(await screen.findByText("Paused")).toBeInTheDocument();
 });
 
 test("a Needs-you card appears when an approval is requested, and not before", async () => {

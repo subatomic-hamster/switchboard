@@ -1,9 +1,11 @@
 import { type FormEvent, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api";
-import { CHAIN_NAMES, duration, money, REASON_TEXT, type Tone } from "../format";
+import type { Plan, Suggestion } from "../demo-types";
+import { betName, cents, CHAIN_NAMES, duration, money, REASON_TEXT, type Tone } from "../format";
 import { canSpeak, speak, stopSpeaking } from "../speech";
-import type { Chain, ExecuteResponse, IntentResponse, Route } from "../types";
+import type { Chain, ExecuteResponse, Route } from "../types";
+import { Countdown } from "./Countdown";
 import { SendByLink } from "./SendByLink";
 import { StatusMark } from "./StatusMark";
 
@@ -26,7 +28,9 @@ const RESULT: Record<ExecuteResponse["status"], { tone: Tone; label: string }> =
 
 export interface CommandBarProps {
   /** Called with the spoken quote whenever a new plan is quoted. */
-  onQuote?: (plan: IntentResponse) => void;
+  onQuote?: (plan: Plan) => void;
+  /** Live suggestions from demo mode; null or absent keeps the static examples. */
+  suggestions?: Suggestion[] | null;
   /** Called when a market-move sentence resolves to a market. */
   onMarketMove?: (slug: string) => void;
   /** Takes the owner to the Markets tab. */
@@ -60,6 +64,7 @@ function PhoneIcon() {
 
 export function CommandBar({
   onQuote,
+  suggestions,
   onMarketMove,
   onOpenMarkets,
   text,
@@ -67,7 +72,7 @@ export function CommandBar({
   micSlot,
   submit,
 }: CommandBarProps) {
-  const [plan, setPlan] = useState<IntentResponse | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [result, setResult] = useState<ExecuteResponse | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -152,19 +157,31 @@ export function CommandBar({
         </button>
       </form>
       <div className="chips">
-        {EXAMPLES.map((example) => (
-          <button
-            key={example.label}
-            type="button"
-            className="chip"
-            onClick={() => {
-              onTextChange(example.text);
-              void quote(example.text);
-            }}
-          >
-            {example.label}
-          </button>
-        ))}
+        {suggestions
+          ? suggestions.map((suggestion) => (
+              <button
+                key={suggestion.label}
+                type="button"
+                className="chip"
+                title={suggestion.why}
+                onClick={() => onTextChange(suggestion.text)}
+              >
+                {suggestion.label}
+              </button>
+            ))
+          : EXAMPLES.map((example) => (
+              <button
+                key={example.label}
+                type="button"
+                className="chip"
+                onClick={() => {
+                  onTextChange(example.text);
+                  void quote(example.text);
+                }}
+              >
+                {example.label}
+              </button>
+            ))}
         <SendByLink />
       </div>
 
@@ -280,6 +297,59 @@ export function CommandBar({
                   </button>
                 </div>
               </details>
+            )}
+          </div>
+        )}
+
+        {plan?.kind === "market_buy" && plan.market_buy && (
+          <div className="quote quote-buy">
+            <div className="quote-who">
+              <span>
+                Buy <strong>{plan.market_buy.side}</strong> on{" "}
+                <strong>{betName(plan.market_buy.title)}</strong>{" "}
+                <span className="muted">({plan.market_buy.venue})</span>
+              </span>
+              <span className="quote-amount">{money(plan.market_buy.amount_usd)}</span>
+              <span className="muted">from {plan.market_buy.from_place}</span>
+            </div>
+            <dl className="facts">
+              <div>
+                <dt>Price</dt>
+                <dd>{cents(plan.market_buy.price)}</dd>
+              </div>
+              <div>
+                <dt>Contracts</dt>
+                <dd>~{Math.round(plan.market_buy.contracts * 100) / 100}</dd>
+              </div>
+              <div>
+                <dt>Fee</dt>
+                <dd>{money(plan.market_buy.fee_usd)}</dd>
+              </div>
+            </dl>
+            {plan.market_buy.ends_at && (
+              <p className="muted">
+                <Countdown until={plan.market_buy.ends_at} before="Ends in " />
+              </p>
+            )}
+            {result ? (
+              <div className={`note note-${RESULT[result.status].tone}`} role="status">
+                <StatusMark tone={RESULT[result.status].tone} label={RESULT[result.status].label} />
+                <span>{result.detail}</span>
+              </div>
+            ) : (
+              <div className="actions">
+                <button type="button" className="btn" onClick={cancel}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy}
+                  onClick={() => void run("cheapest")}
+                >
+                  Confirm
+                </button>
+              </div>
             )}
           </div>
         )}

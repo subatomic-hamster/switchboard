@@ -1534,6 +1534,153 @@ textarea {
 
 /* Phone: tabs move to a bottom bar. */
 
+/* Demo mode: offer banner, positions, research */
+
+.controls-top {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.offer-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--good-bg);
+  border: 1px solid #1f4a33;
+}
+
+.countdown {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+a.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: 0;
+  text-decoration: none;
+}
+
+.positions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.position {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card-2);
+  min-width: 0;
+}
+
+.position-done {
+  opacity: 0.7;
+}
+
+.position-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.position-top .badge {
+  margin-left: 0;
+}
+
+.position-title {
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.position-nums {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+}
+
+.odds {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: 6px;
+  padding: 0 4px;
+}
+
+.flash-up {
+  animation: flash-up 0.9s ease-out;
+}
+
+.flash-down {
+  animation: flash-down 0.9s ease-out;
+}
+
+@keyframes flash-up {
+  from {
+    background: var(--good-bg);
+    color: var(--good);
+  }
+}
+
+@keyframes flash-down {
+  from {
+    background: var(--critical-bg);
+    color: var(--critical);
+  }
+}
+
+.position .actions {
+  margin-top: 4px;
+}
+
+.insight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.insight:focus {
+  outline: none;
+}
+
+.insight-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.insight-checks li {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.insight-source {
+  font-size: 0.8rem;
+}
+
 @media (max-width: 860px) {
   .home-grid {
     grid-template-columns: minmax(0, 1fr);

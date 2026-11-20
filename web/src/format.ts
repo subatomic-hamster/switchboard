@@ -253,7 +253,42 @@ export function describe(event: SwitchboardEvent): EventLine {
         detail: d.memo,
       };
     }
+    case "demo.updated":
+      return {
+        tone: "neutral",
+        label: "Demo",
+        title: event.data.title,
+        detail: event.data.detail,
+      };
   }
+}
+
+/** Contract price (0..1) as cents, e.g. 0.62 -> "62¢". */
+export function cents(price: number): string {
+  return `${Math.round(price * 1000) / 10}¢`;
+}
+
+/** "ends in 4:05" style countdown from milliseconds left; null once over. */
+export function countdown(msLeft: number): string | null {
+  if (msLeft <= 0) return null;
+  const total = Math.ceil(msLeft / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = String(total % 60).padStart(2, "0");
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+/** "2 h ago" style age. */
+export function ago(iso: string, now = Date.now()): string {
+  const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return `${Math.floor(s / 86400)} d ago`;
+}
+
+export function signedMoney(amount: number): string {
+  return `${amount < 0 ? "-" : "+"}${money(Math.abs(amount))}`;
 }
 
 const EVM_HASH = /^0x[0-9a-fA-F]{64}$/;

@@ -10,7 +10,6 @@ import type {
   ExecuteResponse,
   ForecastList,
   HostileResult,
-  IntentResponse,
   MarketBrief,
   MarketListing,
   Opinion,
@@ -22,6 +21,8 @@ import type {
   Venue,
   Wallet,
 } from "./types";
+
+import type { Insight, Plan, Portfolio, RecentAction, Suggestion } from "./demo-types";
 
 /** An error whose message is safe to show: the server's own `detail` when it sent one. */
 export class ApiError extends Error {
@@ -85,7 +86,17 @@ export const api = {
     post<EscrowPeek>("/api/escrow/peek", { escrow_id: escrowId, secret }),
   claimEscrow: (escrowId: string, secret: string, to: string) =>
     post<{ tx_hash: string }>("/api/escrow/claim", { escrow_id: escrowId, secret, to }),
-  intent: (text: string) => post<IntentResponse>("/api/intent", { text }),
+  intent: (text: string) => post<Plan>("/api/intent", { text }),
+  // Demo mode (docs/demo-mode.md). Every route answers 404 unless the server runs in demo mode.
+  demoPortfolio: () => request<Portfolio>("/api/demo/portfolio"),
+  demoSuggestions: async () =>
+    (await request<{ suggestions: Suggestion[] }>("/api/demo/suggestions")).suggestions,
+  demoInsight: (positionId: string) =>
+    request<Insight>(`/api/demo/insight?position_id=${encodeURIComponent(positionId)}`),
+  demoRecent: async () =>
+    (await request<{ actions: RecentAction[] }>("/api/demo/recent")).actions,
+  demoAction: (action: "offer" | "settle" | "reset") =>
+    post<OkResponse>(`/api/demo/${action}`, {}),
   execute: (planId: string, routeId: "cheapest" | "fastest") =>
     post<ExecuteResponse>(`/api/plans/${encodeURIComponent(planId)}/execute`, {
       route_id: routeId,

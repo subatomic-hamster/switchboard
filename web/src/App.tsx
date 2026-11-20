@@ -10,14 +10,19 @@ import { FreezeButton } from "./components/FreezeButton";
 import { MarketsPanel } from "./components/MarketsPanel";
 import { MicButton } from "./components/MicButton";
 import { RingView } from "./components/RingView";
-import { StatsPanel } from "./components/StatsPanel";
+import { OfferBanner } from "./components/Countdown";
+import { Positions } from "./components/Positions";
+import { Recent } from "./components/Recent";
+import { useDemo } from "./demo";
+import type { Plan } from "./demo-types";
 import { useEventStream } from "./events";
 import { speak } from "./speech";
-import type { ApprovalView, IntentResponse, StatsResponse, Wallet } from "./types";
+import type { ApprovalView, StatsResponse, Wallet } from "./types";
 
 const TABS = [
   { id: "home", label: "Home", icon: "M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
   { id: "markets", label: "Markets", icon: "M4 19V5M4 19h16M8 15l4-4 3 3 5-6" },
+  { id: "activity", label: "Activity", icon: "M3 12h4l3-8 4 16 3-8h4" },
   { id: "controls", label: "Controls", icon: "M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4" },
 ] as const;
 
@@ -61,11 +66,14 @@ export function App() {
   const lastId = stream.events.at(-1)?.id ?? 0;
   useEffect(refresh, [refresh, lastId, stream.state]);
 
-  const onQuote = useCallback((plan: IntentResponse) => {
+  const demo = useDemo(lastId, tab === "home");
+
+  const onQuote = useCallback((plan: Plan) => {
     if (viaVoice.current) speak(plan.spoken_quote);
   }, []);
 
   const pending = approvals.filter((approval) => approval.status === "pending").length;
+  // Null when everything is fine: the chip only shows when something is wrong.
   const streamLabel = stats?.frozen
     ? "Frozen"
     : stream.state !== "live"
@@ -74,7 +82,7 @@ export function App() {
         : "Reconnecting…"
       : stats?.stream_stale
         ? "Paused"
-        : "Live";
+        : null;
   const streamTitle = stats?.stream_stale
     ? "No word from the chain for a while, so spending is paused until it is back."
     : undefined;
@@ -110,9 +118,13 @@ export function App() {
             ))}
           </nav>
           <span className="spacer" />
-          <span className={`stream stream-${streamTone}`} role="status" title={streamTitle}>
-            <span className="dot" aria-hidden="true" />
-            <span className="stream-label">{streamLabel}</span>
+          <span role="status">
+            {streamLabel && (
+              <span className={`stream stream-${streamTone}`} title={streamTitle}>
+                <span className="dot" aria-hidden="true" />
+                <span className="stream-label">{streamLabel}</span>
+              </span>
+            )}
           </span>
           <FreezeButton stats={stats} onChanged={refresh} />
         </div>
@@ -126,7 +138,9 @@ export function App() {
       <main className="page">
         <div hidden={tab !== "home"} className="home">
           <h1 className="visually-hidden">Home</h1>
+          <OfferBanner offer={demo.portfolio?.offer ?? null} />
           <CommandBar
+            suggestions={demo.on ? demo.suggestions : null}
             text={text}
             onTextChange={(next) => {
               viaVoice.current = false;
@@ -150,13 +164,38 @@ export function App() {
               />
             }
           />
-          <StatsPanel stats={stats} />
           <ApprovalPanel
             approvals={approvals}
             callsLive={stats?.calls_live ?? false}
             passkeyRegistered={stats?.passkey_registered ?? false}
             onChanged={refresh}
           />
+          {demo.on ? (
+            <>
+              <Positions
+                positions={demo.portfolio?.positions ?? []}
+                account={demo.portfolio?.account ?? null}
+                onMove={(sentence) => {
+                  setText(sentence);
+                  const box = document.getElementById("sentence");
+                  box?.scrollIntoView?.({ block: "center" });
+                  box?.focus();
+                }}
+              />
+              <Recent actions={demo.recent} />
+            </>
+          ) : (
+            <p className="muted">
+              <a href="#activity" onClick={() => setTab("activity")}>
+                Activity
+              </a>{" "}
+              shows what happened.
+            </p>
+          )}
+        </div>
+        {/* Always mounted, so the ring keeps animating events that arrive on another tab. */}
+        <div hidden={tab !== "activity"} className="activity">
+          <h1 className="visually-hidden">Activity</h1>
           <div className="home-grid">
             <FlightRecorder events={stream.events} onFrame={setReplay}>
               <EventFeed events={stream.events} />
@@ -172,7 +211,9 @@ export function App() {
           </div>
         </div>
         {tab === "markets" && <MarketsPanel selectedSlug={marketSlug} refreshKey={lastId} />}
-        {tab === "controls" && <ControlsPage stats={stats} refreshKey={lastId} onChanged={refresh} />}
+        {tab === "controls" && (
+          <ControlsPage stats={stats} refreshKey={lastId} onChanged={refresh} demo={demo.on === true} />
+        )}
       </main>
     </div>
   );

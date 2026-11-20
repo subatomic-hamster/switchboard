@@ -1,10 +1,12 @@
 // Short names for the generated API types. Nothing here is written by hand except aliases:
 // the shapes all come from api-types.ts, which is generated from the server's OpenAPI document.
 import type { components } from "./api-types";
+import type { DemoUpdatedEvent } from "./demo-types";
 
 type S = components["schemas"];
 
-export type SwitchboardEvent = S["EventHistory"]["events"][number];
+// The generated events plus the demo-mode one the server publishes (see demo-types.ts).
+export type SwitchboardEvent = S["EventHistory"]["events"][number] | DemoUpdatedEvent;
 export type EventType = SwitchboardEvent["type"];
 export type EventOf<T extends EventType> = Extract<SwitchboardEvent, { type: T }>;
 
@@ -56,4 +58,5 @@ export const EVENT_TYPES: EventType[] = [
   "forecast.revealed",
   "escrow.updated",
   "payment.updated",
+  "demo.updated",
 ];

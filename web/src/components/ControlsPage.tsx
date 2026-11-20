@@ -3,25 +3,32 @@ import { useState } from "react";
 import { money } from "../format";
 import type { StatsResponse } from "../types";
 import { ConnectorsPanel } from "./ConnectorsPanel";
+import { DemoCard } from "./DemoCard";
 import { HealthPanel } from "./HealthPanel";
 import { HostileBox } from "./HostileBox";
 import { RulesBox } from "./RulesBox";
+import { StatsPanel } from "./StatsPanel";
 
 export interface ControlsPageProps {
   stats: StatsResponse | null;
   /** Bumps when an event arrives, so lists refresh. */
   refreshKey: number;
   onChanged: () => void;
+  /** Demo mode is on: show the Demo card. */
+  demo?: boolean;
 }
 
-/** Limits and the rule box, assistants, health, and the fake-attack test. */
-export function ControlsPage({ stats, refreshKey, onChanged }: ControlsPageProps) {
+/** The three limit numbers, then limits and the rule box, assistants, health, and the fake-attack test. */
+export function ControlsPage({ stats, refreshKey, onChanged, demo = false }: ControlsPageProps) {
   const [seed, setSeed] = useState<{ text: string; at: number } | null>(null);
   const change = (text: string) => setSeed({ text, at: Date.now() });
 
   return (
     <div className="controls">
       <h1 className="visually-hidden">Controls</h1>
+      <div className="controls-top">
+        <StatsPanel stats={stats} />
+      </div>
       <div className="controls-main">
         <section className="card" aria-labelledby="limits-title">
           <h2 id="limits-title">Limits</h2>
@@ -71,6 +78,7 @@ export function ControlsPage({ stats, refreshKey, onChanged }: ControlsPageProps
         <ConnectorsPanel refreshKey={refreshKey} />
       </div>
       <div className="controls-side">
+        {demo && <DemoCard />}
         <HealthPanel stats={stats} onChanged={onChanged} />
         <details className="card fold-card">
           <summary>Test it with a fake attack</summary>
