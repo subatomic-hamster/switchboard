@@ -62,6 +62,7 @@ class Rail:
     cost_usd: Decimal
     eta_s: int
     description: str
+    live: bool = True  # the real transfer module can run it today
 
 
 @dataclass(frozen=True)
@@ -71,9 +72,12 @@ class FxRail:
     cost_bps: Decimal
     eta_s: int
     description: str
+    live: bool = True
 
 
-def load_rails(path: Path | None = None) -> tuple[list[Rail], FxRail]:
+def load_rails(path: Path | None = None, live_only: bool = False) -> tuple[list[Rail], FxRail]:
+    """The rail table. With `live_only` (real transfers on) only rails the real transfer module
+    can run are offered, so the planner never quotes a route it cannot execute."""
     raw = json.loads((path or FIXTURES_DIR / "rails.json").read_text(encoding="utf-8"))
     rails = [
         Rail(
@@ -83,16 +87,18 @@ def load_rails(path: Path | None = None) -> tuple[list[Rail], FxRail]:
             cost_usd=Decimal(item["cost_usd"]),
             eta_s=int(item["eta_s"]),
             description=item["description"],
+            live=bool(item.get("live", True)),
         )
         for item in raw["rails"]
     ]
     fx = raw["fx"]
-    return rails, FxRail(
+    return [r for r in rails if r.live or not live_only], FxRail(
         rail=fx["rail"],
         chain=Chain(fx["chain"]),
         cost_bps=Decimal(fx["cost_bps"]),
         eta_s=int(fx["eta_s"]),
         description=fx["description"],
+        live=bool(fx.get("live", True)),
     )
 
 
@@ -221,7 +227,8 @@ class Planner:
     def __init__(self, ctx: AppContext, parser: IntentParser) -> None:
         self._ctx = ctx
         self._parser = parser
-        self._rails, self._fx = load_rails()
+        self._live_only = ctx.settings.use_real_transfers and not ctx.settings.use_p1_stubs
+        self._rails, self._fx = load_rails(live_only=self._live_only)
         ctx.bus.on("transfer.sent", self._on_transfer_sent)
         ctx.bus.on("transfer.arrived", self._on_transfer_arrived)
         ctx.bus.on("approval.resolved", self._on_approval_resolved)
@@ -235,6 +242,8 @@ class Planner:
             log.info("intent warm-up did not parse; continuing")
 
     def routes(self, request: TransferRequest) -> list[Route]:
+        if self._live_only and request.to_asset == "EURC" and not self._fx.live:
+            return []  # StableFX is permissioned (RAILS.md): no route we could execute
         return find_routes(self._rails, self._fx, request)
 
     async def preview(self, request: TransferRequest) -> Decision:
@@ -408,10 +417,18 @@ class Planner:
 
         assert request.destination.address is not None
         if hold is not None:
-            result = await ctx.holds.hold(request.destination.address, request.amount_usd, hold)
+            result = await ctx.holds.hold(
+                request.destination.address,
+                request.amount_usd,
+                hold,
+                chain=request.destination.chain,
+            )
         else:
             result = await ctx.vault.request_spend(
-                request.destination.address, request.amount_usd, purpose=f"plan {plan_id}"
+                request.destination.address,
+                request.amount_usd,
+                purpose=f"plan {plan_id}",
+                chain=request.destination.chain,
             )
         if result.permitted:
             assert result.permit_id is not None

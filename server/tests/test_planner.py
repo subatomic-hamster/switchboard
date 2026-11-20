@@ -33,12 +33,13 @@ def test_cheapest_and_fastest_routes_differ_when_the_rails_do() -> None:
     routes = find_routes(rails, fx, _request(Chain.ETH_SEPOLIA, Chain.SOLANA_DEVNET))
     cheapest, fastest = routes
     assert (cheapest.id, fastest.id) == ("cheapest", "fastest")
-    # Cheapest goes Ethereum -> Arc -> Solana on standard rails: 0.25 + 0.05.
-    assert cheapest.cost_usd == Decimal("0.30")
-    assert [step.to_chain for step in cheapest.steps] == [Chain.ARC_TESTNET, Chain.SOLANA_DEVNET]
-    # Fastest is the direct fast transfer.
+    # Cheapest is the direct standard transfer (0.21); going through Arc costs 0.02 + 0.23.
+    assert cheapest.cost_usd == Decimal("0.21")
+    assert [step.to_chain for step in cheapest.steps] == [Chain.SOLANA_DEVNET]
+    assert [step.rail for step in cheapest.steps] == ["cctp-standard"]
+    # Fastest is the direct fast transfer, a cent dearer.
     assert fastest.eta_s == 20
-    assert fastest.cost_usd == Decimal("0.60")
+    assert fastest.cost_usd == Decimal("0.22")
     assert cheapest.cost_usd <= fastest.cost_usd
     assert fastest.eta_s <= cheapest.eta_s
 
@@ -77,9 +78,9 @@ async def test_intent_returns_a_plan_with_quoted_routes(client: httpx.AsyncClien
     assert body["plan_id"] == "p_1"
     assert body["request"]["amount_usd"] == 200
     assert [route["id"] for route in body["routes"]] == ["cheapest", "fastest"]
-    assert body["routes"][0]["cost_usd"] == 0.3
+    assert body["routes"][0]["cost_usd"] == 0.21
     assert body["preview"]["outcome"] == "pay"
-    assert "Cheapest route is 30 cents" in body["spoken_quote"]
+    assert "Cheapest route is 21 cents" in body["spoken_quote"]
     assert body["spoken_quote"].endswith("Go ahead?")
 
 
@@ -106,7 +107,7 @@ async def test_pay_inside_limits_executes_and_arrives(
     ledger = ctx.planner.ledger()
     assert len(ledger) == 1
     assert ledger[0].status == "arrived"
-    assert ledger[0].cost_micro == 600_000
+    assert ledger[0].cost_micro == 220_000
 
     again = await client.post(f"/api/plans/{plan['plan_id']}/execute", json={})
     assert again.status_code == 409

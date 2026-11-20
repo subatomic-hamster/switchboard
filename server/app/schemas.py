@@ -279,6 +279,24 @@ class TransferSentData(Model):
     payee_label: str = ""
     route_id: str = ""
     eta_s: int = 0
+    tx_hash: str | None = Field(default=None, description="The burn transaction on Arc, if real.")
+
+
+class TransferAttestedData(Model):
+    """Circle has signed the burn; the mint on the destination has not been seen yet.
+
+    Additive (not one of the frozen event names). Lets the dashboard say "burned on Arc,
+    attested by Circle, waiting to mint on <chain>" instead of showing nothing.
+    """
+
+    transfer_id: str
+    to_chain: Chain
+    amount_usd: Money
+    tx_hash: str = Field(default="", description="The burn transaction on Arc.")
+    forwarding: bool = Field(
+        default=False, description="True when Circle's Forwarding Service will submit the mint."
+    )
+    detail: str = ""
 
 
 class TransferArrivedData(Model):
@@ -367,6 +385,11 @@ class TransferSentEvent(_EventBase):
     data: TransferSentData
 
 
+class TransferAttestedEvent(_EventBase):
+    type: Literal["transfer.attested"] = "transfer.attested"
+    data: TransferAttestedData
+
+
 class TransferArrivedEvent(_EventBase):
     type: Literal["transfer.arrived"] = "transfer.arrived"
     data: TransferArrivedData
@@ -434,6 +457,7 @@ class ForecastRevealedEvent(_EventBase):
 
 SwitchboardEvent = Annotated[
     TransferSentEvent
+    | TransferAttestedEvent
     | TransferArrivedEvent
     | ApprovalRequestedEvent
     | ApprovalResolvedEvent
@@ -453,6 +477,7 @@ SwitchboardEvent = Annotated[
 EVENT_PAYLOADS: dict[str, type[Model]] = {
     "transfer.sent": TransferSentData,
     "transfer.arrived": TransferArrivedData,
+    "transfer.attested": TransferAttestedData,
     "approval.requested": ApprovalRequestedData,
     "approval.resolved": ApprovalResolvedData,
     "blocked": BlockedData,

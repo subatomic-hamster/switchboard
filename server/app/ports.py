@@ -15,6 +15,7 @@ from decimal import Decimal
 from typing import Protocol
 
 from app.schemas import (
+    Chain,
     ChainTransferRequest,
     MarketListing,
     MarketMatchResponse,
@@ -41,9 +42,14 @@ class SpendResult:
 class VaultPort(Protocol):
     """`chain/vault.py`: the agent and approver operations on the vault contract."""
 
-    async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
+    async def request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None = None
+    ) -> SpendResult:
         """Agent key. Returns a single-use permit if within policy, else a pending request.
-        A pending request leads to an `approval.requested` event (from the Stream)."""
+        A pending request leads to an `approval.requested` event (from the Stream).
+
+        `chain` is where the payee lives. The vault is on Arc, so for any other chain the vault
+        pays the agent wallet and the transfer module carries the money across."""
         ...
 
     async def redeem(self, permit_id: str) -> None:

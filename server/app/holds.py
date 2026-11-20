@@ -24,7 +24,7 @@ from decimal import Decimal
 
 from app.events import EventBus
 from app.ports import SpendResult, VaultPort
-from app.schemas import ApprovalRequestedData, ApprovalResolvedData, Policy, Reason
+from app.schemas import ApprovalRequestedData, ApprovalResolvedData, Chain, Policy, Reason
 
 HOLD_PREFIX = "h"
 
@@ -34,6 +34,7 @@ class _Hold:
     payee: str
     amount: Decimal
     reason: Reason
+    chain: Chain | None = None
     resolved: bool = False
 
 
@@ -47,10 +48,12 @@ class HoldingVault:
 
     # ------------------------------------------------------------------ holds
 
-    async def hold(self, payee: str, amount_usd: Decimal, reason: Reason) -> SpendResult:
+    async def hold(
+        self, payee: str, amount_usd: Decimal, reason: Reason, chain: Chain | None = None
+    ) -> SpendResult:
         """Ask the owner first. Publishes `approval.requested`, so the phone rings."""
         request_id = f"{HOLD_PREFIX}{next(self._ids)}"
-        self._holds[request_id] = _Hold(payee=payee, amount=amount_usd, reason=reason)
+        self._holds[request_id] = _Hold(payee=payee, amount=amount_usd, reason=reason, chain=chain)
         await self._bus.publish(
             "approval.requested",
             ApprovalRequestedData(
@@ -82,8 +85,10 @@ class HoldingVault:
 
     # ------------------------------------------------------------------ VaultPort
 
-    async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
-        return await self._inner.request_spend(payee, amount_usd, purpose)
+    async def request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None = None
+    ) -> SpendResult:
+        return await self._inner.request_spend(payee, amount_usd, purpose, chain)
 
     async def redeem(self, permit_id: str) -> None:
         await self._inner.redeem(permit_id)
@@ -97,7 +102,9 @@ class HoldingVault:
         objection = await self._vault_objection(hold)
         if objection is not None:
             raise ValueError(objection)
-        result = await self._inner.request_spend(hold.payee, hold.amount, f"hold {request_id}")
+        result = await self._inner.request_spend(
+            hold.payee, hold.amount, f"hold {request_id}", hold.chain
+        )
         if result.permit_id is None:
             if result.request_id is not None:
                 await self._inner.deny(result.request_id, via="superseded")

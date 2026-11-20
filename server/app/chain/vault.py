@@ -30,7 +30,7 @@ from web3.exceptions import ContractLogicError, Web3RPCError
 from app.config import REPO_ROOT, Settings
 from app.events import EventBus
 from app.ports import SpendResult
-from app.schemas import Policy, PolicyData, Reason
+from app.schemas import Chain, Policy, PolicyData, Reason
 
 log = logging.getLogger("switchboard.chain")
 
@@ -212,16 +212,21 @@ class ChainVault:
 
     # ------------------------------------------------------------------ VaultPort: agent
 
-    async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
-        return await asyncio.to_thread(self._request_spend, payee, amount_usd, purpose)
+    async def request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None = None
+    ) -> SpendResult:
+        return await asyncio.to_thread(self._request_spend, payee, amount_usd, purpose, chain)
 
-    def _request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
+    def _request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None
+    ) -> SpendResult:
         _, contract = self._web3()
-        if not is_evm(payee):
-            # ponytail: a payee on another chain (Solana, say) cannot be a vault payee, so the
-            # vault pays the agent's own address, which funds the cross-chain leg. The per-payee
-            # allowlist is not enforced onchain for non-EVM payees until the Phase 2 transfer
-            # module exists.
+        if not is_evm(payee) or chain not in (None, Chain.ARC_TESTNET):
+            # ponytail: the vault lives on Arc, so a payee on another chain (a Solana address,
+            # or an Ethereum Sepolia address, which looks like an Arc address) cannot be a vault
+            # payee. The vault pays the agent's own address, and `CctpTransfers` burns it from
+            # there. The onchain per-payee check then runs on the agent address (the owner must
+            # allowlist it); the per-payee list for these payees is the server's mirror only.
             payee = self._address("agent")
         fn = contract.functions.requestSpend(
             Web3.to_checksum_address(payee), to_units(amount_usd), Web3.keccak(text=purpose)
