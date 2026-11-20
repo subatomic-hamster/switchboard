@@ -22,7 +22,8 @@ function explain(caught: unknown): string {
   if (text.includes("WrongSecret") || text.includes("UnknownDeposit") || caught.status === 422)
     return "This link is not valid. Ask the sender for a new one.";
   if (caught.status === 503) return "Claiming is not available right now.";
-  return text;
+  // A 409 carries the server's one-line reason; anything else is not worth showing a stranger.
+  return caught.status === 409 ? text : "Something went wrong. Try again.";
 }
 
 export function ClaimPage() {
@@ -33,17 +34,25 @@ export function ClaimPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(link ? "" : "This link is not valid. Ask the sender for a new one.");
   const [tx, setTx] = useState("");
+  const [dead, setDead] = useState(!link);
 
   useEffect(() => {
     if (!link) return;
     api
       .peekEscrow(link.id, link.secret)
       .then(setPeek)
-      .catch((caught: unknown) => setError(explain(caught)));
+      .catch((caught: unknown) => {
+        setError(explain(caught));
+        setDead(caught instanceof ApiError && caught.status !== 503);
+      });
   }, [link]);
 
   const valid = ADDRESS.test(address.trim());
-  const closed = !!peek && (peek.settled || new Date(peek.expiry).getTime() <= Date.now());
+  const expired = !!peek && new Date(peek.expiry).getTime() <= Date.now();
+  const closed = !!peek && (peek.settled || expired);
+  const closedWhy = peek?.settled
+    ? "This link has already been claimed or refunded."
+    : "This link has expired. The money goes back to the sender.";
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -62,11 +71,12 @@ export function ClaimPage() {
   return (
     <main className="claim-page">
       <section className="card claim-card">
-        <h1>You have money waiting</h1>
+        <h1>{dead || (closed && !tx) ? "This link can't be used" : "You have money waiting"}</h1>
         {peek && !tx && <p className="quote-amount">{money(peek.amount_usd)}</p>}
-        {peek && !peek.settled && !tx && (
+        {peek && !closed && !tx && (
           <p className="muted">Claim it by {new Date(peek.expiry).toLocaleString()}.</p>
         )}
+        {closed && !tx && <p className="note">{closedWhy}</p>}
         {tx ? (
           <p className="note note-good" role="status">
             <span>
@@ -77,7 +87,9 @@ export function ClaimPage() {
             </span>
           </p>
         ) : (
-          link && (
+          link &&
+          !dead &&
+          !closed && (
             <form onSubmit={submit} className="claim-form">
               <label className="field-label">
                 Your Arc wallet address
@@ -94,10 +106,10 @@ export function ClaimPage() {
               {address.trim() !== "" && !valid && (
                 <p className="muted">That is not an address. It starts with 0x and has 40 more characters.</p>
               )}
-              <button type="submit" className="btn btn-primary btn-big" disabled={busy || !valid || closed}>
+              <button type="submit" className="btn btn-primary btn-big" disabled={busy || !valid}>
                 {busy ? "Claiming…" : "Claim"}
               </button>
-              {busy && <p className="muted">This takes about a few seconds. Keep this page open.</p>}
+              {busy && <p className="muted">This takes a few seconds. Keep this page open.</p>}
             </form>
           )
         )}

@@ -151,4 +151,18 @@ describe("ClaimPage", () => {
     expect(screen.queryByRole("button", { name: "Claim" })).toBeNull();
     expect(calls).toHaveLength(0);
   });
+
+  it("hides the form for a wrong secret and for a settled link", async () => {
+    window.location.hash = `7:${SECRET}`;
+    respond({ "/api/escrow/peek": { status: 409, body: { detail: "Escrow reverted: WrongSecret" } } });
+    const { unmount } = render(<ClaimPage />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("not valid");
+    expect(screen.queryByRole("button", { name: "Claim" })).toBeNull();
+    unmount();
+
+    respond({ "/api/escrow/peek": { body: { amount_usd: 5, expiry: future(), settled: true } } });
+    render(<ClaimPage />);
+    expect(await screen.findByText(/already been claimed/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Claim" })).toBeNull();
+  });
 });

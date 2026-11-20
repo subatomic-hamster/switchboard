@@ -107,7 +107,15 @@ after 10 failed retries (the maximum).
    process env vars when starting the server.
 3. `PUBLIC_BASE_URL` in `.env` points at an old quick tunnel, so claim links use a dead host. Set
    it to the current tunnel (or a named tunnel) before demoing claim links.
-4. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
+4. **Re-activate the QuickNode Stream.** The quick tunnel flapped around 07:13–07:17 UTC (QUIC
+   dials failing on this machine's network), deliveries stopped after ~07:07, and QuickNode
+   terminates a Stream after 10 failed retries. The Chrome extension disconnected, so I could not
+   re-activate it. Until then the dashboard shows "Stale" and every spend is blocked
+   (`STREAM_STALE`), which is the dead man's switch doing its job. Fix: QuickNode → Streams →
+   `switchboard-vault-arc` → toggle on → "Continue where it left off". If the tunnel URL changed,
+   update the destination first. For the demo, a named tunnel or `cloudflared --protocol http2`
+   avoids the QUIC flaps.
+5. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
    (`POST /api/forecasts/f_1/reveal` with the outcome, or from the dashboard). That publishes the
    preimage onchain (Ledger entry 2) and scores it.
 
