@@ -352,7 +352,7 @@ class DemoDesk:
         self._linked_at = 0.0
         self._picked_at = 0.0
         self._events: list[dict[str, Any]] | None = None
-        self._events_at = 0.0
+        self._events_at = -1e9
         self._explained: dict[tuple[str, str], tuple[float, str]] = {}
         self._pcache: dict[str, float] = {}
         self._selling: dict[str, _Pos] = {}
@@ -444,15 +444,20 @@ class DemoDesk:
                 p.price = book.best_bid.price
         self._pcache[p.id] = time.monotonic()
 
-    async def _gemini_events(self) -> list[dict[str, Any]]:
-        if self._events is None or time.monotonic() - self._events_at > EVENTS_TTL_S:
-            try:
-                self._events = await self._gem.list_events(max_events=1500)
-            except (VenueError, UnknownMarket) as exc:
-                log.warning("demo: Gemini events unavailable: %s", exc)
-                self._events = self._events or []
-            self._events_at = time.monotonic()
-        return self._events
+    async def _load_events(self) -> None:
+        """Every active Gemini event (about 30 pages, so slow): for the similar-market lookup."""
+        self._events_at = time.monotonic()  # one attempt per TTL, even when it fails
+        try:
+            self._events = await self._gem.list_events(max_events=1500)
+        except (VenueError, UnknownMarket) as exc:
+            log.warning("demo: Gemini events unavailable: %s", exc)
+            self._events = self._events or []
+        for p in self._linked.positions if self._linked else []:
+            p.adjacent = find_similar(p.title, self._events)
+
+    async def warm(self) -> None:
+        """Do the slow loads at startup so the first request does not wait for them."""
+        await asyncio.gather(self._load_events(), self._refresh_linked())
 
     async def _positions_of(self, wallet: str) -> list[dict[str, Any]]:
         resp = await self._http.get(
@@ -500,7 +505,10 @@ class DemoDesk:
                 self._linked_at = now  # do not retry on every poll
                 return
             top = sorted(raw, key=lambda p: _dec(p.get("current_value")), reverse=True)[:LINKED_MAX]
-            events = await self._gemini_events()
+            if time.monotonic() - self._events_at > EVENTS_TTL_S:
+                self._ctx.tasks.spawn(self._load_events(), "demo-events")
+                self._events_at = time.monotonic()
+            events = self._events or []
             positions = [self._linked_pos(i, p, events) for i, p in enumerate(top, 1)]
             self._linked = _Linked(user, wallet, positions)
             self._linked_at = now

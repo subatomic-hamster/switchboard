@@ -223,6 +223,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")
         if isinstance(ctx.markets, RealMarkets):
             ctx.tasks.spawn(ctx.markets.refresh_loop(), "markets-refresh")
+        if ctx.demo is not None:
+            ctx.tasks.spawn(ctx.demo.warm(), "demo-warm")
         # The MCP SDK answers requests inside a task group that lives as long as the app.
         async with gateway.server.session_manager.run():
             yield

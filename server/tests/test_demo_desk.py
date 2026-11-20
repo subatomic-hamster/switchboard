@@ -219,6 +219,7 @@ async def test_demo_routes_are_404_without_demo_mode(client: httpx.AsyncClient, 
 @respx.mock
 async def test_portfolio_has_scripted_and_linked_positions_with_live_prices() -> None:
     async with stage() as s:
+        await s.desk.warm()  # what the server does at startup: the slow Gemini listing
         data = await get(s, "/api/demo/portfolio")
         assert data["account"]["linked"] is True
         assert data["account"]["wallet"] == "0xbbb"
@@ -482,6 +483,7 @@ async def test_btc_5m_insight_is_against_from_the_real_source_check() -> None:
 @respx.mock
 async def test_rockets_insight_is_go_with_the_offer_and_neutral_without() -> None:
     async with stage() as s:
+        await s.desk.warm()
         calm = await get(s, "/api/demo/insight", position_id=ROCKETS)
         assert calm["verdict"] == "neutral" and "47" in calm["body"]
         await post(s, "/api/demo/offer")
