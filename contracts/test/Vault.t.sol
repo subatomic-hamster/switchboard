@@ -246,6 +246,46 @@ contract VaultTest is Test {
         assertEq(vault.spentInWindow(agent), 0);
     }
 
+    // ---- adversarial: payee binding and replay
+
+    function test_permitPaysOnlyItsPayee() public {
+        (uint256 id, bool isPermit) = _req(50e6);
+        assertTrue(isPermit);
+        // redeem takes only the permit id: there is no argument through which to redirect it
+        assertEq(vault.getPermit(id).payee, payee);
+        vm.prank(agent);
+        vault.redeem(id);
+        assertEq(usdc.balanceOf(payee), 50e6);
+        assertEq(usdc.balanceOf(stranger), 0);
+        assertEq(usdc.balanceOf(agent), 0);
+
+        // an address the owner never allowed gets a pending request, never a permit
+        vm.prank(agent);
+        (uint256 rid, bool ok) = vault.requestSpend(stranger, 1e6, bytes32("p"));
+        assertFalse(ok);
+        assertEq(vault.getRequest(rid).reason, vault.PAYEE_NOT_ALLOWED());
+        assertEq(usdc.balanceOf(stranger), 0);
+    }
+
+    function test_approvedRequestCannotBeReplayedAsPermit() public {
+        uint256 rid = _pendingReq(CAP + 1);
+        vm.prank(approver);
+        vault.approve(rid); // pays at once through permit 1
+        vm.prank(agent);
+        vm.expectRevert(Vault.PermitUsedOrUnknown.selector);
+        vault.redeem(1);
+        assertEq(usdc.balanceOf(payee), CAP + 1);
+    }
+
+    function test_unknownPermitIdsRevert() public {
+        vm.startPrank(agent);
+        vm.expectRevert(Vault.PermitUsedOrUnknown.selector);
+        vault.redeem(0);
+        vm.expectRevert(Vault.PermitUsedOrUnknown.selector);
+        vault.redeem(999);
+        vm.stopPrank();
+    }
+
     // ---- access control
 
     function test_agentCannotAdmin() public {

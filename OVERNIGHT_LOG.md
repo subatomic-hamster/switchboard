@@ -471,3 +471,22 @@ contract's.
   records the last one, for the Phase 4 dead man's switch (not built).
 - Tests: `tests/test_stream.py` (no chain) and `tests/test_chain_vault.py` (anvil, marked
   `anvil`, skipped when `anvil` is not on PATH; put `~/.foundry/bin` there).
+
+## Phase 4 safety depth (P1)
+
+- **Dead man's switch** (`app/chain/watchdog.py`, real vault only). Any authenticated delivery
+  (heartbeat or logs) feeds it. No delivery for `STREAM_STALE_AFTER_S` (default 90) publishes
+  `stream.stale` stale=true; the next delivery publishes stale=false; only transitions are
+  published. Before the first delivery the Stream counts as stale. `POST /api/chain/stub/stream`
+  (the dashboard's button) is a forced-stale override in real mode. An owner's yes is not settled
+  while stale (`Approvals._finalise` returns `stream_stale`, the request stays pending); a no
+  always is. `ctx.stale_forced`, `ctx.watchdog` and `ctx.stream_nonces` are new context fields.
+- **Webhook replay guard**: a repeated (nonce, timestamp) pair inside the skew window is a 401.
+  In memory, bounded to 4096 entries. A restart forgets it, but the skew window still applies.
+- **Anomaly baseline** (`app/chain/anomaly.py`, `ANOMALY_ENABLED`, on with the real vault, off
+  with stubs). Seeded from sent plans, fed by `transfer.sent`. Needs 8 spends before it flags
+  anything. Flags: 5x the median (and a robust z of 3.5 when the history varies), a never-paid
+  address, a burst (4 in 10 minutes and faster than any in the history), a UTC hour 3 or more away
+  from every past spend. A flagged spend the vault would allow becomes a hold with the new reason
+  `UNUSUAL_SPEND`; the text reaches the call as `case_against` through `HoldingVault.note`.
+- **Adversarial suite**: `tests/test_adversarial.py`, plus three Foundry tests in `Vault.t.sol`.
