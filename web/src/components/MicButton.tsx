@@ -17,7 +17,16 @@ const ERRORS: Record<string, string> = {
   network: "Speech recognition could not reach its service.",
 };
 
-type Phase = "idle" | "listening" | "transcribing";
+function MicIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </svg>
+  );
+}
+
+type Phase ="idle" | "listening" | "transcribing";
 
 const LABEL: Record<Phase, string> = {
   idle: "Speak",
@@ -35,10 +44,11 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
   useEffect(() => () => session.current?.stop(), []);
 
   if (!canListen()) {
+    const why = "Voice input needs Chrome, Edge or Safari";
     return (
-      <span className="muted mic-unavailable" title="This browser has no speech recognition">
-        Voice input needs Chrome, Edge or Safari
-      </span>
+      <button type="button" className="btn btn-icon mic" aria-disabled="true" aria-label={why} title={why}>
+        <MicIcon />
+      </button>
     );
   }
 
@@ -65,8 +75,9 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
     <>
       <button
         type="button"
-        className={`mic${phase !== "idle" ? " mic-on" : ""}`}
+        className={`btn btn-icon mic${phase !== "idle" ? " mic-on" : ""}`}
         aria-pressed={phase !== "idle"}
+        aria-label={LABEL[phase]}
         title={
           source === "elevenlabs"
             ? "Speech to text by ElevenLabs"
@@ -74,17 +85,7 @@ export function MicButton({ onText, onFinal }: MicButtonProps) {
         }
         onClick={toggle}
       >
-        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" fill="currentColor" />
-          <path
-            d="M3 7.5a5 5 0 0 0 10 0M8 12.5V15"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-        {LABEL[phase]}
+        <MicIcon />
       </button>
       {error && (
         <span role="status" className="mic-error">

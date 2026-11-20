@@ -18,7 +18,6 @@ import {
 } from "../ring";
 import { playTone } from "../speech";
 import type { SwitchboardEvent, Wallet } from "../types";
-import { StatusMark } from "./StatusMark";
 
 const TONE_VAR: Record<Tone, string> = {
   good: "var(--good)",
@@ -110,10 +109,10 @@ export function RingView({
   const held = state.particles.filter((particle) => particle.kind === "held").length;
 
   return (
-    <section className="panel ring-panel" aria-labelledby="ring-title">
-      <div className="panel-head">
-        <h2 id="ring-title">The ring</h2>
-        <label className="toggle">
+    <section className="card ring-panel" aria-labelledby="ring-title">
+      <div className="card-head">
+        <h2 id="ring-title">Where it went</h2>
+        <label className="toggle" title="Play a tone when something happens">
           <input
             type="checkbox"
             checked={sound}
@@ -254,12 +253,6 @@ export function RingView({
           </text>
         )}
       </svg>
-      <div className="legend">
-        <StatusMark tone="good" label="Passed through" />
-        <StatusMark tone="warning" label="Held for your approval" />
-        <StatusMark tone="critical" label="Blocked or denied" />
-        <StatusMark tone="neutral" label="Position move (dry run)" />
-      </div>
     </section>
   );
 }

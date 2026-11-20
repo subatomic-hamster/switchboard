@@ -23,6 +23,12 @@ function useCountdown(expiresAt: string): number {
   return Math.max(0, Math.round((new Date(expiresAt).getTime() - now) / 1000));
 }
 
+function sourceNote(source: string): string {
+  if (source === "hostile") return " · from outside content, not you";
+  if (source.startsWith("connector:")) return ` · asked by ${source.slice("connector:".length)}, not you`;
+  return "";
+}
+
 function PendingApproval({
   approval,
   callsLive,
@@ -64,57 +70,58 @@ function PendingApproval({
     void act(() => api.simulateVoice(approval.request_id, amount, word));
   }
 
+  const deny = (
+    <button
+      type="button"
+      className="btn"
+      disabled={busy}
+      onClick={() => void act(() => api.denyApproval(approval.request_id))}
+    >
+      Deny
+    </button>
+  );
+  const reason = REASON_TEXT[approval.reason];
+
   return (
     <div className="approval">
-      <div className="approval-head">
-        <p className="approval-amount">
-          <strong>{money(approval.amount_usd)}</strong> to {approval.payee_label}
-        </p>
-        <StatusMark tone="warning" label={`Decide within ${seconds} s`} />
+      <div className="approval-main">
+        <span className="approval-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+          </svg>
+        </span>
+        <div className="approval-text">
+          <span className="approval-title">
+            <strong>{money(approval.amount_usd)}</strong> to {approval.payee_label}
+          </span>
+          <span className="approval-reason">
+            <code className="reason-code">{approval.reason}</code>
+            {reason.charAt(0).toUpperCase() + reason.slice(1)}
+            {sourceNote(approval.source)}
+          </span>
+        </div>
+        <StatusMark tone="warning" label={`${seconds} s left`} />
       </div>
-      <p className="feed-detail">
-        <code className="reason-code">{approval.reason}</code>
-        {REASON_TEXT[approval.reason]}
-        {approval.source === "hostile" ? " · triggered by outside content, not by you" : ""}
-        {approval.source.startsWith("connector:")
-          ? ` · asked for by ${approval.source.slice("connector:".length)}, a connected assistant, not by you here`
-          : ""}
+
+      <p className="word-line">
+        Your word <strong className="word" data-testid="challenge-word">{approval.challenge}</strong>
+        <span className="muted">Say the amount and this word on the call. “Yes” is not enough.</span>
       </p>
 
-      <div className="word-box">
-        <span className="word-caption">Your word for this request</span>
-        <span className="word" data-testid="challenge-word">
-          {approval.challenge}
-        </span>
-        <span className="word-caption">
-          To approve, say the amount and this word on the call. “Yes” is not enough.
-        </span>
-      </div>
-
-      <div className="cases">
-        <div>
-          <h3>Operator: the case for</h3>
-          <p>{approval.case_for}</p>
-        </div>
-        <div>
-          <h3>Risk officer: the case against</h3>
-          <p>{approval.case_against}</p>
-        </div>
-      </div>
-
       {approval.requires_passkey && (
-        <div className="notice notice-warning">
+        <div className="note note-warning">
           <span>
-            Large amount: a passkey is also required.{" "}
+            Passkey also required.{" "}
             {approval.passkey_ok
-              ? "Passkey confirmed."
+              ? "Confirmed."
               : passkeyRegistered
                 ? ""
-                : "No passkey is registered yet; register one in Safety controls."}
+                : "None is set up yet: set one up in Controls."}
           </span>
           {!approval.passkey_ok && passkeyRegistered && passkeysSupported() && (
             <button
               type="button"
+              className="btn"
               disabled={busy}
               onClick={() => void act(() => confirmWithPasskey(approval.request_id))}
             >
@@ -124,16 +131,31 @@ function PendingApproval({
         </div>
       )}
 
+      <details className="fold">
+        <summary>Why?</summary>
+        <div className="cases">
+          <div>
+            <h3>Operator: the case for</h3>
+            <p>{approval.case_for}</p>
+          </div>
+          <div>
+            <h3>Risk officer: the case against</h3>
+            <p>{approval.case_against}</p>
+          </div>
+        </div>
+      </details>
+
       {callsLive ? (
-        <p className="muted">
-          Your phone is ringing. Approve on the call. {approval.voice_ok ? "Voice part done." : ""}
-        </p>
+        <div className="actions">
+          <p className="muted grow">
+            Your phone is ringing. Approve on the call. {approval.voice_ok ? "Voice part done." : ""}
+          </p>
+          {deny}
+        </div>
       ) : (
         <form className="simulate" onSubmit={simulate}>
-          <p className="muted">
-            Dry run: no call was placed. Stand in for the call here; the same checks apply.
-          </p>
-          <div className="row">
+          <p className="muted">Practice mode: type what you would say on the call.</p>
+          <div className="simulate-row">
             <label>
               <span className="visually-hidden">Amount you would say</span>
               <input
@@ -154,28 +176,20 @@ function PendingApproval({
                 autoComplete="off"
               />
             </label>
-            <button type="submit" className="primary" disabled={busy || !amount || !word}>
-              Approve
-            </button>
+            <div className="actions">
+              {deny}
+              <button type="submit" className="btn btn-warn" disabled={busy || !amount || !word}>
+                Approve
+              </button>
+            </div>
           </div>
         </form>
       )}
-
-      <div className="row approval-actions">
-        <button
-          type="button"
-          className="danger"
-          disabled={busy}
-          onClick={() => void act(() => api.denyApproval(approval.request_id))}
-        >
-          Deny
-        </button>
-        {message && (
-          <span role="status" className="approval-message">
-            {message}
-          </span>
-        )}
-      </div>
+      {message && (
+        <p role="status" className="approval-message">
+          {message}
+        </p>
+      )}
     </div>
   );
 }
@@ -197,8 +211,7 @@ export function ApprovalPanel({
   const pending = approvals.filter((approval) => approval.status === "pending");
   if (pending.length === 0) return null;
   return (
-    <section className="panel approval-panel" aria-labelledby="approval-title">
-      <h2 id="approval-title">Needs your say</h2>
+    <section className="card approval-panel" aria-label="Needs you">
       {pending.map((approval) => (
         <PendingApproval
           key={approval.request_id}

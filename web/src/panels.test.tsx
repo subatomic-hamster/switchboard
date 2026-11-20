@@ -4,7 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { MicButton } from "./components/MicButton";
 import { RingView } from "./components/RingView";
-import { SafetyPanel } from "./components/SafetyPanel";
+import { FreezeButton } from "./components/FreezeButton";
+import { HealthPanel } from "./components/HealthPanel";
 import { StatsPanel } from "./components/StatsPanel";
 import type { Recognition } from "./speech";
 import { event, pendingApproval, stats } from "./test-fixtures";
@@ -107,20 +108,24 @@ describe("ApprovalPanel", () => {
         onChanged={() => undefined}
       />,
     );
-    expect(screen.getByText(/a passkey is also required/)).toBeInTheDocument();
-    expect(screen.getByText(/No passkey is registered yet/)).toBeInTheDocument();
+    expect(screen.getByText(/Passkey also required/)).toBeInTheDocument();
+    expect(screen.getByText(/None is set up yet/)).toBeInTheDocument();
   });
 });
 
 describe("StatsPanel", () => {
-  it("shows budget left, the limit, and no approval rate before any decision", () => {
+  it("shows budget left, the no-ask limit and calls used", () => {
     render(<StatsPanel stats={stats} />);
     expect(screen.getByText("$300")).toBeInTheDocument();
-    expect(screen.getByText("$200 spent of $500")).toBeInTheDocument();
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("up to $200")).toBeInTheDocument();
+    expect(screen.getByText("Calls today")).toBeInTheDocument();
     expect(
       screen.getByRole("meter", { name: "Share of today's budget spent" }),
     ).toHaveAttribute("aria-valuenow", "200");
+    expect(screen.getByRole("meter", { name: "Share of the daily call limit used" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
   });
 
   it("warns at a one hundred percent approval rate", () => {
@@ -138,35 +143,57 @@ describe("StatsPanel", () => {
         }}
       />,
     );
-    expect(screen.getByText("100%")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("You have approved all 3 requests.");
   });
 });
 
-describe("SafetyPanel", () => {
-  it("freezes the vault and offers the stream switch only against the stub", async () => {
+describe("FreezeButton", () => {
+  it("freezes the vault, and offers to unfreeze once frozen", async () => {
     const calls = respond({ "/api/freeze": { ok: true, status: "frozen", error: "" } });
     const user = userEvent.setup();
-    const { rerender } = render(<SafetyPanel stats={stats} onChanged={() => undefined} />);
-    expect(screen.getByRole("button", { name: "Kill the stream" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Freeze everything" }));
+    const { rerender } = render(<FreezeButton stats={stats} onChanged={() => undefined} />);
+    await user.click(screen.getByRole("button", { name: "Freeze" }));
     expect(calls[0]).toEqual({ url: "/api/freeze", body: { frozen: true } });
 
+    rerender(<FreezeButton stats={{ ...stats, frozen: true }} onChanged={() => undefined} />);
+    expect(screen.getByRole("button", { name: "Unfreeze" })).toBeInTheDocument();
+  });
+});
+
+describe("HealthPanel", () => {
+  it("shows the vault, the stream and the passkey, with the stream switch only against the stub", () => {
+    const { rerender } = render(<HealthPanel stats={stats} onChanged={() => undefined} />);
+    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("Delivering")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Kill the stream" })).toBeInTheDocument();
+
     rerender(
-      <SafetyPanel
-        stats={{ ...stats, frozen: true, using_p1_stubs: false }}
+      <HealthPanel
+        stats={{ ...stats, frozen: true, stream_stale: true, using_p1_stubs: false }}
         onChanged={() => undefined}
       />,
     );
-    expect(screen.getByRole("button", { name: "Unfreeze" })).toBeInTheDocument();
+    expect(screen.getByText("Frozen")).toBeInTheDocument();
+    expect(screen.getByText("Stale")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kill the stream" })).not.toBeInTheDocument();
+  });
+
+  it("kills the stream against the stub", async () => {
+    const calls = respond({ "/api/chain/stub/stream": { ok: true, status: "stale", error: "" } });
+    const user = userEvent.setup();
+    render(<HealthPanel stats={stats} onChanged={() => undefined} />);
+    await user.click(screen.getByRole("button", { name: "Kill the stream" }));
+    expect(calls[0]).toEqual({ url: "/api/chain/stub/stream", body: { stale: true } });
   });
 });
 
 describe("MicButton", () => {
   it("explains itself where the browser cannot listen", () => {
     render(<MicButton onText={() => undefined} onFinal={() => undefined} />);
-    expect(screen.getByText(/Voice input needs/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Voice input needs/ })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("passes interim text, then the finished sentence once", async () => {
@@ -231,6 +258,7 @@ describe("RingView", () => {
     }
     expect(screen.getByText("$250")).toBeInTheDocument();
     expect(screen.getByText("frozen")).toBeInTheDocument();
-    expect(screen.getByText("Held for your approval")).toBeInTheDocument();
+    // The legend is gone; the held transfer is still drawn and counted in the ring's name.
+    expect(screen.queryByText("Held for your approval")).not.toBeInTheDocument();
   });
 });

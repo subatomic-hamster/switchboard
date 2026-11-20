@@ -52,7 +52,7 @@ describe("FlightRecorder", () => {
     render(<FlightRecorder events={tape} onFrame={(frame) => frames.push(frame)} />);
     expect(screen.getByRole("status")).toHaveTextContent("3 events recorded");
 
-    fireEvent.click(screen.getByRole("button", { name: "Replay the day" }));
+    fireEvent.click(screen.getByRole("button", { name: "Replay today" }));
     // Starting a replay clears the ring first.
     expect(frames.at(-1)).toMatchObject({ signals: [], resetKey: 1 });
 
@@ -91,7 +91,7 @@ describe("FlightRecorder", () => {
 
   it("has nothing to replay before anything has happened", () => {
     render(<FlightRecorder events={[]} onFrame={() => undefined} />);
-    expect(screen.getByRole("button", { name: "Replay the day" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Replay today" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Nothing recorded yet.");
   });
 });

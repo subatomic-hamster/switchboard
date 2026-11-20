@@ -46,14 +46,20 @@ describe("CommandBar", () => {
     render(<Harness onQuote={onQuote} />);
 
     await user.type(
-      screen.getByLabelText("Your request, in a sentence"),
+      screen.getByLabelText("Where should the money go?"),
       "move 200 from my eth wallet to sam's sol wallet",
     );
-    await user.click(screen.getByRole("button", { name: "Get a quote" }));
+    await user.click(screen.getByRole("button", { name: "Get quote" }));
 
-    expect(await screen.findByText("Will pay")).toBeInTheDocument();
-    expect(screen.getByText(/Cheapest route is 30 cents/)).toBeInTheDocument();
-    expect(screen.getByText("$0.30 · about 15 min")).toBeInTheDocument();
+    // The big amount, the payee, the route line and the facts for the first route.
+    expect(await screen.findByText("$200", { selector: ".quote-amount" })).toBeInTheDocument();
+    expect(screen.getByText(/to Sam's Solana wallet/)).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Route" })).toHaveTextContent(
+      "EthereumArcSolana",
+    );
+    expect(screen.getByText("$0.30")).toBeInTheDocument();
+    expect(screen.getByText("about 15 min")).toBeInTheDocument();
+    // The other route is folded away but reachable.
     expect(screen.getByText("$0.60 · about 20 s")).toBeInTheDocument();
     expect(onQuote).toHaveBeenCalledWith(transferPlan);
     expect(calls[0]).toEqual({
@@ -61,9 +67,8 @@ describe("CommandBar", () => {
       body: { text: "move 200 from my eth wallet to sam's sol wallet" },
     });
 
-    const buttons = screen.getAllByRole("button", { name: "Send by this route" });
-    expect(buttons).toHaveLength(2);
-    await user.click(buttons[1]!);
+    expect(screen.getByRole("button", { name: "Send $200" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send by this route" }));
     expect(await screen.findByText("Sending")).toBeInTheDocument();
     expect(calls[1]).toEqual({ url: "/api/plans/p_1/execute", body: { route_id: "fastest" } });
   });
@@ -92,10 +97,11 @@ describe("CommandBar", () => {
     });
     const user = userEvent.setup();
     render(<Harness />);
-    await user.type(screen.getByLabelText("Your request, in a sentence"), "send 250 to sam");
-    await user.click(screen.getByRole("button", { name: "Get a quote" }));
-    expect(await screen.findByText("Will ask you")).toBeInTheDocument();
-    await user.click(screen.getAllByRole("button", { name: "Send by this route" })[0]!);
+    await user.type(screen.getByLabelText("Where should the money go?"), "send 250 to sam");
+    await user.click(screen.getByRole("button", { name: "Get quote" }));
+    // The one-line note that this will need approval.
+    expect(await screen.findByText(/over your 200 dollars transfer limit/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Send $200" }));
     expect(await screen.findByText("Needs approval")).toBeInTheDocument();
     expect(screen.getByText("OVER_TRANSFER_CAP")).toBeInTheDocument();
     expect(screen.getByText(/Your phone will ring/)).toBeInTheDocument();
@@ -110,8 +116,8 @@ describe("CommandBar", () => {
     });
     const user = userEvent.setup();
     render(<Harness />);
-    await user.type(screen.getByLabelText("Your request, in a sentence"), "send 20 to alex");
-    await user.click(screen.getByRole("button", { name: "Get a quote" }));
+    await user.type(screen.getByLabelText("Where should the money go?"), "send 20 to alex");
+    await user.click(screen.getByRole("button", { name: "Get quote" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("no wallet on file for Alex");
   });
 });

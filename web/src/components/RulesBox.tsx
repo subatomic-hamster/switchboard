@@ -1,4 +1,4 @@
-import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { ApiError, api } from "../api";
 import { canSpeak, speak } from "../speech";
@@ -16,11 +16,19 @@ export interface RulesBoxProps {
   callsLive: boolean;
   refreshKey: number;
   onChanged: () => void;
+  /** Fills the box and focuses it, for example when a "Change" button is pressed. */
+  seed?: { text: string; at: number } | null;
 }
 
 /** Speak or type a rule, hear it read back, confirm, and the policy changes. */
-export function RulesBox({ callsLive, refreshKey, onChanged }: RulesBoxProps) {
+export function RulesBox({ callsLive, refreshKey, onChanged, seed }: RulesBoxProps) {
   const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!seed) return;
+    setText(seed.text);
+    inputRef.current?.focus();
+  }, [seed]);
   const [rules, setRules] = useState<RuleView[]>([]);
   const [word, setWord] = useState("");
   const [message, setMessage] = useState("");
@@ -78,33 +86,30 @@ export function RulesBox({ callsLive, refreshKey, onChanged }: RulesBoxProps) {
   }
 
   return (
-    <div className="subpanel">
-      <h3>Change a rule by voice</h3>
-      <p className="muted">
-        Try “raise my transfer limit to 300”, “lower my daily budget to 300” or “stop paying
-        Sam's Arc wallet”.
-      </p>
+    <div className="rules">
       <form className="command-form" onSubmit={onSubmit}>
         <label htmlFor="rule" className="visually-hidden">
-          A rule, in a sentence
+          Change a rule in words
         </label>
         <input
           id="rule"
+          ref={inputRef}
           type="text"
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Say or type a rule"
+          placeholder="Or say it: lower my daily limit to $8"
+          title="For example: raise my transfer limit to 300, or stop paying Sam's Arc wallet"
           autoComplete="off"
           maxLength={300}
         />
         <MicButton onText={setText} onFinal={(sentence) => void propose(sentence)} />
-        <button type="submit" disabled={busy || !text.trim()}>
+        <button type="submit" className="btn" disabled={busy || !text.trim()}>
           Read it back
         </button>
       </form>
 
       {pending && (
-        <div className="notice notice-warning rule-pending">
+        <div className="note note-warning rule-pending">
           <div>
             <p>{pending.readback}</p>
             {pending.challenge && (
@@ -115,7 +120,7 @@ export function RulesBox({ callsLive, refreshKey, onChanged }: RulesBoxProps) {
             {callsLive ? (
               <p className="muted">Confirm on the call.</p>
             ) : (
-              <div className="row">
+              <div className="actions actions-start">
                 {pending.needs_word && (
                   <label>
                     <span className="visually-hidden">Word you would say</span>
@@ -130,13 +135,13 @@ export function RulesBox({ callsLive, refreshKey, onChanged }: RulesBoxProps) {
                 )}
                 <button
                   type="button"
-                  className="primary"
+                  className="btn btn-primary"
                   disabled={busy || (pending.needs_word && !word)}
                   onClick={() => void settle("confirm")}
                 >
                   Confirm
                 </button>
-                <button type="button" disabled={busy} onClick={() => void settle("cancel")}>
+                <button type="button" className="btn" disabled={busy} onClick={() => void settle("cancel")}>
                   Cancel
                 </button>
               </div>
