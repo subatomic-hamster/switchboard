@@ -8,9 +8,11 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
+from app import main
+from app.config import Settings
 from app.context import AppContext
+from app.db import Database
 from app.local_only import host_name
-from app.main import _mount_dashboard
 
 TUNNEL = {"Host": "random-words.trycloudflare.com", "Cf-Connecting-Ip": "203.0.113.9"}
 OVER_CAP = "send 250 from my arc wallet to sam's arc wallet"
@@ -57,19 +59,24 @@ async def test_dashboard_routes_are_refused_through_a_tunnel(
 
 
 async def test_claim_page_and_assets_are_public_but_the_dashboard_root_is_not(
-    app: FastAPI, tmp_path: Path
+    settings: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     (tmp_path / "assets").mkdir()
     (tmp_path / "assets" / "a.js").write_text("x")
     (tmp_path / "index.html").write_text("<html>spa</html>")
-    _mount_dashboard(app, tmp_path)
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://localhost"
-    ) as http:
-        page = await http.get("/claim", headers=TUNNEL)
-        assert page.status_code == 200 and "spa" in page.text
-        assert (await http.get("/assets/a.js", headers=TUNNEL)).status_code == 200
-        assert (await http.get("/", headers=TUNNEL)).status_code == 403
+    # Point the app at this fake build, whether or not a real web/dist exists on this machine.
+    monkeypatch.setattr(main, "WEB_DIST", tmp_path)
+    app = main.create_app(settings, Database(None))
+    try:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://localhost"
+        ) as http:
+            page = await http.get("/claim", headers=TUNNEL)
+            assert page.status_code == 200 and "spa" in page.text
+            assert (await http.get("/assets/a.js", headers=TUNNEL)).status_code == 200
+            assert (await http.get("/", headers=TUNNEL)).status_code == 403
+    finally:
+        await app.state.ctx.aclose()
 
 
 async def test_the_challenge_word_cannot_be_fetched_from_outside(
