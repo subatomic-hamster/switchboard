@@ -195,6 +195,16 @@ async def buy_btc(s: Stage) -> dict[str, Any]:
 
 
 @respx.mock
+async def test_btc_buy_in_the_last_minute_waits_for_the_next_window() -> None:
+    async with stage() as s:
+        s.ctx.demo._now = lambda: datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC)
+        text = "Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute market"
+        response = await s.client.post("/api/intent", json={"text": text})
+        assert response.status_code == 422
+        assert "opens in 30 seconds" in response.json()["detail"]
+
+
+@respx.mock
 async def test_a_closed_btc_window_settles_and_is_no_longer_offered() -> None:
     async with stage() as s:
         await buy_btc(s)
@@ -393,9 +403,6 @@ def test_current_window_rolls_over_with_under_a_minute_left() -> None:
     assert mid[2] == BTC and mid[1] - mid[0] == (mid[1] - mid[0]).__class__(minutes=5)
     late = current_window(datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC))
     assert late[2] == f"{BTC_PREFIX}2026-11-20-1505z"
-    # The next window is listed only once it starts, so the buy falls back to this one.
-    held = current_window(datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC), skip_ahead=False)
-    assert held[2] == BTC
 
 
 # --------------------------------------------------------------------------- match and buy
