@@ -9,10 +9,8 @@ import { StatusMark } from "./StatusMark";
 
 // The chip shows the short label; the full sentence is what gets quoted.
 const EXAMPLES = [
-  {
-    label: "$200 Ethereum to Sam's Solana",
-    text: "Move two hundred dollars from my Ethereum wallet to Sam's Solana wallet",
-  },
+  // Within the limits and live on testnet: Arc to Solana through CCTP, no call needed.
+  { label: "$2 Arc to Sam's Solana", text: "Send 2 dollars from my Arc wallet to Sam's Solana wallet" },
   { label: "$250 to Sam's Arc wallet", text: "Send 250 from my Arc wallet to Sam's Arc wallet" },
   {
     label: "Move my Rockets position",
