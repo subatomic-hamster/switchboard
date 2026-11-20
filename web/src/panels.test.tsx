@@ -174,7 +174,7 @@ describe("HealthPanel", () => {
       />,
     );
     expect(screen.getByText("Frozen")).toBeInTheDocument();
-    expect(screen.getByText("Stale")).toBeInTheDocument();
+    expect(screen.getByText("Quiet, spending paused")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Kill the stream" })).not.toBeInTheDocument();
   });
 

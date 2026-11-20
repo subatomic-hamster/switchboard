@@ -64,7 +64,7 @@ export function HealthPanel({ stats, onChanged }: HealthPanelProps) {
         </Line>
         <Line level={stats.stream_stale ? "bad" : "good"} label="Event stream">
           <span className="muted" title="If it goes quiet, spending pauses until it recovers.">
-            {stats.stream_stale ? "Stale" : "Delivering"}
+            {stats.stream_stale ? "Quiet, spending paused" : "Delivering"}
           </span>
           {stats.using_p1_stubs && (
             <button
