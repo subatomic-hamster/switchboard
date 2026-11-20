@@ -616,13 +616,20 @@ the route.
   expiry it reverts.
 - **Payment requests:** `request(payer, amount, memo)` and `pay(id)`, once; a named payer only,
   or anyone if none.
-- Routes: `POST /api/escrow/create`, `/claim`, `/requests`, `/requests/{id}/pay`,
+- **In the dashboard:** "No wallet? Send a link" on Home (amount, expiry, copy the link). The
+  recipient's page at `/claim` shows the amount, takes an Arc address and claims. It and
+  `POST /api/escrow/peek` (amount and expiry, only for the secret's holder) are reachable through
+  the tunnel without a token; the rest of the dashboard and the escrow routes stay on this
+  machine.
+- Routes: `POST /api/escrow/create`, `/claim`, `/peek`, `/requests`, `/requests/{id}/pay`,
   `/{id}/refund`, and `GET /api/escrow/{id}`.
 
 **Checked live.** A $1 escrow (1) was created (`0xdfc8…efbe`) and claimed to Sam
 with the secret (`0xc17d…6a10`, Sam +1 USDC); a replayed claim and a refund both reverted
 `AlreadySettled`. Escrow 2: a refund before expiry reverted `NotExpired`, and after expiry it paid
-back (`0xc059…18fd`). Payment requests are covered by tests; the log records no live one. Claim
+back (`0xc059…18fd`). Escrow 3 went through the browser end to end: a $1 link made on Home,
+opened, claimed to Sam (`0x5d73…e78e`); reopening it said "already been claimed". Payment
+requests are covered by tests; the log records no live one. Claim
 links use `PUBLIC_BASE_URL`, so it must point at the current tunnel.
 
 ## Safety depth
