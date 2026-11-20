@@ -9,12 +9,14 @@ phone cannot fetch it.
 So only a short list of prefixes is served to the outside, and each of those checks its own
 credential (a bearer token or an HMAC signature). Every other path is served only when the
 request was addressed to localhost and did not arrive through a proxy. The Host check also
-defeats DNS rebinding from a web page.
+defeats DNS rebinding from a web page, and a state-changing request that another web page sent
+from the owner's own browser is refused by its Sec-Fetch-Site and Origin headers.
 """
 
 from __future__ import annotations
 
 import json
+from urllib.parse import urlsplit
 
 from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -71,6 +73,26 @@ def is_local(scope: Scope) -> bool:
     return host_name(headers.get(b"host", b"").decode("latin-1")) in LOCAL_HOSTS
 
 
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+ORIGIN_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def cross_site(scope: Scope) -> bool:
+    """A state-changing request sent by some other web page in the owner's browser. Such a page can
+    POST to 127.0.0.1 with a plain-text body (no preflight), and the Host check alone lets it in.
+    The browser sets Sec-Fetch-Site and Origin itself; page scripts cannot forge either."""
+    if scope.get("method", "GET") in SAFE_METHODS:
+        return False
+    headers = dict(scope.get("headers") or [])
+    site = headers.get(b"sec-fetch-site")
+    if site is not None and site not in (b"same-origin", b"none"):
+        return True
+    origin = headers.get(b"origin")
+    if origin is None:
+        return False  # not a browser (curl, tests, the MCP client)
+    return urlsplit(origin.decode("latin-1")).hostname not in ORIGIN_HOSTS
+
+
 class LocalOnly:
     """ASGI middleware. Written at this level so it does not buffer the SSE stream."""
 
@@ -82,7 +104,7 @@ class LocalOnly:
             await self._app(scope, receive, send)
             return
         path: str = scope.get("path", "")
-        if path.startswith(PUBLIC_PREFIXES) or is_local(scope):
+        if path.startswith(PUBLIC_PREFIXES) or (is_local(scope) and not cross_site(scope)):
             await self._app(scope, receive, send)
             return
         await send(

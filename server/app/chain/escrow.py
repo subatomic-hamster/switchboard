@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import secrets
+import threading
 import time
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -47,6 +48,7 @@ ZERO = "0x" + "00" * 20
 DEFAULT_EXPIRY_S = 7 * 24 * 3600
 # `claim` is sent without gas estimation (see Client.send); it uses well under this.
 CLAIM_GAS = 200_000
+CLAIM_EXPIRY_MARGIN_S = 30
 ERC20_ABI: list[dict[str, Any]] = [
     {
         "type": "function",
@@ -109,6 +111,8 @@ class ChainEscrow:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
         self._client = Client(settings, "Escrow", settings.escrow_address)
+        self._claim_lock = threading.Lock()  # claims run in worker threads
+        self._claiming: set[int] = set()
 
     # ------------------------------------------------------------------ plumbing
 
@@ -169,22 +173,46 @@ class ChainEscrow:
     async def claim(self, escrow_id: str, secret_hex: str, to: str) -> TxResult:
         return await asyncio.to_thread(self._claim, int(escrow_id), secret_hex, to)
 
+    def _held_deposit(self, contract: Any, escrow_id: int, secret: bytes) -> Any:
+        """The deposit, for the holder of its secret only. An unknown id and a wrong secret look
+        the same, so the public routes do not reveal which ids exist."""
+        try:
+            deposit = self._call(contract.functions.getDeposit(escrow_id))
+        except ContractRevert as exc:
+            if exc.error == "UnknownDeposit":
+                raise ContractRevert("Escrow", "WrongSecret") from None
+            raise
+        if Web3.keccak(secret) != bytes(deposit[4]):
+            raise ContractRevert("Escrow", "WrongSecret")
+        return deposit
+
     def _claim(self, escrow_id: int, secret_hex: str, to: str) -> TxResult:
-        _, contract = self._client.web3()
         secret = bytes.fromhex(secret_hex.removeprefix("0x"))
         if len(secret) != 32:
             raise ValueError("the secret is 32 bytes")
         to = Web3.to_checksum_address(to)
-        deposit = self._call(contract.functions.getDeposit(escrow_id))
-        if Web3.keccak(secret) != bytes(deposit[4]):
-            # Checked before any transaction: commitClaim does not look at the secret, and a
-            # wrong guess must not cost the relayer gas.
-            raise ContractRevert("Escrow", "WrongSecret")
-        # Likewise for a used or lapsed link: commitClaim would succeed and only claim revert, so
-        # anyone holding an old link could make the relayer pay for commitClaim again and again.
+        # One claim per link at a time: duplicates sent together would all pass the checks below
+        # before the first settles, and each would cost the relayer two transactions.
+        with self._claim_lock:
+            if escrow_id in self._claiming:
+                raise ValueError("This link is already being claimed.")
+            self._claiming.add(escrow_id)
+        try:
+            return self._claim_once(escrow_id, secret, to)
+        finally:
+            with self._claim_lock:
+                self._claiming.discard(escrow_id)
+
+    def _claim_once(self, escrow_id: int, secret: bytes, to: str) -> TxResult:
+        _, contract = self._client.web3()
+        # Every check runs before any transaction: commitClaim does not look at the secret,
+        # settlement or expiry, so a wrong, used or lapsed link must be refused here or each try
+        # would cost the relayer gas.
+        deposit = self._held_deposit(contract, escrow_id, secret)
         if deposit[3]:
             raise ContractRevert("Escrow", "AlreadySettled")
-        if deposit[2] <= time.time():
+        # A margin for the two blocks the claim takes and for clock skew against the chain.
+        if deposit[2] <= time.time() + CLAIM_EXPIRY_MARGIN_S:
             raise ContractRevert("Escrow", "Expired")
         commitment = self._call(contract.functions.commitmentFor(escrow_id, secret, to))
         # Two transactions in two blocks: the commitment must be older than the claim.
@@ -198,10 +226,9 @@ class ChainEscrow:
     def _peek(self, escrow_id: int, secret_hex: str) -> EscrowPeek:
         """Amount, expiry and state for whoever holds the secret. Read-only, costs no gas."""
         _, contract = self._client.web3()
-        secret = bytes.fromhex(secret_hex.removeprefix("0x"))
-        deposit = self._call(contract.functions.getDeposit(escrow_id))
-        if Web3.keccak(secret) != bytes(deposit[4]):
-            raise ContractRevert("Escrow", "WrongSecret")
+        deposit = self._held_deposit(
+            contract, escrow_id, bytes.fromhex(secret_hex.removeprefix("0x"))
+        )
         return EscrowPeek(
             amount_usd=from_units(deposit[1]),
             expiry=datetime.fromtimestamp(deposit[2], UTC),

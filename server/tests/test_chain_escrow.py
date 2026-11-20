@@ -6,6 +6,7 @@ Skipped when `anvil` is not on PATH (put `~/.foundry/bin` there). Needs `forge b
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import shutil
@@ -222,6 +223,23 @@ async def test_deposit_then_claim_pays_the_recipient(
     assert chain.w3.eth.get_transaction_count(chain.agent) == nonce
 
 
+async def test_duplicate_claims_sent_together_cost_one_claim(
+    deployed: Deployed, escrow: ChainEscrow
+) -> None:
+    chain = deployed.chain
+    created = await escrow.create(Decimal("2"), expiry_s=3600)
+    nonce = chain.w3.eth.get_transaction_count(chain.agent)
+    results = await asyncio.gather(
+        *[escrow.claim(created.escrow_id, created.secret, PAYEE) for _ in range(4)],
+        return_exceptions=True,
+    )
+    assert sum(not isinstance(r, Exception) for r in results) == 1
+    assert all(isinstance(r, ValueError) for r in results if isinstance(r, Exception))
+    assert chain.balance(PAYEE) == Decimal("2")
+    # commitClaim and claim, once: the duplicates never reached the chain.
+    assert chain.w3.eth.get_transaction_count(chain.agent) == nonce + 2
+
+
 async def test_wrong_secret_is_refused_before_any_transaction(
     deployed: Deployed, escrow: ChainEscrow
 ) -> None:
@@ -419,6 +437,7 @@ async def test_peek_shows_the_amount_only_to_the_holder_of_the_secret(
         )
         assert wrong.status_code == 409 and "WrongSecret" in wrong.json()["detail"]
         nope = await http.post("/api/escrow/peek", json={**body, "escrow_id": "99"}, headers=TUNNEL)
-        assert nope.status_code == 409 and "UnknownDeposit" in nope.json()["detail"]
+        # An unknown id answers exactly like a wrong secret: which ids exist is not public.
+        assert nope.status_code == 409 and nope.json() == wrong.json()
         await http.post("/api/escrow/claim", json={**body, "to": PAYEE}, headers=TUNNEL)
         assert (await http.post("/api/escrow/peek", json=body)).json()["settled"] is True

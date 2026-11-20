@@ -173,9 +173,11 @@ async def test_a_different_key_is_rejected(client: httpx.AsyncClient, ctx: AppCo
 
 
 async def test_only_the_dashboard_origin_may_use_passkeys(client: httpx.AsyncClient) -> None:
-    for headers in ({}, {"Origin": "https://evil.example"}):
+    # No Origin: the passkey route refuses. Another site's Origin: the local-only guard refuses
+    # it first, before the route runs.
+    for headers, status in (({}, 400), ({"Origin": "https://evil.example"}, 403)):
         response = await client.post("/api/passkey/register/options", headers=headers)
-        assert response.status_code == 400
+        assert response.status_code == status
 
 
 async def test_only_one_passkey_can_be_registered(client: httpx.AsyncClient) -> None:

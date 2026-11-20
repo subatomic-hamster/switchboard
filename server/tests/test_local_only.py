@@ -134,3 +134,33 @@ async def test_local_requests_are_served(app: FastAPI) -> None:
     for base in ("http://localhost:8787", "http://127.0.0.1:8787", "http://[::1]:8787"):
         async with httpx.AsyncClient(transport=transport, base_url=base) as http:
             assert (await http.get("/api/stats")).status_code == 200, base
+
+
+async def test_another_web_page_cannot_post_to_the_local_server(
+    client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    # A page on some other site, open in the owner's browser, POSTs to 127.0.0.1 with a
+    # plain-text JSON body (no preflight). The Host is local and no proxy header is set.
+    body = '{"frozen": true}'
+    for headers in (
+        {"Sec-Fetch-Site": "cross-site", "Origin": "https://evil.example"},
+        {"Origin": "https://evil.example"},  # a browser without Sec-Fetch-Site
+        {"Origin": "null"},  # a sandboxed frame
+    ):
+        sent = await client.post(
+            "/api/freeze", content=body, headers={"Content-Type": "text/plain", **headers}
+        )
+        assert sent.status_code == 403, headers
+    assert not await ctx.vault.is_frozen()
+
+    # Reading stays allowed (the response is opaque to the other page anyway).
+    read = await client.get("/api/stats", headers={"Sec-Fetch-Site": "cross-site"})
+    assert read.status_code == 200
+
+    # The dashboard itself: same origin through Vite's proxy, or a script with no Origin.
+    for headers in (
+        {"Sec-Fetch-Site": "same-origin", "Origin": "http://localhost:5173"},
+        {},
+    ):
+        sent = await client.post("/api/freeze", json={"frozen": False}, headers=headers)
+        assert sent.status_code == 200, headers
