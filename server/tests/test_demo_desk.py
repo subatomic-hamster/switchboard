@@ -377,6 +377,9 @@ def test_current_window_rolls_over_with_under_a_minute_left() -> None:
     assert mid[2] == BTC and mid[1] - mid[0] == (mid[1] - mid[0]).__class__(minutes=5)
     late = current_window(datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC))
     assert late[2] == f"{BTC_PREFIX}2026-11-20-1505z"
+    # The next window is listed only once it starts, so the buy falls back to this one.
+    held = current_window(datetime(2026, 11, 20, 15, 4, 30, tzinfo=UTC), skip_ahead=False)
+    assert held[2] == BTC
 
 
 # --------------------------------------------------------------------------- match and buy

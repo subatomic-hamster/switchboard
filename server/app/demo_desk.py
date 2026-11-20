@@ -383,11 +383,12 @@ def find_similar(
     )
 
 
-def current_window(now: datetime) -> tuple[datetime, datetime, str]:
-    """The BTC 5-minute window in progress; the next one when under a minute is left."""
+def current_window(now: datetime, skip_ahead: bool = True) -> tuple[datetime, datetime, str]:
+    """The BTC 5-minute window in progress; the next one when under a minute is left
+    (unless `skip_ahead` is off)."""
     start = now.replace(minute=now.minute // 5 * 5, second=0, microsecond=0)
     end = start + timedelta(minutes=5)
-    if (end - now).total_seconds() < 60:
+    if skip_ahead and (end - now).total_seconds() < 60:
         start, end = end, end + timedelta(minutes=5)
     return start, end, f"{BTC_PREFIX}{start:%Y-%m-%d-%H%M}z"
 
@@ -903,13 +904,19 @@ class DemoDesk:
         wallet = self._ctx.wallets.find("me", chain) if chain else None
         if wallet is None:
             raise IntentError("Which wallet should it come from, Ethereum, Solana or Arc?")
-        start, end, slug = current_window(self._now())
+        now = self._now()
+        start, end, slug = current_window(now)
         try:
             book = await self._pm.book(slug)
         except UnknownMarket as exc:
-            raise IntentError(
-                "That 5-minute window is not listed yet. Try again in a moment."
-            ) from exc
+            # The next window is listed only once it starts; until then, the one still running.
+            start, end, slug = current_window(now, skip_ahead=False)
+            try:
+                book = await self._pm.book(slug)
+            except UnknownMarket:
+                raise IntentError(
+                    "That 5-minute window is not listed yet. Try again in a moment."
+                ) from exc
         if book.best_ask is None:
             raise IntentError("Nobody is offering contracts in that window right now.")
         ask = book.best_ask.price
