@@ -2,7 +2,7 @@ import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { ApiError, api } from "../api";
 import type { DemoPosition, Insight, LinkedAccount } from "../demo-types";
-import { betName, cents, money, signedMoney, type Tone } from "../format";
+import { betName, cents, contracts, money, signedMoney, type Tone } from "../format";
 import { Countdown } from "./Countdown";
 import { StatusMark, ToneIcon } from "./StatusMark";
 
@@ -113,6 +113,8 @@ function PositionCard({ position, onMove }: { position: DemoPosition; onMove: (t
   const name = betName(position.title);
   const open = position.status === "open";
   const other = position.venue === "Gemini" ? "Polymarket US" : "Gemini";
+  // The move engine runs between Polymarket US and Gemini; linked Polymarket positions are research only.
+  const movable = position.venue !== "Polymarket";
   const closeResearch = () => {
     setResearch(false);
     opener.current?.focus();
@@ -128,7 +130,7 @@ function PositionCard({ position, onMove }: { position: DemoPosition; onMove: (t
       </div>
       <h3 className="position-title">{name}</h3>
       <p className="muted">
-        {position.side} · {position.contracts} contracts
+        {position.side} · {contracts(position.contracts)} contracts
       </p>
       <div className="position-nums">
         <span className={`odds ${flash}`} aria-label={`Odds ${cents(position.price)}`}>
@@ -157,14 +159,16 @@ function PositionCard({ position, onMove }: { position: DemoPosition; onMove: (t
             Research
             <span className="visually-hidden"> {name}</span>
           </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => onMove(`Move my ${name} position to ${other}`)}
-          >
-            Move
-            <span className="visually-hidden"> {name}</span>
-          </button>
+          {movable && (
+            <button
+              type="button"
+              className="btn"
+              onClick={() => onMove(`Move my ${name} position to ${other}`)}
+            >
+              Move
+              <span className="visually-hidden"> {name}</span>
+            </button>
+          )}
         </div>
       )}
       {research && <InsightPanel position={position} onClose={closeResearch} />}
@@ -172,7 +176,8 @@ function PositionCard({ position, onMove }: { position: DemoPosition; onMove: (t
   );
 }
 
-/** Your positions: a card each, with live odds. Moved ones are left out. */
+/** Your positions: a card each, with live odds. Moved ones are left out. Positions held through
+ * Switchboard (Polymarket US, Gemini) come first, then the linked account's, biggest first. */
 export function Positions({
   positions,
   account,
@@ -185,7 +190,11 @@ export function Positions({
   const [all, setAll] = useState(false);
   const live = positions
     .filter((position) => position.status !== "moved")
-    .sort((a, b) => b.value_usd - a.value_usd);
+    .sort(
+      (a, b) =>
+        Number(a.venue === "Polymarket") - Number(b.venue === "Polymarket") ||
+        b.value_usd - a.value_usd,
+    );
   const shown = all ? live : live.slice(0, FEW);
   return (
     <section className="card" aria-labelledby="positions-title">

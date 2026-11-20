@@ -151,15 +151,20 @@ describe("demo mode on Home", () => {
     portfolio = {
       ...portfolioBase,
       account: { venue: "Polymarket", name: "Trader1", wallet: "0x1", profile_url: "https://polymarket.com/@t", linked: true },
-      positions: Array.from({ length: 8 }, (_, i) => ({
-        ...rockets,
-        id: `pm-${i}`,
-        venue: "Polymarket" as const,
-        title: `Market ${i}`,
-        value_usd: 10 + i,
-        ends_at: null,
-        adjacent: i === 7 ? { venue: "Gemini", title: "Twin", symbol: "T", price: 0.4 } : null,
-      })),
+      positions: [
+        ...Array.from({ length: 8 }, (_, i) => ({
+          ...rockets,
+          id: `pm-${i}`,
+          venue: "Polymarket" as const,
+          title: `Market ${i}`,
+          contracts: 82235.6606,
+          value_usd: 10 + i,
+          ends_at: null,
+          adjacent: i === 7 ? { venue: "Gemini", title: "Twin", symbol: "T", price: 0.4 } : null,
+        })),
+        // Held through Switchboard: first, however small, and the only one that can be moved.
+        { ...rockets, value_usd: 1 },
+      ],
     };
     const user = userEvent.setup();
     render(<App />);
@@ -167,11 +172,14 @@ describe("demo mode on Home", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link).toHaveAttribute("href", "https://polymarket.com/@t");
     const cards = screen.getAllByRole("heading", { level: 3 });
-    expect(cards[0]).toHaveTextContent("Market 7");
+    expect(cards[0]).toHaveTextContent("Rockets");
+    expect(cards[1]).toHaveTextContent("Market 7");
     expect(cards).toHaveLength(6);
+    expect(screen.getAllByRole("button", { name: /^Move / })).toHaveLength(1);
+    expect(screen.getAllByText("Yes · 82,236 contracts")).toHaveLength(5);
     expect(screen.getByText("Similar on Gemini: Twin 40¢")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Show all (8)" }));
-    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(8);
+    await user.click(screen.getByRole("button", { name: "Show all (9)" }));
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(9);
   });
 
   it("hides moved positions and marks a won one", async () => {

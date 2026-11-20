@@ -272,10 +272,18 @@ export function cents(price: number): string {
 export function countdown(msLeft: number): string | null {
   if (msLeft <= 0) return null;
   const total = Math.ceil(msLeft / 1000);
+  const days = Math.floor(total / 86400);
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = String(total % 60).padStart(2, "0");
-  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+  if (days >= 2) return `${days} days`;
+  if (h >= 1) return `${h} h ${m} min`;
+  return `${m}:${s}`;
+}
+
+/** A contract count: whole numbers past 100, two decimals below, with separators. */
+export function contracts(count: number): string {
+  return count.toLocaleString("en-US", { maximumFractionDigits: count >= 100 ? 0 : 2 });
 }
 
 /** "2 h ago" style age. */

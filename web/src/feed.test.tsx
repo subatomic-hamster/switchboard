@@ -5,6 +5,7 @@ import { mergeEvents } from "./events";
 import {
   betName,
   collapseBlips,
+  countdown,
   describe as describeEvent,
   duration,
   explorerLink,
@@ -184,6 +185,15 @@ describe("cross-chain wording", () => {
     );
     expect(arrived.title).toBe("$1 arrived on Ethereum");
     expect(arrived.detail).toBe("");
+  });
+});
+
+describe("countdowns", () => {
+  it("reads in days, then hours, then minutes and seconds", () => {
+    expect(countdown(18 * 86_400_000 + 5_000)).toBe("18 days");
+    expect(countdown(8 * 3_600_000 + 4 * 60_000)).toBe("8 h 4 min");
+    expect(countdown(125_000)).toBe("2:05");
+    expect(countdown(0)).toBeNull();
   });
 });
 
