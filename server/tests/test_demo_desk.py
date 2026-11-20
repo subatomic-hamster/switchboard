@@ -214,6 +214,26 @@ async def test_demo_routes_are_404_without_demo_mode(client: httpx.AsyncClient, 
         assert (await client.post(f"/api/demo/{path}")).status_code == 404
 
 
+def test_demo_mode_overrides_real_rails_settings() -> None:
+    # `.env` wins over the environment, so a real-rails `.env` must not leak into the demo.
+    settings = make_settings(
+        demo_mode=True,
+        use_p1_stubs=False,
+        use_real_transfers=True,
+        trading_enabled=True,
+        database_path="./data/switchboard.sqlite",
+        policy_transfer_cap_usd=Decimal("5"),
+        policy_daily_budget_usd=Decimal("10"),
+    )
+    assert settings.use_p1_stubs and not settings.use_real_transfers
+    assert settings.use_real_markets and not settings.trading_enabled
+    assert settings.database_path == "./data/demo.sqlite"
+    assert settings.policy_transfer_cap_usd == Decimal("500")
+    assert settings.policy_daily_budget_usd == Decimal("2000")
+    assert settings.max_calls_per_day == 50
+    assert make_settings(use_real_transfers=True).use_real_transfers  # demo off: untouched
+
+
 # --------------------------------------------------------------------------------- portfolio
 
 

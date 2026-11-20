@@ -10,7 +10,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -20,6 +20,9 @@ FIXTURES_DIR = SERVER_ROOT / "fixtures"
 # The real-money ceiling is a constant in code, not only a setting: a setting can lower it,
 # nothing can raise it.
 HARD_MAX_ORDER_USD = Decimal("2")
+
+# Demo mode keeps its own history, apart from the real-rails database.
+DEMO_DATABASE_PATH = "./data/demo.sqlite"
 
 # Who places the approval call. `dry_run` places none.
 CallProvider = Literal["dry_run", "agentphone", "elevenlabs_twilio"]
@@ -165,6 +168,22 @@ class Settings(BaseSettings):
     # on. DEMO_TRADER_WALLET pins the public trader shown on Home; blank picks one.
     demo_mode: bool = False
     demo_trader_wallet: str = ""
+
+    @model_validator(mode="after")
+    def _demo_is_its_own_world(self) -> Settings:
+        """Demo mode overrides `.env` (which otherwise wins over the environment): simulated
+        vault and transfers, its own database, raised limits, live market data, no orders. So a
+        real-rails `.env` cannot leak real money paths or its history into the stage."""
+        if self.demo_mode:
+            self.use_p1_stubs = True
+            self.use_real_transfers = False
+            self.use_real_markets = True
+            self.trading_enabled = False
+            self.database_path = DEMO_DATABASE_PATH
+            self.policy_transfer_cap_usd = Decimal("500")
+            self.policy_daily_budget_usd = Decimal("2000")
+            self.max_calls_per_day = 50
+        return self
 
     @property
     def anomaly_on(self) -> bool:
