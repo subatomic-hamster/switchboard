@@ -280,6 +280,16 @@ def _hint_words(text: str) -> set[str]:
     return {w for w in out if w not in skip and not w.isdigit() and len(w) > 1}
 
 
+def search_terms(title: str, outcome: str = "") -> list[str]:
+    """Up to three names to search Gemini for: capitalised words such as teams, or "Fed"."""
+    skip = STOP_WORDS | {"will", "spread", "there", "after", "yes", "over", "under", "the"}
+    out: list[str] = []
+    for word in re.findall(r"[A-Za-z]+", f"{title} {outcome}"):
+        if word[0].isupper() and len(word) >= 3 and word.lower() not in skip and word not in out:
+            out.append(word)
+    return out[:3]
+
+
 def _kind(text: str) -> str:
     """Gemini lists each game as separate events: the winner, "Total Points", "Point Spread",
     and player props. Polymarket titles say "Spread:" or "O/U"."""
@@ -293,12 +303,17 @@ def _kind(text: str) -> str:
     return ""
 
 
-def _contract_for(event: dict[str, Any], outcome: str) -> dict[str, Any]:
+def _contract_for(event: dict[str, Any], outcome: str) -> dict[str, Any] | None:
     """The contract for the team held: "Raptors" is the participant "Toronto Raptors", whose
-    contract is labelled "Toronto"."""
+    contract is labelled "Toronto". None when the side held cannot be told apart."""
     contracts: list[dict[str, Any]] = event["contracts"]
+    if len(contracts) == 1:
+        return contracts[0]
     held = outcome.strip().lower()
     if held:
+        for contract in contracts:
+            if held in str(contract.get("label", "")).lower():
+                return contract
         for team in event.get("participants") or []:
             name = str(team.get("name", "")).lower()
             if held in name:
@@ -307,19 +322,21 @@ def _contract_for(event: dict[str, Any], outcome: str) -> dict[str, Any]:
                     city = name.rsplit(" ", 1)[0]
                     if label and (label in name or city in label):
                         return contract
-    return contracts[0]
+    return None
 
 
 def find_similar(
     title: str, events: list[dict[str, Any]], outcome: str = ""
 ) -> DemoAdjacent | None:
-    """The Gemini event of the same kind sharing the most distinctive words with a title (two at
-    least). It is a neighbour, not the same bet: nothing here claims the five fields match."""
+    """The Gemini event sharing the most distinctive words with a title (two at least),
+    preferring the same kind (winner, spread, total). It is a neighbour, not the same bet:
+    nothing here claims the five fields match."""
     mine = _words(title)
     kind = _kind(title)
     best: tuple[int, dict[str, Any]] | None = None
     for event in events:
-        if not event.get("contracts") or _kind(str(event.get("title", ""))) != kind:
+        their_kind = _kind(str(event.get("title", "")))
+        if not event.get("contracts") or (their_kind == "props" and kind != "props"):
             continue
         theirs = _words(
             " ".join(
@@ -330,13 +347,17 @@ def find_similar(
                 + [str(p.get("name", "")) for p in event.get("participants", [])]
             )
         )
-        score = len(mine & theirs)
-        if score >= 2 and (best is None or score > best[0]):
+        shared = len(mine & theirs)
+        score = 2 * shared + (their_kind == kind)
+        if shared >= 2 and (best is None or score > best[0]):
             best = (score, event)
     if best is None:
         return None
     event = best[1]
     contract = _contract_for(event, outcome)
+    if contract is None:
+        # Name the event only: a price for the other side would mislead.
+        return DemoAdjacent(venue=GEMINI, title=str(event.get("title", "")), symbol="", price=None)
     prices = contract.get("prices") or {}
     raw = prices.get("bestBid") or prices.get("lastTradePrice")
     return DemoAdjacent(
@@ -479,20 +500,29 @@ class DemoDesk:
                 p.price = book.best_bid.price
         self._pcache[p.id] = time.monotonic()
 
-    async def _load_events(self) -> None:
-        """Every active Gemini event (about 30 pages, so slow): for the similar-market lookup."""
-        self._events_at = time.monotonic()  # one attempt per TTL, even when it fails
+    async def _search(self, query: str) -> list[dict[str, Any]]:
         try:
-            self._events = await self._gem.list_events(max_events=1500)
+            return await self._gem.list_events(search=query, max_events=100)
         except (VenueError, UnknownMarket) as exc:
-            log.warning("demo: Gemini events unavailable: %s", exc)
-            self._events = self._events or []
-        for p in self._linked.positions if self._linked else []:
+            log.warning("demo: Gemini search %r failed: %s", query, exc)
+            return []
+
+    async def _load_events(self) -> None:
+        """Search Gemini for each linked position's teams or topic. (The full event list stops
+        at 1,001 of several thousand, so most games are not in it; search finds them.)"""
+        self._events_at = time.monotonic()  # one attempt per TTL, even when it fails
+        linked = self._linked.positions if self._linked else []
+        queries = sorted({q for p in linked for q in search_terms(p.title, p.side)})
+        found = await asyncio.gather(*(self._search(q) for q in queries))
+        events = {str(e.get("ticker")): e for rows in found for e in rows}
+        self._events = list(events.values())
+        for p in linked:
             p.adjacent = find_similar(p.title, self._events, p.side)
 
     async def warm(self) -> None:
         """Do the slow loads at startup so the first request does not wait for them."""
-        await asyncio.gather(self._load_events(), self._refresh_linked())
+        await self._refresh_linked()
+        await self._load_events()
 
     async def _positions_of(self, wallet: str) -> list[dict[str, Any]]:
         resp = await self._http.get(

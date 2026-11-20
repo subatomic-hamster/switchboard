@@ -141,8 +141,8 @@ function PositionCard({ position, onMove }: { position: DemoPosition; onMove: (t
       </div>
       {position.adjacent && (
         <p className="muted">
-          Similar on {position.adjacent.venue}: {position.adjacent.title}{" "}
-          {cents(position.adjacent.price)}
+          Similar on {position.adjacent.venue}: {position.adjacent.title}
+          {position.adjacent.price != null && ` ${cents(position.adjacent.price)}`}
         </p>
       )}
       {open && (

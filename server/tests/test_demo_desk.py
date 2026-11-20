@@ -26,6 +26,7 @@ from app.demo_desk import (
     choose_trader,
     current_window,
     find_similar,
+    search_terms,
 )
 from app.events import _sse
 from app.main import create_app
@@ -114,7 +115,7 @@ LEADERS = [
 POSITIONS = {
     "0xaaa": [position("Only two", 5), position("Just two", 4)],
     "0xbbb": [
-        position("Houston Rockets vs. Denver Nuggets", 900),
+        position("Houston Rockets vs. Denver Nuggets", 900, outcome="Rockets"),
         position("Will it rain on Mars", 50),
         position("Another one", 40),
         position("Fourth", 30),
@@ -336,6 +337,13 @@ def test_similar_market_picks_the_same_kind_of_event_and_the_team_held() -> None
     assert pick("Raptors vs. Pistons", "Pistons") == "DET"
     assert pick("Spread: Raptors Pistons (-4.5)") == "SPR"
     assert pick("Raptors vs. Pistons: O/U 220.5", "Over") == "TOT"
+    # Without a spread event, a spread position falls back to the winner market for its team.
+    assert find_similar("Spread: Raptors (-4.5) Pistons", events[2:], "Raptors") is not None
+    # A side that cannot be told apart names the event and gives no price.
+    unclear = find_similar("Raptors vs. Pistons", events, "Yes")
+    assert unclear is not None and unclear.symbol == "" and unclear.price is None
+    assert search_terms("Spread: Thunder (-11.5)", "Thunder") == ["Thunder"]
+    assert search_terms("Will there be no change in Fed interest rates?", "Yes") == ["Fed"]
 
 
 def test_current_window_rolls_over_with_under_a_minute_left() -> None:

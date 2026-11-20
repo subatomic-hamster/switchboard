@@ -7,7 +7,8 @@ export interface Adjacent {
   venue: string;
   title: string;
   symbol: string;
-  price: number;
+  /** Null when the side held could not be told apart in the Gemini event. */
+  price: number | null;
 }
 
 /** The linked Polymarket account (pretend-linked in the demo). */
