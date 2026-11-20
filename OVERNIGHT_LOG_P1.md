@@ -48,6 +48,8 @@ after 10 failed retries (the maximum).
 | Polish from walking the live app: Home's first example is a live Arc → Solana hop within limits; "Sending from your Ethereum wallet isn't live yet. I can send from your Arc wallet." instead of "no route"; header says "Paused" (reason on hover), not "Stale"; the ring shows link payments; opinion stance shown once; feed titles wrap on phones; favicon; contract reverts name the error without the node's raw message | `3f8c35a`, `a6833ed`, `392ca15`, `b7fd8b1`, `65bc42a`, `d9c4547`, `1592e3e` |
 | **Security review of the internet-facing surface** (independent, read-only), three fixes: (1) **high**: a page on any other site open in the owner's browser could POST (text/plain, no preflight) to local routes such as `/api/freeze` or `/api/escrow/create`; state-changing requests now need `Sec-Fetch-Site` same-origin/none and a local `Origin`. Checked in a real browser: the dashboard's POSTs still work, a cross-origin `no-cors` POST to `/api/freeze` got 403 and the vault stayed unfrozen. (2) medium: concurrent duplicate claims of one link each cost the relayer two transactions; claims are now one at a time per link (test: 4 concurrent, 1 succeeds, nonce +2). (3) low: unknown escrow ids answered differently from wrong secrets. Webhook HMAC, replay guard, bearer tokens, prefix matching and the claim page were checked and found fine | `f051ff0` |
 | Morning pass after the restart: the allowlist listed the owner's shared Arc/Ethereum address twice; Activity shows one row per Stream outage ("recovered, paused for 2 min") instead of a went-quiet/recovered pair; the ring's "Vault / paused" labels no longer overlap; Markets shows "Rockets vs Nuggets · Nov 21" instead of the venue's long question; Health says "Quiet, spending paused" instead of "Stale". `web/dist` rebuilt, so `:8787/` serves the current UI | `e24abf8`, `916bcb0`, `19a9c68`, `6153f78` |
+| **Demo mode** (`docs/demo-mode.md`, `DEMO_MODE=true`): linked Polymarket account's real positions with similar Gemini markets, live suggestions, made-up recent actions; scripted hourly-BTC buy, Gemini offer, BTC move refused (no Gemini twin, Grok "against"), Rockets move with rebate (Grok "go", all 320 contracts), scripted win, $150 Ethereum → Sam's Solana with cheapest/fastest routes. Demo mode forces stubs, its own DB, $500/$2,000/50-call limits and 5-minute approvals over `.env`. Walked end to end in the browser on 20 Nov; Grok text live via OpenRouter | `0c5eaf0` … `84b22b5` |
+| **Calls and voice checked live (20 Nov)**: ElevenLabs text-to-speech → speech-to-text round trip returned the exact sentence; AgentPhone rang the owner for a $600 send over the cap, the owner said the amount and the word, the request was approved by voice and the $600 arrived on Solana (stub rails). First try expired because `.env` had `APPROVAL_EXPIRY_S=20`; demo mode now gives 300 s | `84b22b5` |
 | Demo runbook (`docs/demo-runbook.md`): the five beats with sentences that work live under the caps, pre-flight checks, and fixes for what can go wrong | `dc2c8b8` |
 | README rewritten for the integrated build: status table, contracts, Stream, CCTP, escrow, safety, markets, live-vs-sandboxed, configuration | `9ac7ce2` merge, `5579fd1` |
 | Phase 2 cross-chain: `CctpTransfers` (CCTP V2 burn on Arc, Circle Forwarding Service mints on the destination, so no destination gas), Iris attestation watch, `transfer.attested` event, sourced rail fees/ETAs in `fixtures/rails.json`, research in `server/app/chain/RAILS.md`; StableFX written against the API but blocked (permissioned) | `848821c` merge |
@@ -115,10 +117,15 @@ after 10 failed retries (the maximum).
    and the same names (blank / false) to `.env.example`, plus `CCTP_FORWARD=true`,
    `STREAM_STALE_AFTER_S=90`, `ANOMALY_ENABLED=`, `WALLETS_PATH=`. Until then I pass them as
    process env vars when starting the server.
-3. **Tunnel host.** `.env` `PUBLIC_BASE_URL` and the Stream both point at
-   `democrat-archived-retrieved-discussion.trycloudflare.com`. The Stream was repointed to the current tunnel and re-activated ("continue where it left off") on
-   20 Nov ~14:45 UTC; it had terminated after 10 failed retries to the old host. Every
-   quick-tunnel restart gets a new host, so both need redoing each time; a named tunnel avoids it.
+3. **Tunnel host.** The old tunnel died on 20 Nov. A new one runs at
+   `alike-saints-gibraltar-portsmouth.trycloudflare.com` (→ :8787): `.env` `PUBLIC_BASE_URL`
+   and the AgentPhone webhook point at it (16:40 UTC). The QuickNode Stream still points at the
+   old host, which the demo does not need, but the real-rails server does: repoint it and
+   "continue where it left off" before running real rails. Every quick-tunnel restart gets a new
+   host; a named tunnel avoids it.
+3a. **ElevenLabs calls** (`CALL_PROVIDER=elevenlabs_twilio`) need an ElevenLabs agent and an
+   imported Twilio number (`ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID`). AgentPhone is
+   the working call provider; ElevenLabs voice (speak/hear) works.
 4. **Use a steadier tunnel for the demo.** The quick tunnel flapped around 07:07–07:38 UTC (QUIC
    dials failing on this machine's network). The Stream went stale, spending was blocked, and
    it recovered by itself at 07:39 when QuickNode's retries got through and it caught up. If it
