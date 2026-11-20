@@ -70,6 +70,13 @@ export function describe(event: SwitchboardEvent): EventLine {
         }${d.eta_s ? `, about ${duration(d.eta_s)}` : ""}`,
       };
     }
+    case "transfer.attested":
+      return {
+        tone: "neutral",
+        label: "Attested",
+        title: `${money(event.data.amount_usd)} burned on Arc, waiting to mint on ${CHAIN_NAMES[event.data.to_chain]}`,
+        detail: event.data.detail || event.data.transfer_id,
+      };
     case "transfer.arrived":
       return {
         tone: "good",

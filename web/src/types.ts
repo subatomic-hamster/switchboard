@@ -40,6 +40,7 @@ export type ConnectorCreated = S["ConnectorCreated"];
 
 export const EVENT_TYPES: EventType[] = [
   "transfer.sent",
+  "transfer.attested",
   "transfer.arrived",
   "approval.requested",
   "approval.resolved",

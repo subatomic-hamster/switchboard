@@ -221,6 +221,9 @@ export interface paths {
         /**
          * Chain Transfer
          * @description STUB. Pretends to send a transfer; emits `transfer.sent`, then `transfer.arrived`.
+         *
+         *     Refused when transfers are real: this route skips the vault, so it would burn the agent
+         *     wallet's own USDC with no limit, no allowlist and no approval.
          */
         post: operations["chain_transfer_api_chain_transfer_post"];
         delete?: never;
@@ -1879,7 +1882,7 @@ export interface components {
         /** EventHistory */
         EventHistory: {
             /** Events */
-            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"])[];
+            events: (components["schemas"]["TransferSentEvent"] | components["schemas"]["TransferAttestedEvent"] | components["schemas"]["TransferArrivedEvent"] | components["schemas"]["ApprovalRequestedEvent"] | components["schemas"]["ApprovalResolvedEvent"] | components["schemas"]["BlockedEvent"] | components["schemas"]["TradePostedEvent"] | components["schemas"]["TradeFilledEvent"] | components["schemas"]["StreamStaleEvent"] | components["schemas"]["FrozenEvent"] | components["schemas"]["CallStartedEvent"] | components["schemas"]["CallEndedEvent"] | components["schemas"]["PolicyUpdatedEvent"] | components["schemas"]["ForecastCommittedEvent"] | components["schemas"]["ForecastRevealedEvent"])[];
         };
         /** ExecuteRequest */
         ExecuteRequest: {
@@ -2846,6 +2849,53 @@ export interface components {
              */
             type: "transfer.arrived";
         };
+        /**
+         * TransferAttestedData
+         * @description Circle has signed the burn; the mint on the destination has not been seen yet.
+         *
+         *     Additive (not one of the frozen event names). Lets the dashboard say "burned on Arc,
+         *     attested by Circle, waiting to mint on <chain>" instead of showing nothing.
+         */
+        TransferAttestedData: {
+            /** Amount Usd */
+            amount_usd: number;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /**
+             * Forwarding
+             * @description True when Circle's Forwarding Service will submit the mint.
+             * @default false
+             */
+            forwarding: boolean;
+            to_chain: components["schemas"]["Chain"];
+            /** Transfer Id */
+            transfer_id: string;
+            /**
+             * Tx Hash
+             * @description The burn transaction on Arc.
+             * @default
+             */
+            tx_hash: string;
+        };
+        /** TransferAttestedEvent */
+        TransferAttestedEvent: {
+            data: components["schemas"]["TransferAttestedData"];
+            /** Id */
+            id: number;
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "transfer.attested";
+        };
         /** TransferRequest */
         TransferRequest: {
             /** Amount Usd */
@@ -2890,6 +2940,11 @@ export interface components {
             to_chain: components["schemas"]["Chain"];
             /** Transfer Id */
             transfer_id: string;
+            /**
+             * Tx Hash
+             * @description The burn transaction on Arc, if real.
+             */
+            tx_hash?: string | null;
         };
         /** TransferSentEvent */
         TransferSentEvent: {
