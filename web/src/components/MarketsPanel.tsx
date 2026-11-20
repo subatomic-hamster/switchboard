@@ -224,7 +224,9 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
               <span className="venue-name">Polymarket US</span>
               <span>
                 Sell at <strong>{price(listing.polymarket.bid)}</strong>{" "}
-                <span className="muted">· {listing.polymarket.bid_depth} wanted</span>
+                <span className="muted">
+                  · {Math.round(listing.polymarket.bid_depth).toLocaleString("en-US")} wanted
+                </span>
               </span>
             </div>
             <svg className="venue-arrow" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
