@@ -808,6 +808,10 @@ async def test_calling_in_sends_buys_adds_and_moves_with_a_yes() -> None:
         assert "simulated" not in done and "real order" not in done
         assert "You now hold 173.64" in done and "16 percent chance" in done
         # More of a position already held, at a blended average.
+        # No amount: a bet on a held market defaults to $30.
+        quote = await call(s, "Place a bet on the Rockets on Polymarket")
+        assert "Rockets" in quote and "Go ahead?" in quote
+        assert "Okay, I won't" in await call(s, "no")
         quote = await call(s, "Add 20 dollars to my Rockets position")
         assert "Rockets" in quote and "Go ahead?" in quote
         assert "You now hold 3" in await call(s, "go ahead")

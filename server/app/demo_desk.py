@@ -974,8 +974,8 @@ class DemoDesk:
             if held is None or held.slug.startswith((BTC_PREFIX, BTC5_PREFIX)):
                 return None
         amount = read_amount(text[: market.start()] if market else text)
-        if amount is None and five:
-            amount = DEFAULT_BET_USD  # "place a bet on Down on the 5m market"
+        if amount is None and (five or held is not None):
+            amount = DEFAULT_BET_USD  # "place a bet on the Rockets", "...Down on the 5m market"
         if amount is None or amount <= 0:
             raise IntentError("How much should I put in? I did not catch an amount.")
         after_from = re.search(r"\bfrom\b(.*)", lowered)
