@@ -115,11 +115,11 @@ after 10 failed retries (the maximum).
    and the same names (blank / false) to `.env.example`, plus `CCTP_FORWARD=true`,
    `STREAM_STALE_AFTER_S=90`, `ANOMALY_ENABLED=`, `WALLETS_PATH=`. Until then I pass them as
    process env vars when starting the server.
-3. **Point the Stream and claim links at the current tunnel.** Every quick-tunnel restart gets a
-   new `*.trycloudflare.com` host. After the restart the Stream is still delivering to the old
-   one, so the server shows the stream as quiet and spending paused. Set the Stream's destination
-   (QuickNode → Streams → `switchboard-vault-arc`) to `https://<new host>/api/hooks/quicknode`, and
-   set `PUBLIC_BASE_URL` in `.env` to `https://<new host>`. A named tunnel avoids redoing this.
+3. **`PUBLIC_BASE_URL` in `.env` still reads `https://YOUR-HOST.trycloudflare.com`.** The running
+   server gets the real host as a process env var, so claim links work until it restarts. The
+   Stream was repointed to the current tunnel and re-activated ("continue where it left off") on
+   20 Nov ~14:45 UTC; it had terminated after 10 failed retries to the old host. Every
+   quick-tunnel restart gets a new host, so both need redoing each time; a named tunnel avoids it.
 4. **Use a steadier tunnel for the demo.** The quick tunnel flapped around 07:07–07:38 UTC (QUIC
    dials failing on this machine's network). The Stream went stale, spending was blocked, and
    it recovered by itself at 07:39 when QuickNode's retries got through and it caught up. If it
