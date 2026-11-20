@@ -424,6 +424,9 @@ async def test_btc_5m_is_matched_through_gemini_and_tracked() -> None:
         assert match["verdict"] == "refuse" and match["checks"]["source"] == "different"
         await buy_btc(s)
         assert BTC in s.ctx.markets._tracked  # type: ignore[attr-defined]
+        # Listed on Markets right after the buy, not at the next timed refresh.
+        listed = (await get(s, "/api/desk/markets"))["markets"]
+        assert BTC in [m["slug"] for m in listed]
 
 
 @respx.mock

@@ -995,6 +995,9 @@ class DemoDesk:
                 to=PM_US,
             )
         )
+        if isinstance(self._ctx.markets, RealMarkets):
+            # List the new window on Markets now, not at the next timed refresh.
+            await self._ctx.markets.refresh()
         await self._changed(
             "Bought Bitcoin 5-min", f"{buy.contracts.normalize():f} Up for ${cost}."
         )
