@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import secrets
+import time
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated, Any
@@ -179,6 +180,12 @@ class ChainEscrow:
             # Checked before any transaction: commitClaim does not look at the secret, and a
             # wrong guess must not cost the relayer gas.
             raise ContractRevert("Escrow", "WrongSecret")
+        # Likewise for a used or lapsed link: commitClaim would succeed and only claim revert, so
+        # anyone holding an old link could make the relayer pay for commitClaim again and again.
+        if deposit[3]:
+            raise ContractRevert("Escrow", "AlreadySettled")
+        if deposit[2] <= time.time():
+            raise ContractRevert("Escrow", "Expired")
         commitment = self._call(contract.functions.commitmentFor(escrow_id, secret, to))
         # Two transactions in two blocks: the commitment must be older than the claim.
         self._client.send(contract.functions.commitClaim(escrow_id, commitment))

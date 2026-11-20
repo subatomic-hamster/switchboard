@@ -213,10 +213,13 @@ async def test_deposit_then_claim_pays_the_recipient(
     assert chain.balance(deployed.escrow.address) == 0
     assert (await escrow.status("1")).settled is True
 
+    nonce = chain.w3.eth.get_transaction_count(chain.agent)
     with pytest.raises(ContractRevert) as again:
         await escrow.claim(created.escrow_id, created.secret, PAYEE)
     assert again.value.error == "AlreadySettled"
     assert isinstance(again.value, ValueError)
+    # Refused before any transaction: replaying a used link costs the relayer nothing.
+    assert chain.w3.eth.get_transaction_count(chain.agent) == nonce
 
 
 async def test_wrong_secret_is_refused_before_any_transaction(
