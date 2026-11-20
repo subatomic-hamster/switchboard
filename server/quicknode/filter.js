@@ -4,8 +4,8 @@
 // returns {heartbeat: n} so the server can tell a quiet chain from a dead Stream.
 const WATCHED = [
   "0xf04a1a72848cd816a0e22d3af62fc5d4288d4524", // Vault
-  // "0x...", // Ledger
-  // "0x...", // Escrow
+  "0x75375b072eea338c1ae65941dfc4e9567ab13569", // Ledger
+  "0x12b1820011873d8e23a6679ec26e9d61b4d2523d", // Escrow
 ];
 
 function main(payload) {
