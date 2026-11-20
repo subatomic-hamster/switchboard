@@ -1,0 +1,11 @@
+{
+  "_note": "FIXTURE. Placeholder testnet addresses for the demo wallet book. P1 replaces these with the real Circle wallets.",
+  "wallets": [
+    {"owner": "me", "label": "my Ethereum wallet", "chain": "eth-sepolia", "address": "0x1111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "me", "label": "my Solana wallet", "chain": "solana-devnet", "address": "Mine1111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "me", "label": "my Arc wallet", "chain": "arc-testnet", "address": "0x2222222222222222222222222222222222222222", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Ethereum wallet", "chain": "eth-sepolia", "address": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Solana wallet", "chain": "solana-devnet", "address": "Sam11111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Arc wallet", "chain": "arc-testnet", "address": "0x5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b", "allowlisted": true}
+  ]
+}

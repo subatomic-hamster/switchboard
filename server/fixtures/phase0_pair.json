@@ -1,0 +1,284 @@
+{
+  "_note": "Recorded by scripts/phase0_markets.py from the venues' public endpoints.",
+  "polymarket": {
+    "market": {
+      "id": "2222768",
+      "question": "Who will win in the upcoming basketball event HOU Rockets vs DEN Nuggets scheduled for November 21, 2026 at 3:00 AM UTC?",
+      "slug": "aec-nba-hou-den-2026-11-20",
+      "endDate": "2026-12-05T03:00:00Z",
+      "category": "sports",
+      "startDate": "2026-11-06T05:00:37Z",
+      "description": "This market will settle to the winner of the HOU Rockets vs DEN Nuggets professional basketball game scheduled for November 20, 2026 at 10:00PM ET (as of the listing of the event's first instrument). Overtime is included if played. If the game is delayed, postponed, suspended or otherwise rescheduled to a date and time not within two days of the originally scheduled date and time, the market will settle to the last fair market price. Outcome sourced from the relevant governing body.",
+      "active": true,
+      "marketType": "moneyline",
+      "closed": false,
+      "createdAt": "2026-11-06T05:00:37Z",
+      "updatedAt": "2026-11-19T06:24:25Z",
+      "archived": false,
+      "orderPriceMinTickSize": 0.01,
+      "gameStartTime": "2026-11-21T03:00:00Z",
+      "manualActivation": false,
+      "sportsMarketType": "basketball_team_full_game_winner",
+      "marketSides": [
+        {
+          "id": "4444986",
+          "marketSideType": "MARKET_SIDE_TYPE_INSTRUMENT",
+          "identifier": "aec-nba-hou-den-2026-11-20",
+          "createdAt": "2026-11-06T05:00:37Z",
+          "updatedAt": "2026-11-06T05:00:37Z",
+          "description": "Rockets",
+          "price": "0.4600",
+          "marketId": 2222768,
+          "long": true,
+          "teamId": 18,
+          "team": {
+            "id": 18,
+            "name": "Houston Rockets",
+            "abbreviation": "hou",
+            "league": "nba",
+            "record": "11-4",
+            "logo": "https://static.polymarket.us/images/teams/nba-hou/HOU_light_inset6.png",
+            "alias": "Houston Rockets",
+            "safeName": "Rockets",
+            "homeIcon": "https://static.polymarket.us/images/teams/nba-hou/HOU_light_inset6.png",
+            "awayIcon": "https://static.polymarket.us/images/teams/nba-hou/HOU_light_inset6.png",
+            "colorPrimary": "#d93025",
+            "providerId": 22,
+            "ordering": "away",
+            "longIcon": "https://static.polymarket.us/images/teams/nba-hou/HOU_light_inset6.png",
+            "shortIcon": "https://static.polymarket.us/images/teams/nba-hou/HOU_light_inset6.png",
+            "displayAbbreviation": "HOU",
+            "providerIds": [
+              {
+                "provider": "PROVIDER_SPORTSDATAIO",
+                "providerId": "22"
+              },
+              {
+                "provider": "PROVIDER_SPORTRADAR",
+                "providerId": "583ecb3a-fb46-11e1-82cb-f4ce4684ea4c"
+              },
+              {
+                "provider": "PROVIDER_OPTICODDS",
+                "providerId": "DF2D9E9E8E20"
+              }
+            ],
+            "longIconDark": "https://static.polymarket.us/images/teams/nba-hou/HOU_dark_inset6.png",
+            "shortIconDark": "https://static.polymarket.us/images/teams/nba-hou/HOU_dark_inset6.png",
+            "color": {
+              "light": "#d93025",
+              "dark": "#d93025"
+            },
+            "imageDisplayType": "IMAGE_DISPLAY_TYPE_LOGO"
+          },
+          "quote": {
+            "value": "0.4600",
+            "currency": "USD"
+          },
+          "tradable": true
+        },
+        {
+          "id": "4444987",
+          "marketSideType": "MARKET_SIDE_TYPE_INSTRUMENT",
+          "identifier": "aec-nba-hou-den-2026-11-20",
+          "createdAt": "2026-11-06T05:00:37Z",
+          "updatedAt": "2026-11-06T05:00:37Z",
+          "description": "Nuggets",
+          "price": "0.55",
+          "marketId": 2222768,
+          "long": false,
+          "teamId": 40,
+          "team": {
+            "id": 40,
+            "name": "Denver Nuggets",
+            "abbreviation": "den",
+            "league": "nba",
+            "record": "7-5",
+            "logo": "https://static.polymarket.us/images/teams/nba-den/DEN_light_inset6.png",
+            "alias": "Denver Nuggets",
+            "safeName": "Nuggets",
+            "homeIcon": "https://static.polymarket.us/images/teams/nba-den/DEN_light_inset6.png",
+            "awayIcon": "https://static.polymarket.us/images/teams/nba-den/DEN_light_inset6.png",
+            "colorPrimary": "#255fb5",
+            "providerId": 20,
+            "ordering": "home",
+            "longIcon": "https://static.polymarket.us/images/teams/nba-den/DEN_light_inset6.png",
+            "shortIcon": "https://static.polymarket.us/images/teams/nba-den/DEN_light_inset6.png",
+            "displayAbbreviation": "DEN",
+            "providerIds": [
+              {
+                "provider": "PROVIDER_SPORTSDATAIO",
+                "providerId": "20"
+              },
+              {
+                "provider": "PROVIDER_SPORTRADAR",
+                "providerId": "583ed102-fb46-11e1-82cb-f4ce4684ea4c"
+              },
+              {
+                "provider": "PROVIDER_OPTICODDS",
+                "providerId": "C0312DE08463"
+              }
+            ],
+            "longIconDark": "https://static.polymarket.us/images/teams/nba-den/DEN_dark_inset6.png",
+            "shortIconDark": "https://static.polymarket.us/images/teams/nba-den/DEN_dark_inset6.png",
+            "color": {
+              "light": "#255fb5",
+              "dark": "#255fb5"
+            },
+            "imageDisplayType": "IMAGE_DISPLAY_TYPE_LOGO"
+          },
+          "quote": {
+            "value": "0.55",
+            "currency": "USD"
+          },
+          "tradable": true
+        }
+      ],
+      "outcomes": "[\"Rockets\",\"Nuggets\"]",
+      "outcomePrices": "[\"0.4600\",\"0.55\"]",
+      "ep3Status": "OPEN",
+      "status": "MARKET_STATUS_OPEN",
+      "assetPriceTerms": null,
+      "sportsMarketTypeV2": "SPORTS_MARKET_TYPE_MONEYLINE",
+      "hidden": false,
+      "tags": [],
+      "feeCoefficient": 0.095,
+      "bestBidQuote": {
+        "value": "0.4500",
+        "currency": "USD"
+      },
+      "bestAskQuote": {
+        "value": "0.4600",
+        "currency": "USD"
+      },
+      "ep3SyncedAt": "2026-11-06T05:00:37Z",
+      "minimumTradeQty": 0.01,
+      "comboEnabled": true,
+      "politics": null,
+      "eventSubcategory": "BASKETBALL",
+      "singlesRfqConfig": {
+        "enabled": false,
+        "midpointDeviation": 0,
+        "minOrderValueUsd": 0,
+        "maxQuoteAgeSeconds": 0,
+        "quoteWindows": [],
+        "ruleName": "default",
+        "version": "singles-half-markets-v2"
+      }
+    },
+    "bbo": {
+      "marketSlug": "aec-nba-hou-den-2026-11-20",
+      "currentPx": {
+        "value": "0.4550",
+        "currency": "USD"
+      },
+      "lastTradePx": {
+        "value": "0.4600",
+        "currency": "USD"
+      },
+      "settlementPx": null,
+      "sharesTraded": "10786.9100",
+      "openInterest": "1244.9700",
+      "bestAsk": {
+        "value": "0.4600",
+        "currency": "USD"
+      },
+      "bestBid": {
+        "value": "0.4500",
+        "currency": "USD"
+      },
+      "askDepth": 17,
+      "bidDepth": 19,
+      "lastPriceSample": {
+        "longPx": {
+          "value": "0.4600",
+          "currency": "USD"
+        },
+        "shortPx": {
+          "value": "0.54",
+          "currency": "USD"
+        },
+        "ts": "2026-11-19T07:18:53.299884523Z"
+      },
+      "longQuote": {
+        "value": "0.4600",
+        "currency": "USD"
+      },
+      "shortQuote": {
+        "value": "0.55",
+        "currency": "USD"
+      },
+      "state": "MARKET_STATE_OPEN",
+      "bidShares": "19000",
+      "askShares": "18000"
+    }
+  },
+  "gemini": {
+    "event": {
+      "ticker": "NBA-2611210300-HOU-DEN-M",
+      "title": "Houston vs Denver",
+      "startTime": "2026-11-21T03:00:00.000Z",
+      "expiryDate": "2026-11-22T15:00:00.000Z",
+      "category": "Sports",
+      "source": null,
+      "sourceDetails": {
+        "agency": "statscore-rest-api",
+        "index": "Basketball"
+      }
+    },
+    "contract": {
+      "id": "475112-1195361",
+      "label": "Houston",
+      "description": {
+        "data": {},
+        "content": [
+          {
+            "data": {},
+            "marks": [],
+            "value": "If Houston wins the Pro Basketball game between Houston and Denver originally scheduled for November 20, 2026 at 10:00 PM ET, this market will resolve to Yes. Otherwise, it will resolve to No. The Underlying is the official result of the specified sporting event. Source Agencies, in order, are the league governing body, ESPN, Fox Sports, and the broadcast partner of the event. If the Expiration Value cannot be determined on the Expiration Date (including because the event is cancelled or a team forfeits, withdraws, or is disqualified), the Exchange may determine payouts pursuant to the Market Outcome Review Process. View the [full rules.](https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NBA_Win_Lose_Class_925aa13e-b255-4ef8-85e0-534a6f0a9012.pdf)",
+            "nodeType": "text"
+          }
+        ],
+        "nodeType": "document"
+      },
+      "prices": {
+        "buy": {
+          "yes": "0.46",
+          "no": "0.55"
+        },
+        "sell": {
+          "yes": "0.45",
+          "no": "0.54"
+        },
+        "bestBid": "0.45",
+        "bestAsk": "0.46"
+      },
+      "status": "active",
+      "createdAt": "2026-11-18T00:02:33.321Z",
+      "termsAndConditionsUrl": "https://assets.gemini.com/predictions/terms_and_conditions/Terms_and_Conditions_NBA_Win_Lose_Class_925aa13e-b255-4ef8-85e0-534a6f0a9012.pdf",
+      "ticker": "HOU",
+      "instrumentSymbol": "GEMI-NBA-2611210300-HOU-DEN-M-HOU",
+      "marketState": "open",
+      "abbreviatedName": "HOU",
+      "color": "#CE1141",
+      "imageUrl": "https://assets.gemini.com/predictions/images/HOU_55ffc374-c780-4aa2-9055-57351ab86be9.png",
+      "expiryDate": "2026-11-22T15:00:00.000Z",
+      "effectiveDate": "2026-11-18T00:00:08.000Z",
+      "sortOrder": 1,
+      "sportsSide": "away",
+      "teamId": "583ecb3a-fb46-11e1-82cb-f4ce4684ea4c",
+      "isCombo": false,
+      "quantityIncrement": "0.01",
+      "quantityMinimum": "0.01",
+      "priceIncrement": "0.01",
+      "quoteAssetPrecision": 2,
+      "priceMinimum": "0.01",
+      "target": {
+        "type": "team",
+        "name": "Houston Rockets",
+        "externalIds": {
+          "sportradar": "583ecb3a-fb46-11e1-82cb-f4ce4684ea4c"
+        }
+      }
+    }
+  }
+}
