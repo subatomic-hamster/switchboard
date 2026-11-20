@@ -29,16 +29,16 @@ States: **Live on Arc testnet**, **Live public data** (real venue endpoints, no 
 | USDC to EURC (StableFX) | **Blocked**: permissioned, needs an API key from Circle. Code written, dry-run quotes only |
 | Bank on-ramp | **Blocked**: needs a Circle Mint sandbox account. Not built |
 | Escrow, claim links, payment requests | **Live on Arc testnet**: commit-reveal claim and refund after expiry checked ([Escrow](#escrow-and-payment-requests)). Claim link host depends on `PUBLIC_BASE_URL` |
-| Safety depth (dead man's switch, anomaly baseline) | Real, with tests. Checked live: stale at start, clear on the first heartbeat |
+| Safety depth (dead man's switch, anomaly baseline) | Real, with tests. Checked live: stale at start, clear on the first heartbeat; pausing the Stream in QuickNode blocks spending within 90 s |
 | Approval call | Real code, **dry run** by default: the request that would be sent is logged and the dashboard stands in for the phone. The phone call goes through **AgentPhone** (`CALL_PROVIDER=agentphone`); an ElevenLabs agent through Twilio is the alternative. **No real call has been placed yet**, so the call itself is untested end to end |
 | Dashboard voice (microphone, quote read back) | Real: ElevenLabs speech-to-text and text-to-speech when `ELEVENLABS_API_KEY` is set, checked with one live round trip; the browser's own speech otherwise |
 | Approval rules (amount, word, passkey, expiry, call cap) | Real |
 | Connected assistants (ChatGPT, Claude, Grok and others sending through Switchboard) | Real server code, checked on this machine with the official MCP client. **No assistant has been connected for real**: that needs a public address. See [Connected assistants](#connected-assistants) |
 | Prices and equivalence check | **Live public data** with `USE_REAL_MARKETS=true` (Gemini and Polymarket US, no keys). **Recorded data** otherwise (`server/fixtures/markets.json`). Tests use recordings in `server/fixtures/markets/` |
 | Position move | **Dry run only.** Both legs are built and signed with a dummy key, never sent. `TRADING_ENABLED` is false, no venue keys are set, and no order has been placed |
-| Trade records onchain | Ledger deployed on Arc testnet. With the real vault and `LEDGER_ADDRESS` set, each move, dry or not, is hashed onto it; stub anchor otherwise. Covered by tests; no live move was recorded in the run log |
+| Trade records onchain | Ledger deployed on Arc testnet. With the real vault and `LEDGER_ADDRESS` set, each move, dry or not, is hashed onto it; stub anchor otherwise. Checked live: a dry-run move of 2 contracts wrote Ledger entry 1 (tx `0x68b0…5969`) |
 | Forecast opinion | Real: four model families on live calls, when the keys are set |
-| Forecast receipts | Real hashing, reveal and Brier scoring. The commitment goes onto the Ledger with the real vault and `LEDGER_ADDRESS` (a stub anchor otherwise) |
+| Forecast receipts | Real hashing, reveal and Brier scoring. The commitment goes onto the Ledger with the real vault and `LEDGER_ADDRESS` (a stub anchor otherwise). Checked live: a four-model opinion on an NBA game was committed as Ledger entry 2 before tip-off; the reveal comes after the game |
 | Grok Bot routines | Server routes are real. The routines are set up by hand: [bots/routines.md](bots/routines.md) |
 | Kalshi, Limitless, Phantom | **Planned.** Listed in the markets panel as not connected. Nothing is built for them |
 
@@ -548,7 +548,9 @@ logs, resets a timer. After `STREAM_STALE_AFTER_S` (default 90) of silence the s
 `stream.stale` and refuses to spend. At start-up there has been no delivery, so the Stream counts
 as stale until the first heartbeat. An owner's approval is also not settled onchain while stale
 (the request stays pending and may expire, which is the safe direction); a denial always is.
-Checked live: restart published stale, the first heartbeat cleared it.
+Checked live: restart published stale, the first heartbeat cleared it. Pausing the Stream in
+QuickNode turned it stale 90 s after the last delivery and a spend previewed `block`
+(`STREAM_STALE`); resuming cleared it in 9 s.
 
 ## Cross-chain transfers (CCTP V2)
 
@@ -684,7 +686,8 @@ Recorded responses used by the tests, with their provenance and one synthetic fi
   guard order is fixed: minimum 0.01 contract, notional at most `MAX_ORDER_USD` (hard ceiling $2),
   then `TRADING_ENABLED`. Outcomes are `filled`, `partial`, `unfilled`, `stranded` or `dry_run`.
   Every move, dry or not, ends in a hash of the trade record committed to the Ledger. Gemini
-  trades settle on Gemini; the Ledger entry is the record. A live position move has not been run.
+  trades settle on Gemini; the Ledger entry is the record. A real-money move has not been run;
+  a dry-run move on live order books has (orders signed with dummy keys, logged, never sent).
 - **"Will I get a bid?"** is read from bid depth and spread. It is a fact.
 - **"I'd hold this"** is a forecast. One model from each of at least three families
   (Anthropic, OpenAI, Google, xAI) estimates the probability, starting from the market price;
