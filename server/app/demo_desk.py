@@ -280,12 +280,47 @@ def _hint_words(text: str) -> set[str]:
     return {w for w in out if w not in skip and not w.isdigit() and len(w) > 1}
 
 
-def find_similar(title: str, events: list[dict[str, Any]]) -> DemoAdjacent | None:
-    """The Gemini event sharing the most distinctive words with a title (two at least). It is a
-    neighbour, not the same bet: nothing here claims the five fields match."""
+def _kind(text: str) -> str:
+    """Gemini lists each game as separate events: the winner, "Total Points", "Point Spread",
+    and player props. Polymarket titles say "Spread:" or "O/U"."""
+    lowered = text.lower()
+    if "spread" in lowered:
+        return "spread"
+    if "o/u" in lowered or "total" in lowered:
+        return "total"
+    if "player" in lowered:
+        return "props"
+    return ""
+
+
+def _contract_for(event: dict[str, Any], outcome: str) -> dict[str, Any]:
+    """The contract for the team held: "Raptors" is the participant "Toronto Raptors", whose
+    contract is labelled "Toronto"."""
+    contracts: list[dict[str, Any]] = event["contracts"]
+    held = outcome.strip().lower()
+    if held:
+        for team in event.get("participants") or []:
+            name = str(team.get("name", "")).lower()
+            if held in name:
+                for contract in contracts:
+                    label = str(contract.get("label", "")).lower()
+                    city = name.rsplit(" ", 1)[0]
+                    if label and (label in name or city in label):
+                        return contract
+    return contracts[0]
+
+
+def find_similar(
+    title: str, events: list[dict[str, Any]], outcome: str = ""
+) -> DemoAdjacent | None:
+    """The Gemini event of the same kind sharing the most distinctive words with a title (two at
+    least). It is a neighbour, not the same bet: nothing here claims the five fields match."""
     mine = _words(title)
+    kind = _kind(title)
     best: tuple[int, dict[str, Any]] | None = None
     for event in events:
+        if not event.get("contracts") or _kind(str(event.get("title", ""))) != kind:
+            continue
         theirs = _words(
             " ".join(
                 [
@@ -298,24 +333,10 @@ def find_similar(title: str, events: list[dict[str, Any]]) -> DemoAdjacent | Non
         score = len(mine & theirs)
         if score >= 2 and (best is None or score > best[0]):
             best = (score, event)
-    if best is None or not best[1].get("contracts"):
+    if best is None:
         return None
     event = best[1]
-    # Pick the contract of the same kind as the position: a spread, a total, or the winner.
-    lowered = title.lower()
-    kind = (
-        "spread"
-        if "spread" in lowered
-        else "total"
-        if "o/u" in lowered or "total" in lowered
-        else ""
-    )
-
-    def kind_of(contract: dict[str, Any]) -> str:
-        label = str(contract.get("label", "")).lower()
-        return "spread" if "spread" in label else "total" if "total" in label else ""
-
-    contract = next((c for c in event["contracts"] if kind_of(c) == kind), event["contracts"][0])
+    contract = _contract_for(event, outcome)
     prices = contract.get("prices") or {}
     raw = prices.get("bestBid") or prices.get("lastTradePrice")
     return DemoAdjacent(
@@ -467,7 +488,7 @@ class DemoDesk:
             log.warning("demo: Gemini events unavailable: %s", exc)
             self._events = self._events or []
         for p in self._linked.positions if self._linked else []:
-            p.adjacent = find_similar(p.title, self._events)
+            p.adjacent = find_similar(p.title, self._events, p.side)
 
     async def warm(self) -> None:
         """Do the slow loads at startup so the first request does not wait for them."""
@@ -553,7 +574,7 @@ class DemoDesk:
             _dec(p.get("current_price")),
             f"https://polymarket.com/event/{p.get('event_slug') or p.get('slug', '')}",
             ends_at=end,
-            adjacent=find_similar(title, events),
+            adjacent=find_similar(title, events, str(p.get("outcome", ""))),
             value=_dec(p.get("current_value")),
             pnl=_dec(pnl),
         )

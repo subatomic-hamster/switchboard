@@ -302,21 +302,40 @@ def test_similar_gemini_market_needs_two_shared_words() -> None:
     assert find_similar("Will the Rockets win", events) is None  # one shared word
 
 
-def test_similar_market_picks_the_same_kind_of_contract() -> None:
+def test_similar_market_picks_the_same_kind_of_event_and_the_team_held() -> None:
+    teams = [
+        {"name": "Detroit Pistons", "abbreviation": "DET"},
+        {"name": "Toronto Raptors", "abbreviation": "TOR"},
+    ]
     events = [
         {
-            "title": "Toronto Raptors vs Detroit Pistons",
+            "title": "Toronto vs Detroit: Total Points",
+            "participants": teams,
+            "contracts": [{"label": "More than 193.5 points scored", "instrumentSymbol": "TOT"}],
+        },
+        {
+            "title": "Toronto vs Detroit: Point Spread",
+            "participants": teams,
+            "contracts": [{"label": "Detroit wins by more than 1.5", "instrumentSymbol": "SPR"}],
+        },
+        {
+            "title": "Toronto vs Detroit",
+            "participants": teams,
             "contracts": [
-                {"label": "Total Points: More than 193.5", "instrumentSymbol": "TOT"},
-                {"label": "Point Spread: Detroit by 1.5", "instrumentSymbol": "SPR"},
-                {"label": "Toronto", "instrumentSymbol": "WIN"},
+                {"label": "Detroit", "instrumentSymbol": "DET"},
+                {"label": "Toronto", "instrumentSymbol": "TOR"},
             ],
-        }
+        },
     ]
-    pick = lambda title: getattr(find_similar(title, events), "symbol", None)  # noqa: E731
-    assert pick("Raptors vs. Pistons") == "WIN"
+
+    def pick(title: str, outcome: str = "") -> str | None:
+        hit = find_similar(title, events, outcome)
+        return hit.symbol if hit else None
+
+    assert pick("Raptors vs. Pistons", "Raptors") == "TOR"
+    assert pick("Raptors vs. Pistons", "Pistons") == "DET"
     assert pick("Spread: Raptors Pistons (-4.5)") == "SPR"
-    assert pick("Raptors vs. Pistons: O/U 220.5") == "TOT"
+    assert pick("Raptors vs. Pistons: O/U 220.5", "Over") == "TOT"
 
 
 def test_current_window_rolls_over_with_under_a_minute_left() -> None:
