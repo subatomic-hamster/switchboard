@@ -115,10 +115,10 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    `uv run python -m scripts.agentphone_setup` with no flags: it lists what is still missing.
 8. **Place the first call and listen.** `CALLS_ENABLED=true` was set on 20 November, on your
    say, and the server restarted: it reports calls live through AgentPhone. I have placed no
-   call. The next approval request rings your phone, once the daily limit allows: the five
-   dry-run calls of 19 November count against it until they are 24 hours old (the first
-   three by 07:49 UTC on 20 November, the last at 17:03 UTC). To place the first call,
-   keep the server and the tunnel running and
+   call. The next approval request rings your phone. The five dry-run calls of 19 November
+   had filled the daily limit; you asked for the count to be set back to 0, so I deleted
+   those five records (decision 57). To place the first call, keep the server and the
+   tunnel running and
    either run `uv run python -m scripts.phase0_call --place-real-call` (one test call that can
    approve nothing) or send "Send 250 from my Arc wallet to Sam's Arc wallet" from the
    dashboard and answer. Things I could not check without a real call:
@@ -460,3 +460,11 @@ agreement because they touch the shared interface.
     not an x.ai address; I used them as you gave them. And a request denied by the call limit
     does not notify the routine at all, because the notice says "Switchboard called"; it shows
     on the dashboard as blocked and is counted in the daily summary. Left as it is.
+57. **The call count was reset by deleting records, on your say.** The daily limit counts the
+    rows of the call log from the last 24 hours, dry runs included, so a restart does not
+    reset it. On 20 November you asked for it back at 0. All five rows were dry runs from the
+    tests of 19 November; I stopped the server, copied the database to
+    `data/switchboard.sqlite.before-call-reset-20261120` (git-ignored) and deleted those five
+    rows. Nothing else in the database was touched and `MAX_CALLS_PER_DAY` is still 5. The
+    events and approvals from those tests are still there, so the dashboard's history is
+    unchanged.
