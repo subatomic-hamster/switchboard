@@ -12,7 +12,7 @@ and what to check beforehand. Everything here runs on testnets with burner walle
 | Steady tunnel | A named Cloudflare tunnel, or `cloudflared tunnel --protocol http2 --url http://127.0.0.1:8787`. Quick tunnels over QUIC dropped every few minutes on hotel-grade Wi-Fi |
 | Stream points at it | QuickNode → Streams → `switchboard-vault-arc` → destination `<tunnel>/api/hooks/quicknode`, active |
 | `PUBLIC_BASE_URL` = the tunnel | Claim links are built from it |
-| Header shows **Live** | Not "Stale". Stale means no Stream delivery for 90 s, and every spend is refused |
+| Header shows **Live** | Not "Paused". Paused means no Stream delivery for 90 s, and every spend is refused |
 | Budget left | Home shows "Left today". The agent has $10 per rolling 24 h and $5 per send. Each beat below spends at most $2 |
 | Agent float | The agent wallet pays cross-chain fees (about $0.23 to Solana) and funds escrow links. Keep $5+ USDC on it |
 | Phone | `CALLS_ENABLED=true` and the AgentPhone settings if the call should really ring; otherwise the dashboard stands in for the phone |
@@ -46,7 +46,7 @@ Sam's Solana wallet."*
 **5. Safety.** Either:
 - **Freeze:** the Freeze button in the header. Then repeat beat 2: blocked, `FROZEN`.
   Unfreeze afterwards.
-- **Kill the stream:** pause the Stream in QuickNode. Within 90 s the header turns Stale and the
+- **Kill the stream:** pause the Stream in QuickNode. Within 90 s the header turns Paused and the
   next send is blocked, `STREAM_STALE`. Resume ("Continue where it left off"); it clears in
   seconds.
 
@@ -57,7 +57,7 @@ phone, paste an Arc address, Claim. The ring lights "New address".
 
 | You see | It means | Do |
 |---|---|---|
-| Header "Stale" | No Stream delivery for 90 s | Check the tunnel; resume the Stream in QuickNode |
+| Header "Paused" | No Stream delivery for 90 s | Check the tunnel; resume the Stream in QuickNode |
 | Quote says it needs approval for a small amount | Daily budget used up (`OVER_DAILY_BUDGET`) | Approve it on the call, or raise the budget in Controls |
 | "Sending from your Ethereum wallet isn't live yet" | Only Arc-origin transfers move real money | Send from the Arc wallet |
 | Claim page "This link is not valid" | Wrong or cut-off link | Copy the whole link, including the part after `#` |

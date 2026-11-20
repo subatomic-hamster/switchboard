@@ -73,8 +73,11 @@ export function App() {
         ? "Connecting…"
         : "Reconnecting…"
       : stats?.stream_stale
-        ? "Stale"
+        ? "Paused"
         : "Live";
+  const streamTitle = stats?.stream_stale
+    ? "No word from the chain for a while, so spending is paused until it is back."
+    : undefined;
   const streamTone = stats?.frozen || stats?.stream_stale ? "bad" : stream.state;
 
   return (
@@ -107,7 +110,7 @@ export function App() {
             ))}
           </nav>
           <span className="spacer" />
-          <span className={`stream stream-${streamTone}`} role="status">
+          <span className={`stream stream-${streamTone}`} role="status" title={streamTitle}>
             <span className="dot" aria-hidden="true" />
             <span className="stream-label">{streamLabel}</span>
           </span>
