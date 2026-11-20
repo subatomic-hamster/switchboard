@@ -20,6 +20,7 @@ from app.wallets import WalletBook
 
 if TYPE_CHECKING:
     from app.bots import Bots
+    from app.chain.watchdog import Watchdog
     from app.connectors import Connectors
     from app.forecast import Forecaster
     from app.holds import HoldingVault
@@ -75,9 +76,15 @@ class AppContext:
     markets: MarketsPort
     anchor: AnchorPort
     stream_stale: bool = False
-    # Set by the real Stream webhook (app/chain/stream.py); the Phase 4 dead man's switch reads it.
+    # Set by the real Stream webhook (app/chain/stream.py); the dead man's switch reads it.
     last_stream_delivery: datetime | None = None
+    # Demo override from /api/chain/stub/stream: stale whatever the Stream is doing.
+    stale_forced: bool = False
     stream_seen: OrderedDict[tuple[str, int], None] = field(default_factory=OrderedDict)
+    # (nonce, timestamp) of recent authenticated deliveries, value = timestamp. Replay guard.
+    stream_nonces: OrderedDict[tuple[str, str], int] = field(default_factory=OrderedDict)
+    # Real vault only: app/chain/watchdog.py. None with stubs.
+    watchdog: Watchdog | None = None
     # Services are attached by app.main.build_context once the context exists.
     planner: Planner = field(init=False)
     approvals: Approvals = field(init=False)

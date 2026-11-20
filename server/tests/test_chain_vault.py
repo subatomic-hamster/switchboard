@@ -305,6 +305,13 @@ async def test_over_limit_plan_through_planner_and_approval(
             response = await http.post("/api/hooks/quicknode", content=body, headers=sign(body))
             assert response.status_code == 200
 
+        # Until the Stream's first delivery the server treats it as stale and refuses to spend.
+        beat = b'{"heartbeat": 1}'
+        assert (
+            await http.post("/api/hooks/quicknode", content=beat, headers=sign(beat))
+        ).status_code == 200
+        assert ctx.stream_stale is False
+
         plan = (
             await http.post(
                 "/api/intent", json={"text": "send 250 from my arc wallet to sam's arc wallet"}

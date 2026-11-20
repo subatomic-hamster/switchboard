@@ -117,6 +117,7 @@ REASON_PHRASES: dict[Reason, str] = {
     Reason.OVER_DAILY_BUDGET: "it would take you past your daily budget",
     Reason.PAYEE_NOT_ALLOWED: "the destination is one you have never paid before",
     Reason.FROZEN: "the vault is frozen",
+    Reason.UNUSUAL_SPEND: "it is unlike this agent's usual spending",
     Reason.OVER_AGENT_LIMIT: (
         "it came from a connected assistant and is more than that assistant may send "
         "without asking you"
@@ -189,7 +190,9 @@ class Approvals:
             expires_at=now + timedelta(seconds=policy.approval_expiry_s),
             passkey_required=amount > ctx.settings.passkey_threshold_usd,
             case_for="The agent asked for this spend. No sentence of yours is on record for it.",
-            case_against=self._case_against(
+            # A server-side hold may carry its own objection (the anomaly baseline's).
+            case_against=ctx.holds.note(request_id)
+            or self._case_against(
                 reason, amount, label, spent, policy.transfer_cap_usd, policy.daily_budget_usd
             ),
         )
@@ -486,6 +489,11 @@ class Approvals:
         return await self._finalise(request_id, "voice+passkey")
 
     async def _finalise(self, request_id: str, via: str) -> OkResponse:
+        if self._ctx.stream_stale:
+            # Approving releases money, so it waits for the Stream like any other spend (see
+            # chain/watchdog.py). The request stays pending; saying the word again after the
+            # Stream recovers works, and if not it expires. Denying is never blocked.
+            return OkResponse(ok=False, status="pending", error="stream_stale")
         row = self._require(request_id)
         row.status = "approved"
         row.resolved_via = via

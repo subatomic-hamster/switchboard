@@ -273,7 +273,14 @@ async def quicknode_hook(body: JsonObject) -> OkResponse:
 
 @router.post("/chain/stub/stream", response_model=OkResponse)
 async def stub_stream(body: StreamToggleRequest, ctx: Ctx) -> OkResponse:
-    """STUB, demo only. Simulates the Stream going quiet ("kill the stream") or recovering."""
+    """Demo only, local-only. Forces the Stream stale ("kill the stream") or releases it.
+
+    With stubs it publishes the event itself. With the real vault it is an override on the
+    dead man's switch (`chain/watchdog.py`): forced stale holds whatever the Stream does, and
+    releasing it hands back to the real clock, so the answer can still be "stale"."""
+    if ctx.watchdog is not None:
+        await ctx.watchdog.force(body.stale)
+        return OkResponse(ok=True, status="stale" if ctx.stream_stale else "live")
     if not ctx.settings.use_p1_stubs:
         raise HTTPException(status_code=404, detail="stub routes are disabled")
     await ctx.bus.publish(

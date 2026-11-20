@@ -70,6 +70,16 @@ class Settings(BaseSettings):
     agent_private_key: str = ""
     approver_private_key: str = ""
     quicknode_stream_secret: str = ""
+    # Dead man's switch: no authenticated Stream delivery for this long means stale. The Stream
+    # sends a heartbeat about every 30 seconds.
+    stream_stale_after_s: int = Field(default=90, gt=0)
+
+    # Anomaly baseline (app/chain/anomaly.py). Unset means on with the real vault, off with stubs.
+    anomaly_enabled: bool | None = None
+    anomaly_min_samples: int = Field(default=8, ge=1)
+    anomaly_amount_factor: Decimal = Decimal("5")
+    anomaly_burst_count: int = Field(default=4, ge=2)
+    anomaly_burst_window_s: int = Field(default=600, gt=0)
 
     # policy mirror (the contract is the authority once P1's vault is wired in)
     policy_transfer_cap_usd: Decimal = Decimal("200")
@@ -120,6 +130,10 @@ class Settings(BaseSettings):
 
     # demo: divide stubbed transfer times by this so the ring view is watchable
     demo_time_scale: float = Field(default=4.0, gt=0)
+
+    @property
+    def anomaly_on(self) -> bool:
+        return (not self.use_p1_stubs) if self.anomaly_enabled is None else self.anomaly_enabled
 
     @property
     def effective_max_order_usd(self) -> Decimal:
