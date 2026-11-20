@@ -136,11 +136,27 @@ class Decision(Model):
     detail: str
 
 
+class MarketBuyIntent(Model):
+    """Demo mode: buy into a market. Priced from the live ask; nothing is really ordered."""
+
+    venue: str
+    slug: str
+    title: str
+    side: str
+    amount_usd: Money
+    price: Money
+    contracts: Money
+    fee_usd: Money
+    from_place: str
+    ends_at: datetime | None = None
+
+
 class IntentResponse(Model):
     plan_id: str
-    kind: Literal["transfer", "market_move"] = "transfer"
+    kind: Literal["transfer", "market_move", "market_buy"] = "transfer"
     request: TransferRequest | None = None
     market_move: MarketMoveIntent | None = None
+    market_buy: MarketBuyIntent | None = None
     routes: list[Route] = []
     # P2 additions (optional, so the frozen shape still validates):
     spoken_quote: str = ""
@@ -398,6 +414,13 @@ class PaymentData(Model):
     memo: str = ""
 
 
+class DemoUpdatedData(Model):
+    """Demo mode only: something on the scripted stage changed (see app/demo_desk.py)."""
+
+    title: str
+    detail: str = ""
+
+
 class _EventBase(Model):
     id: int
     ts: datetime
@@ -488,6 +511,11 @@ class PaymentUpdatedEvent(_EventBase):
     data: PaymentData
 
 
+class DemoUpdatedEvent(_EventBase):
+    type: Literal["demo.updated"] = "demo.updated"
+    data: DemoUpdatedData
+
+
 SwitchboardEvent = Annotated[
     TransferSentEvent
     | TransferAttestedEvent
@@ -505,7 +533,8 @@ SwitchboardEvent = Annotated[
     | ForecastCommittedEvent
     | ForecastRevealedEvent
     | EscrowUpdatedEvent
-    | PaymentUpdatedEvent,
+    | PaymentUpdatedEvent
+    | DemoUpdatedEvent,
     Field(discriminator="type"),
 ]
 
@@ -527,6 +556,7 @@ EVENT_PAYLOADS: dict[str, type[Model]] = {
     "forecast.revealed": ForecastData,
     "escrow.updated": EscrowData,
     "payment.updated": PaymentData,
+    "demo.updated": DemoUpdatedData,
 }
 
 FROZEN_EVENT_TYPES: tuple[str, ...] = (

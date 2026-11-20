@@ -161,6 +161,11 @@ class Settings(BaseSettings):
     # demo: divide stubbed transfer times by this so the ring view is watchable
     demo_time_scale: float = Field(default=4.0, gt=0)
 
+    # Demo mode (docs/demo-mode.md): the scripted stage. Routes under /api/demo exist only when
+    # on. DEMO_TRADER_WALLET pins the public trader shown on Home; blank picks one.
+    demo_mode: bool = False
+    demo_trader_wallet: str = ""
+
     @property
     def anomaly_on(self) -> bool:
         return (not self.use_p1_stubs) if self.anomaly_enabled is None else self.anomaly_enabled

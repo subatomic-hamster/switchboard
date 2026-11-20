@@ -232,7 +232,9 @@ def describe_polymarket(market: Mapping[str, Any]) -> Descriptor:
 def _pm_price(market: Mapping[str, Any], terms: Mapping[str, Any]) -> Descriptor:
     market_type = str(terms.get("marketType", ""))
     style = (
-        "above_below"
+        "up_down"
+        if "UP_DOWN" in market_type
+        else "above_below"
         if "ABOVE_BELOW" in market_type
         else "touch"
         if ("HIT" in market_type or "TOUCH" in market_type)
@@ -264,7 +266,7 @@ def _pm_price(market: Mapping[str, Any], terms: Mapping[str, Any]) -> Descriptor
         "polymarket",
         PriceEvent(asset, style) if asset else None,
         strike,
-        strike.direction if strike else None,
+        "up" if style == "up_down" else strike.direction if strike else None,  # Yes = Up
         _dt(terms.get("windowEnd")),
         timedelta(minutes=1),
         provider,
@@ -440,7 +442,11 @@ def _gem_price(event: Mapping[str, Any], contract: Mapping[str, Any]) -> Descrip
         "gemini",
         PriceEvent(asset, style) if asset else None,
         strike,
-        strike.direction if strike else None,
+        str(contract.get("ticker", "")).lower()
+        if style == "up_down"
+        else strike.direction
+        if strike
+        else None,
         _dt(contract.get("expiryDate") or event.get("expiryDate")),
         timedelta(minutes=1),
         provider,
@@ -553,11 +559,10 @@ def compare(pm: Descriptor, gem: Descriptor) -> tuple[MatchChecks, list[str]]:
     event = _event_check(pm.event, gem.event)
 
     if pm.strike is None and gem.strike is None:
-        strike: CheckResult = (
-            "n/a"
-            if isinstance(pm.event, SportsEvent) and pm.event.kind in ("winner", "advance")
-            else "unknown"
-        )
+        no_threshold = (
+            isinstance(pm.event, SportsEvent) and pm.event.kind in ("winner", "advance")
+        ) or (isinstance(pm.event, PriceEvent) and pm.event.style == "up_down")
+        strike: CheckResult = "n/a" if no_threshold else "unknown"
     elif pm.strike is None or gem.strike is None:
         strike = "unknown"
     else:

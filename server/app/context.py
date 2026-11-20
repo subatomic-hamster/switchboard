@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.chain.escrow import ChainEscrow
     from app.chain.watchdog import Watchdog
     from app.connectors import Connectors
+    from app.demo_desk import DemoDesk
     from app.forecast import Forecaster
     from app.holds import HoldingVault
     from app.hostile import HostileLab
@@ -101,8 +102,12 @@ class AppContext:
     connectors: Connectors = field(init=False)
     # The same object as `vault`, typed so the planner can place a server-side hold.
     holds: HoldingVault = field(init=False)
+    # Demo mode only (app/demo_desk.py); None otherwise, and its routes then answer 404.
+    demo: DemoDesk | None = None
 
     async def aclose(self) -> None:
+        if self.demo is not None:
+            await self.demo.aclose()
         await self.tasks.aclose()
         await self.approvals.aclose()
         await self.forecaster.aclose()

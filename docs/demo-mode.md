@@ -1,7 +1,7 @@
 # Demo mode
 
 A scripted stage for the pitch. Money moves are simulated by the stub vault and stub transfers;
-market data (Polymarket US, Gemini, a real Polymarket trader's public positions) is live. No order
+market data (Polymarket US, Gemini, a real linked Polymarket account's public positions) is live. No order
 is placed and no testnet funds move. The real-rails build is unchanged when `DEMO_MODE` is off.
 
 ## Start
@@ -17,8 +17,9 @@ offer, and Settle Rockets as a win.
 
 ## The script
 
-1. Home shows live suggestions, your positions with live odds, a real top Polymarket trader's
-   positions with similar Gemini markets, and recent money actions.
+1. Home shows live suggestions, your positions with live odds (a linked Polymarket account's
+   real positions plus the scripted ones; linked ones show a similar Gemini market), and recent
+   money actions.
 2. "Put 30 dollars from my Ethereum wallet into the Bitcoin 5 minute market on Polymarket"
    → plan card (live price, contracts, fee) → Confirm → position appears with live odds.
 3. Controls → Demo → Show the Gemini offer (3% rebate for 10 minutes). A banner and new
@@ -39,21 +40,25 @@ offer, and Settle Rockets as a win.
 
 ```
 {
-  "trader": {"name", "wallet", "profile_url",
-             "positions": [{"title", "outcome", "size", "avg_price", "price", "value_usd",
-                            "pnl_usd", "url",
-                            "adjacent": {"venue": "Gemini", "title", "symbol", "price"} | null}]
-            } | null,
-  "positions": [{"id", "venue": "Polymarket US" | "Gemini", "slug", "title", "side",
-                 "contracts", "avg_price", "price", "value_usd", "pnl_usd",
-                 "ends_at": iso | null, "status": "open" | "won" | "lost" | "moved", "url"}],
+  "account": {"venue": "Polymarket", "name", "wallet", "profile_url", "linked": true} | null,
+  "positions": [{"id", "venue": "Polymarket US" | "Polymarket" | "Gemini", "slug", "title",
+                 "side", "contracts", "avg_price", "price", "value_usd", "pnl_usd",
+                 "ends_at": iso | null, "status": "open" | "won" | "lost" | "moved", "url",
+                 "adjacent": {"venue": "Gemini", "title", "symbol", "price"} | null}],
   "offer": {"venue": "Gemini", "headline", "rebate_pct", "expires_at": iso} | null,
   "balances": [{"place", "usd"}]
 }
 ```
 
-Prices are 0..1 (the live best bid you could sell at). `trader` is null when the public API is
-unreachable.
+Prices are 0..1 (the live best bid you could sell at). We pretend a Polymarket account is
+linked: `account` is a real public Polymarket (international) account, `DEMO_TRADER_WALLET` or
+else the first weekly-PNL leader with 3+ open positions (preferring sports/BTC/ETH titles), and
+its top 6 open positions (by current value, refreshed every 15 s, ids `pm-<n>`, `venue:
+"Polymarket"`, price = the data API's `current_price`) join the scripted ones. Polymarket US has
+no public per-user positions, so the account comes from `data-api.polymarket.com`. `adjacent` is
+a *similar* Gemini market by keyword overlap (never the same bet; no five-field claim) and only
+set on linked positions. `account` is null, and only scripted positions show, when the data API
+is unreachable. The "Polymarket" balance row is a fixed $60 cash figure (positions not added).
 
 `GET /api/demo/suggestions` → `{"suggestions": [{"label", "text", "why"}]}` (at most 4; `text`
 is the sentence placed in the command box).

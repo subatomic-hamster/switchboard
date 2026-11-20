@@ -21,6 +21,7 @@ from sqlmodel import func, select
 from app import (
     bots,
     connectors,
+    demo_desk,
     events,
     hostile,
     market_brief,
@@ -190,6 +191,9 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     ctx.bots = bots.Bots(ctx)
     ctx.speech = speech.Speech(ctx)
     ctx.connectors = connectors.Connectors(ctx)
+    if settings.demo_mode:
+        ctx.demo = demo_desk.DemoDesk(ctx)
+        log.warning("DEMO MODE: money is simulated, market data is live, no order is placed")
     return ctx
 
 
@@ -219,6 +223,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")
         if isinstance(ctx.markets, RealMarkets):
             ctx.tasks.spawn(ctx.markets.refresh_loop(), "markets-refresh")
+        if ctx.demo is not None:
+            ctx.tasks.spawn(ctx.demo.warm(), "demo-warm")
         # The MCP SDK answers requests inside a task group that lives as long as the app.
         async with gateway.server.session_manager.run():
             yield
@@ -260,6 +266,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(connectors.router)
     app.include_router(connectors.dashboard)
     app.include_router(mcp_http.router)
+    if settings.demo_mode:
+        app.include_router(demo_desk.router)
 
     @app.get("/api/health", tags=["meta"])
     async def health() -> dict[str, str]:
