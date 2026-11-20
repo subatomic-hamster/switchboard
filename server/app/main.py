@@ -30,7 +30,9 @@ from app import (
     speech,
     voice,
 )
+from app.chain import stream
 from app.chain import stub as chain_stub
+from app.chain.vault import ChainVault
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
 from app.db import Database, EventRow
@@ -41,6 +43,7 @@ from app.intent import IntentError, IntentParser, make_llm_call
 from app.local_only import LocalOnly
 from app.markets import stub as markets_stub
 from app.planner import PlanError, Planner
+from app.ports import VaultPort
 from app.schemas import (
     ExecuteRequest,
     ExecuteResponse,
@@ -75,10 +78,29 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     bus = EventBus(database)
     wallets = WalletBook()
     if not settings.use_p1_stubs:
-        # P1's real modules are not on this branch yet. Fail loudly rather than pretend.
-        raise RuntimeError(
-            "USE_P1_STUBS=false, but P1's chain/ and markets/ modules are not wired in yet. "
-            "Set USE_P1_STUBS=true, or wire the real modules into app.main.build_context."
+        missing = [
+            name.upper()
+            for name in (
+                "vault_address",
+                "arc_rpc_url",
+                "owner_private_key",
+                "agent_private_key",
+                "approver_private_key",
+            )
+            if not getattr(settings, name)
+        ]
+        if missing:
+            raise RuntimeError(
+                f"USE_P1_STUBS=false needs the real vault, but {', '.join(missing)} "
+                "is not set. Set it in .env, or set USE_P1_STUBS=true."
+            )
+        if not settings.quicknode_stream_secret:
+            log.warning(
+                "QUICKNODE_STREAM_SECRET is not set: every Stream delivery will be rejected, "
+                "so no approval.requested event will arrive"
+            )
+        log.warning(
+            "real vault on chain %s; transfers, markets and anchor are STUBS", settings.arc_chain_id
         )
     tasks = Tasks()
     # The stubs number their requests, permits, transfers and moves from 1 in memory. On a
@@ -89,11 +111,13 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         first_id = int(session.exec(select(func.max(EventRow.id))).one() or 0) + 1
     # Everything reaches the vault through this wrapper, which adds server-side holds for
     # connected assistants and passes every other call straight through.
-    vault = HoldingVault(
-        chain_stub.StubVault(bus, settings, wallets.allowlist(), first_id=first_id),
-        bus,
-        first_id=first_id,
+    # Hold ids are "h<n>" and the contract's request ids are plain numbers, so they never meet.
+    inner: VaultPort = (
+        chain_stub.StubVault(bus, settings, wallets.allowlist(), first_id=first_id)
+        if settings.use_p1_stubs
+        else ChainVault(settings, wallets.allowlist(), bus)
     )
+    vault = HoldingVault(inner, bus, first_id=first_id)
     ctx = AppContext(
         settings=settings,
         db=database,
@@ -163,6 +187,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
 
     app.include_router(events.router)
     app.include_router(chain_stub.router)
+    app.include_router(chain_stub.hook_router if settings.use_p1_stubs else stream.router)
     app.include_router(markets_stub.router)
     app.include_router(voice.router)
     app.include_router(voice.dashboard)

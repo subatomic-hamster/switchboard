@@ -13,7 +13,7 @@ from app.main import create_app
 from tests.conftest import make_settings
 
 NEW_ADDRESS = "0x9c1e8a4f2b7d6c5a3e1f0b9d8c7a6e5f4d3c4f2c"
-SAM_ARC = "0x5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b"
+SAM_ARC = "0x4ccFA9e40f035038edfe5b6A5c5111993B1bEFfA"
 
 
 def _word(ctx: AppContext) -> str:

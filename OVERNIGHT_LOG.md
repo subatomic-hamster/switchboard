@@ -433,3 +433,41 @@ agreement because they touch the shared interface.
     of its secret. I typed no token anywhere; the Bot asked for it with a secret card, which
     is left for you. One difference from the plan's four routines: research on demand is a
     skill, not a routine.
+
+## P1 integration
+
+The vault contract is wired into the server. With `USE_P1_STUBS=true` (the default) nothing
+changes.
+
+**Real with `USE_P1_STUBS=false`:** `app/chain/vault.py` (`ChainVault`, web3.py, satisfies
+`VaultPort`, still wrapped by `HoldingVault`) and `app/chain/stream.py` (the QuickNode Stream
+webhook at `/api/hooks/quicknode`: HMAC check, gzip cap, vault logs published as
+`approval.requested`, `approval.resolved` and `frozen`). `ChainVault` publishes no vault events
+itself; the webhook does, so nothing appears twice. The one event it does publish is
+`policy.updated`, because the contract has no event for a policy change. **Still stubs, logged
+at start-up:** transfers, markets, anchor.
+
+**Switch:** set `USE_P1_STUBS=false`, `VAULT_ADDRESS`, `ARC_RPC_URL`, `OWNER_PRIVATE_KEY`,
+`AGENT_PRIVATE_KEY`, `APPROVER_PRIVATE_KEY` and `QUICKNODE_STREAM_SECRET` (also
+`ARC_CHAIN_ID`, default 5042002, and `USDC_ADDRESS`). The server refuses to start if the vault
+address, the RPC URL or a key is blank. The ABI is read from `contracts/out`, so run
+`cd contracts && forge build` once. Use a fresh `DATABASE_PATH` when switching: the contract's
+request numbers start at 1, like the stub's, and an old approval or plan row with the same
+number would be matched to the new request. Hold ids start with `h`, so they never meet the
+contract's.
+
+**Limits:**
+- A payee that is not an EVM address (Solana) cannot be a vault payee, so the vault pays the
+  agent's own address, which funds the cross-chain leg. The per-payee allowlist is not enforced
+  onchain for these until the Phase 2 transfer module exists. The agent address must be
+  allowed as a payee onchain for such a spend to be permitted without a call.
+- The contract cannot tell who asked, so `via` on `freeze` and `deny` is dropped, and events
+  from the Stream carry `via="chain"`.
+- The allowlist the dashboard sees is the wallet book, with each EVM entry checked on the
+  contract; entries that are not EVM addresses are kept in memory only.
+- A spend asked while frozen opens a request onchain (reason 4). Nothing rings and nothing is
+  published; it stays pending until someone expires it.
+- Stream deliveries are de-duplicated by transaction and log index in memory. `ctx.last_stream_delivery`
+  records the last one, for the Phase 4 dead man's switch (not built).
+- Tests: `tests/test_stream.py` (no chain) and `tests/test_chain_vault.py` (anvil, marked
+  `anvil`, skipped when `anvil` is not on PATH; put `~/.foundry/bin` there).

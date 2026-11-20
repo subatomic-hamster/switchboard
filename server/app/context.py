@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import OrderedDict
 from collections.abc import Coroutine
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from fastapi import Request
@@ -73,6 +75,9 @@ class AppContext:
     markets: MarketsPort
     anchor: AnchorPort
     stream_stale: bool = False
+    # Set by the real Stream webhook (app/chain/stream.py); the Phase 4 dead man's switch reads it.
+    last_stream_delivery: datetime | None = None
+    stream_seen: OrderedDict[tuple[str, int], None] = field(default_factory=OrderedDict)
     # Services are attached by app.main.build_context once the context exists.
     planner: Planner = field(init=False)
     approvals: Approvals = field(init=False)

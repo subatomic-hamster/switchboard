@@ -60,6 +60,17 @@ class Settings(BaseSettings):
     # P1 stubs
     use_p1_stubs: bool = True
 
+    # P1's vault on Arc (used when USE_P1_STUBS=false). The three keys are the owner, the
+    # agent (asks for spends, redeems permits) and the approver (approves, denies, freezes).
+    vault_address: str = ""
+    arc_rpc_url: str = ""
+    arc_chain_id: int = 5042002
+    usdc_address: str = "0x3600000000000000000000000000000000000000"
+    owner_private_key: str = ""
+    agent_private_key: str = ""
+    approver_private_key: str = ""
+    quicknode_stream_secret: str = ""
+
     # policy mirror (the contract is the authority once P1's vault is wired in)
     policy_transfer_cap_usd: Decimal = Decimal("200")
     policy_daily_budget_usd: Decimal = Decimal("500")

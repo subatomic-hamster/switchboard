@@ -261,7 +261,11 @@ async def chain_transfer(body: ChainTransferRequest, ctx: Ctx) -> ChainTransferR
     return ChainTransferResponse(transfer_id=transfer_id)
 
 
-@router.post("/hooks/quicknode", response_model=OkResponse)
+# Separate so the real Stream webhook (chain/stream.py) can take its path when stubs are off.
+hook_router = APIRouter(prefix="/api", tags=["chain (STUB)"])
+
+
+@hook_router.post("/hooks/quicknode", response_model=OkResponse)
 async def quicknode_hook(body: JsonObject) -> OkResponse:
     """STUB. P1's real handler verifies the HMAC, decodes vault events and publishes them."""
     return OkResponse(ok=True, status="stub: delivery ignored")

@@ -192,7 +192,7 @@ async def test_status_says_what_the_assistant_may_do(client: httpx.AsyncClient) 
     assert [payee["name"] for payee in status["payees"]] == ["sam"]
     assert "simulated" in status["message"]
     # Payees are named, not addressed: the assistant never handles a payee's address.
-    assert "0x5b5b" not in str(status)
+    assert "0x4ccF" not in str(status)
 
 
 async def test_receive_gives_the_owners_own_addresses_only(client: httpx.AsyncClient) -> None:
