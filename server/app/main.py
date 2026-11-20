@@ -32,6 +32,7 @@ from app import (
 )
 from app.chain import stream
 from app.chain import stub as chain_stub
+from app.chain.transfer import CctpTransfers
 from app.chain.vault import ChainVault
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
@@ -100,8 +101,14 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
                 "so no approval.requested event will arrive"
             )
         log.warning(
-            "real vault on chain %s; transfers, markets and anchor are STUBS", settings.arc_chain_id
+            "real vault on chain %s; %smarkets and anchor are STUBS",
+            settings.arc_chain_id,
+            "" if settings.use_real_transfers else "transfers, ",
         )
+    # Real transfers need the real vault: the stub vault pays nobody, so there is nothing to carry.
+    real_transfers = settings.use_real_transfers and not settings.use_p1_stubs
+    if settings.use_real_transfers and settings.use_p1_stubs:
+        log.warning("USE_REAL_TRANSFERS is ignored while USE_P1_STUBS=true")
     tasks = Tasks()
     # The stubs number their requests, permits, transfers and moves from 1 in memory. On a
     # database that has been used before, start above everything it has recorded, so a number
@@ -125,7 +132,11 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         tasks=tasks,
         wallets=wallets,
         vault=vault,
-        transfers=chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id),
+        transfers=(
+            CctpTransfers(tasks.spawn, bus, settings, first_id=first_id)
+            if real_transfers
+            else chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id)
+        ),
         markets=markets_stub.StubMarkets(bus, settings, first_id=first_id),
         anchor=chain_stub.StubAnchor(),
     )
