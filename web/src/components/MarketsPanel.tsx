@@ -3,15 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, api } from "../api";
 import { money, type Tone } from "../format";
 import { canSpeak, speak } from "../speech";
-import type {
-  BotNote,
-  MarketBrief,
-  MarketListing,
-  Opinion,
-  TrackRecord,
-  Venue,
-} from "../types";
-import { StatusMark } from "./StatusMark";
+import type { BotNote, MarketBrief, MarketListing, MoveOption, Opinion, TrackRecord } from "../types";
+import { StatusMark, ToneIcon } from "./StatusMark";
 
 const CHECKS: { key: keyof MarketBrief["match"]["checks"]; label: string }[] = [
   { key: "event", label: "Event" },
@@ -28,16 +21,9 @@ const CHECK_TONE: Record<string, Tone> = {
   "n/a": "neutral",
 };
 
-const VENUE_TONE: Record<Venue["status"], Tone> = {
-  connected: "good",
-  fixtures: "warning",
-  planned: "neutral",
-};
-
-const VENUE_LABEL: Record<Venue["status"], string> = {
-  connected: "Connected",
-  fixtures: "Recorded data",
-  planned: "Planned",
+const MODE_LABEL: Record<MoveOption["mode"], string> = {
+  take: "Sell now",
+  post: "Post and wait",
 };
 
 const price = (value: number) => `${(value * 100).toFixed(value * 100 % 1 === 0 ? 0 : 1)}¢`;
@@ -65,57 +51,59 @@ function TrackRecordLine({ record }: { record: TrackRecord }) {
 function OpinionBlock({ opinion }: { opinion: Opinion }) {
   return (
     <div className="opinion">
-      <div className="quote-head">
-        <h3>The operator's opinion</h3>
+      <div className="opinion-head">
         <StatusMark
           tone={opinion.stance === "hold" ? "warning" : "good"}
           label={opinion.stance === "hold" ? "I'd hold" : "Moving is defensible"}
         />
+        <span>{opinion.summary}</span>
       </div>
-      <p>{opinion.summary}</p>
-      <table className="grid">
-        <caption className="visually-hidden">What each forecasting model said</caption>
-        <thead>
-          <tr>
-            <th scope="col">Model family</th>
-            <th scope="col" className="num">
-              Probability
-            </th>
-            <th scope="col">The model's note</th>
-          </tr>
-        </thead>
-        <tbody>
-          {opinion.models.map((model) => (
-            <tr key={`${model.family}-${model.model}`}>
-              <th scope="row">
-                {model.family}
-                <span className="muted"> · {model.model}</span>
+      <details className="fold">
+        <summary>What each model said</summary>
+        <table className="grid">
+          <caption className="visually-hidden">What each forecasting model said</caption>
+          <thead>
+            <tr>
+              <th scope="col">Model family</th>
+              <th scope="col" className="num">
+                Probability
               </th>
-              <td className="num">
-                {model.probability != null ? percent(model.probability) : "no answer"}
-              </td>
-              <td className="muted">{model.rationale || model.error}</td>
+              <th scope="col">The model's note</th>
             </tr>
-          ))}
-          <tr>
-            <th scope="row">Market price</th>
-            <td className="num">{percent(opinion.market_price)}</td>
-            <td className="muted">The starting point for every model</td>
-          </tr>
-          <tr>
-            <th scope="row">Combined</th>
-            <td className="num">
-              <strong>{percent(opinion.probability)}</strong>
-            </td>
-            <td className="muted">Models averaged, then pulled halfway back to the market</td>
-          </tr>
-        </tbody>
-      </table>
-      <p className="muted receipt">
-        Receipt {opinion.receipt_id}: hash <code>{opinion.commitment.slice(0, 20)}…</code>{" "}
-        committed before the event ({opinion.anchor_ref}).
-        {opinion.overridden ? " You overrode this opinion." : ""}
-      </p>
+          </thead>
+          <tbody>
+            {opinion.models.map((model) => (
+              <tr key={`${model.family}-${model.model}`}>
+                <th scope="row">
+                  {model.family}
+                  <span className="muted"> · {model.model}</span>
+                </th>
+                <td className="num">
+                  {model.probability != null ? percent(model.probability) : "no answer"}
+                </td>
+                <td className="muted">{model.rationale || model.error}</td>
+              </tr>
+            ))}
+            <tr>
+              <th scope="row">Market price</th>
+              <td className="num">{percent(opinion.market_price)}</td>
+              <td className="muted">The starting point for every model</td>
+            </tr>
+            <tr>
+              <th scope="row">Combined</th>
+              <td className="num">
+                <strong>{percent(opinion.probability)}</strong>
+              </td>
+              <td className="muted">Models averaged, then pulled halfway back to the market</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="muted receipt">
+          Receipt {opinion.receipt_id}: hash <code>{opinion.commitment.slice(0, 20)}…</code>{" "}
+          committed before the event ({opinion.anchor_ref}).
+          {opinion.overridden ? " You overrode this opinion." : ""}
+        </p>
+      </details>
     </div>
   );
 }
@@ -127,12 +115,12 @@ export interface MarketsPanelProps {
   refreshKey: number;
 }
 
-/** Both venues' prices side by side, the equivalence check, the move cost, and the opinion. */
+/** Move a position: one price per venue, a one-line verdict, how to sell, and the opinion. */
 export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
   const [markets, setMarkets] = useState<MarketListing[]>([]);
-  const [venues, setVenues] = useState<Venue[]>([]);
   const [slug, setSlug] = useState("");
   const [qty, setQty] = useState(4);
+  const [mode, setMode] = useState<MoveOption["mode"] | null>(null);
   const [brief, setBrief] = useState<MarketBrief | null>(null);
   const [notes, setNotes] = useState<BotNote[]>([]);
   const [message, setMessage] = useState("");
@@ -146,7 +134,6 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
         setSlug((current) => current || list[0]?.slug || "");
       })
       .catch(() => undefined);
-    api.venues().then(setVenues).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -184,21 +171,31 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
 
   const listing = brief?.listing;
   const refused = brief?.match.verdict === "refuse";
+  const options = brief?.options ?? [];
+  const cheapest = options.reduce<MoveOption | undefined>(
+    (best, option) => (!best || option.cost_usd < best.cost_usd ? option : best),
+    undefined,
+  );
+  const chosen = mode ?? cheapest?.mode ?? "post";
+  const matched = brief
+    ? CHECKS.filter((check) => ["same", "n/a"].includes(brief.match.checks[check.key])).length
+    : 0;
+  const holding = brief?.opinion?.stance === "hold" && !brief.opinion.overridden;
 
   return (
-    <section className="panel" aria-labelledby="markets-title">
-      <div className="panel-head">
-        <h2 id="markets-title">Markets</h2>
+    <section className="card markets" aria-labelledby="markets-title">
+      <div className="card-head">
+        <h1 id="markets-title">Move a position</h1>
         {brief && canSpeak() && (
           <button type="button" className="chip" onClick={() => speak(brief.spoken)}>
-            Hear the operator
+            Read aloud
           </button>
         )}
       </div>
 
-      <div className="row market-pick">
-        <label className="grow">
-          <span className="visually-hidden">Market</span>
+      <div className="market-pick">
+        <label className="field-label grow">
+          Bet
           <select value={slug} onChange={(event) => setSlug(event.target.value)}>
             {markets.map((market) => (
               <option key={market.slug} value={market.slug}>
@@ -207,8 +204,8 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
             ))}
           </select>
         </label>
-        <label className="qty">
-          <span className="muted">Contracts</span>
+        <label className="field-label qty">
+          Contracts
           <input
             type="number"
             min={0.01}
@@ -221,120 +218,94 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
 
       {brief && listing && (
         <>
-          <table className="grid">
-            <caption className="visually-hidden">Prices on both venues</caption>
-            <thead>
-              <tr>
-                <th scope="col">Venue</th>
-                <th scope="col" className="num">
-                  Bid
-                </th>
-                <th scope="col" className="num">
-                  Ask
-                </th>
-                <th scope="col" className="num">
-                  Bid depth
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">
-                  Polymarket US
-                  <span className="muted mono contract"> {listing.slug}</span>
-                </th>
-                <td className="num">{price(listing.polymarket.bid)}</td>
-                <td className="num">{price(listing.polymarket.ask)}</td>
-                <td className="num">{listing.polymarket.bid_depth}</td>
-              </tr>
-              <tr>
-                <th scope="row">
-                  Gemini
-                  <span className="muted mono contract">
-                    {" "}
-                    {listing.gemini_symbol ?? "no equivalent contract"}
-                  </span>
-                </th>
-                <td className="num">{listing.gemini ? price(listing.gemini.bid) : "—"}</td>
-                <td className="num">{listing.gemini ? price(listing.gemini.ask) : "—"}</td>
-                <td className="num">{listing.gemini ? listing.gemini.bid_depth : "—"}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div className={`notice notice-${refused ? "critical" : "good"}`}>
-            <StatusMark
-              tone={refused ? "critical" : "good"}
-              label={refused ? "Not the same bet" : "Same bet"}
-            />
-            <span>
-              {refused
-                ? brief.spoken
-                : `All five fields agree${brief.match.notes.length ? `. Note: ${brief.match.notes.join("; ")}.` : "."}`}
-            </span>
-          </div>
-          <ul className="checks" aria-label="Equivalence checks">
-            {CHECKS.map((check) => {
-              const value = brief.match.checks[check.key];
-              return (
-                <li key={check.key}>
-                  <span className="muted">{check.label}</span>
-                  <StatusMark tone={CHECK_TONE[value] ?? "neutral"} label={value} />
-                </li>
-              );
-            })}
-          </ul>
-
-          {!refused && brief.options.length > 0 && (
-            <>
-              <table className="grid">
-                <caption className="visually-hidden">What the move costs, two ways</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Moving {brief.qty} contracts</th>
-                    <th scope="col" className="num">
-                      Sell at
-                    </th>
-                    <th scope="col" className="num">
-                      Buy at
-                    </th>
-                    <th scope="col" className="num">
-                      Fees
-                    </th>
-                    <th scope="col" className="num">
-                      Cost
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {brief.options.map((option) => (
-                    <tr key={option.mode}>
-                      <th scope="row">{option.label}</th>
-                      <td className="num">{price(option.sell_price)}</td>
-                      <td className="num">{price(option.buy_price)}</td>
-                      <td className="num">{money(option.fees_usd)}</td>
-                      <td className="num">
-                        <strong>{money(option.cost_usd)}</strong> ({option.cost_pct}%)
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p>
-                <strong>Will I get a bid?</strong> {brief.bid_answer}
-              </p>
-
-              {brief.opinion ? (
-                <OpinionBlock opinion={brief.opinion} />
+          <div className="venues-row">
+            <div className="venue">
+              <span className="muted">From</span>
+              <span className="venue-name">Polymarket US</span>
+              <span>
+                Sell at <strong>{price(listing.polymarket.bid)}</strong>{" "}
+                <span className="muted">· {listing.polymarket.bid_depth} wanted</span>
+              </span>
+            </div>
+            <svg className="venue-arrow" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+            <div className="venue">
+              <span className="muted">To</span>
+              <span className="venue-name">Gemini</span>
+              {listing.gemini ? (
+                <span>
+                  Buy at <strong>{price(listing.gemini.ask)}</strong>
+                </span>
               ) : (
-                <p className="muted">{brief.opinion_unavailable}</p>
+                <span className="muted">No equivalent contract</span>
               )}
-              <TrackRecordLine record={brief.track_record} />
+            </div>
+          </div>
 
-              <div className="row">
+          <details className={`verdict verdict-${refused ? "critical" : "good"}`} open={refused}>
+            <summary>
+              <span className="verdict-icon">
+                <ToneIcon tone={refused ? "critical" : "good"} size={20} />
+              </span>
+              <span className="verdict-title">{refused ? "Not the same bet" : "Same bet on both"}</span>
+              <span className="verdict-count">· {matched} of {CHECKS.length} checks match</span>
+            </summary>
+            <ul className="checks" aria-label="Equivalence checks">
+              {CHECKS.map((check) => {
+                const value = brief.match.checks[check.key];
+                return (
+                  <li key={check.key}>
+                    <span>{check.label}</span>
+                    <StatusMark tone={CHECK_TONE[value] ?? "neutral"} label={value} />
+                  </li>
+                );
+              })}
+            </ul>
+            {brief.match.notes.length > 0 && (
+              <p className="muted">Note: {brief.match.notes.join("; ")}.</p>
+            )}
+            <p className="muted mono contract">
+              {listing.slug} · {listing.gemini_symbol ?? "no equivalent contract"}
+            </p>
+          </details>
+          {refused && <p className="verdict-why">{brief.spoken}</p>}
+
+          {!refused && options.length > 0 && (
+            <>
+              <fieldset className="how">
+                <legend>How to sell</legend>
+                {options.map((option) => (
+                  <label key={option.mode} className={`opt${chosen === option.mode ? " opt-on" : ""}`}>
+                    <input
+                      type="radio"
+                      name="how"
+                      checked={chosen === option.mode}
+                      onChange={() => setMode(option.mode)}
+                    />
+                    <span className="opt-text">
+                      <span className="opt-title">
+                        {MODE_LABEL[option.mode]}
+                        {options.length > 1 && option === cheapest && (
+                          <span className="badge">Cheaper</span>
+                        )}
+                      </span>
+                      <span className="muted">
+                        Costs {money(option.cost_usd)} ({option.cost_pct}%)
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+
+              {brief.opinion && <OpinionBlock opinion={brief.opinion} />}
+
+              <div className="actions market-actions">
                 <button
                   type="button"
+                  className="btn"
                   disabled={busy !== ""}
+                  title={brief.opinion ? undefined : brief.opinion_unavailable}
                   onClick={() =>
                     void act("forecast", async () => {
                       await api.forecast(slug, qty);
@@ -342,63 +313,58 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
                     })
                   }
                 >
-                  {busy === "forecast"
-                    ? "Asking the models…"
-                    : brief.opinion
-                      ? "Ask again"
-                      : "Ask for the operator's opinion"}
+                  {busy === "forecast" ? "Asking the models…" : "Get a second opinion"}
                 </button>
+                <span className="grow" />
+                <span className="muted">Practice mode: no real orders</span>
                 <button
                   type="button"
-                  className="primary"
+                  className="btn btn-primary"
                   disabled={busy !== ""}
                   onClick={() =>
                     void act("move", async () => {
                       if (brief.opinion?.stance === "hold" && !brief.opinion.overridden) {
                         await api.overrideForecast(brief.opinion.receipt_id);
                       }
-                      const move = await api.deskMove(slug, qty, "post");
+                      const move = await api.deskMove(slug, qty, chosen);
                       return `Move ${move.move_id} ran as a dry run: no order was placed.`;
                     })
                   }
                 >
-                  {brief.opinion?.stance === "hold" && !brief.opinion.overridden
-                    ? "Override and move (dry run)"
-                    : "Move the position (dry run)"}
+                  {holding ? "Override and move" : "Move"} {qty} contract{qty === 1 ? "" : "s"}
                 </button>
               </div>
             </>
           )}
-          <p className="muted disclaimer">{brief.disclaimer}</p>
+
           {notes.length > 0 && (
-            <div className="research">
-              <h3>Bot research, unverified</h3>
-              <p className="muted">
-                Written by a Grok Bot from outside sources. It is here to read. It does not
-                change the result of the check above.
-              </p>
+            <details className="fold research">
+              <summary title="Written by a bot from outside sources. It does not change the check above.">
+                Bot research, unverified
+              </summary>
               {notes.map((note) => (
                 <blockquote key={note.ts}>{note.body}</blockquote>
               ))}
-            </div>
+            </details>
           )}
+          <details className="fold">
+            <summary>Details</summary>
+            {!refused && options.length > 0 && (
+              <p>
+                <strong>Will I get a bid?</strong> {brief.bid_answer}
+              </p>
+            )}
+            <TrackRecordLine record={brief.track_record} />
+            <p className="muted disclaimer">{brief.disclaimer}</p>
+          </details>
         </>
       )}
 
       {message && (
-        <p role="status" className="notice">
+        <p role="status" className="note">
           {message}
         </p>
       )}
-
-      <ul className="venues" aria-label="Venues">
-        {venues.map((venue) => (
-          <li key={venue.id}>
-            <span>{venue.name}</span>
-            <StatusMark tone={VENUE_TONE[venue.status]} label={VENUE_LABEL[venue.status]} />
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

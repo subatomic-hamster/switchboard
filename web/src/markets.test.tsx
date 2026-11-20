@@ -175,29 +175,41 @@ function serve(briefs: Record<string, MarketBrief>) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("MarketsPanel", () => {
-  it("shows both venues side by side, the checks, and the cost both ways", async () => {
-    serve({ [NBA]: matchBrief });
+  it("shows the one price per venue, a one-line verdict, and the cost both ways", async () => {
+    const calls = serve({ [NBA]: matchBrief });
+    const user = userEvent.setup();
     render(<MarketsPanel refreshKey={0} />);
 
-    const prices = await screen.findByRole("table", { name: "Prices on both venues" });
-    const rows = within(prices).getAllByRole("row");
-    expect(within(rows[1]!).getByText("45¢")).toBeInTheDocument();
-    expect(within(rows[2]!).getByText("44¢")).toBeInTheDocument();
-    expect(within(rows[2]!).getByText(/GEMI-NBA-2611210300-HOU-DEN-M-HOU/)).toBeInTheDocument();
+    // Sell at the bid on the source, buy at the ask on the destination.
+    expect(await screen.findByText("45¢")).toBeInTheDocument();
+    expect(screen.getByText("46¢")).toBeInTheDocument();
+    expect(screen.getByText(/120 wanted/)).toBeInTheDocument();
 
-    expect(screen.getByText("Same bet")).toBeInTheDocument();
+    expect(screen.getByText("Same bet on both")).toBeInTheDocument();
+    expect(screen.getByText(/5 of 5 checks match/)).toBeInTheDocument();
     const checks = screen.getByRole("list", { name: "Equivalence checks" });
     expect(within(checks).getAllByText("same")).toHaveLength(4);
-    const costs = screen.getByRole("table", { name: "What the move costs, two ways" });
-    expect(within(costs).getByText("Sell now and pay the fee")).toBeInTheDocument();
-    expect(within(costs).getByText("(11.1%)", { exact: false })).toBeInTheDocument();
-    expect(within(costs).getByText("(3.9%)", { exact: false })).toBeInTheDocument();
+    expect(screen.getByText(/GEMI-NBA-2611210300-HOU-DEN-M-HOU/)).toBeInTheDocument();
+
+    const sellNow = screen.getByRole("radio", { name: /Sell now/ });
+    const post = screen.getByRole("radio", { name: /Post and wait/ });
+    expect(sellNow).toHaveAccessibleName(/\(11\.1%\)/);
+    expect(post).toHaveAccessibleName(/\(3\.9%\)/);
+    expect(post).toBeChecked();
+    expect(screen.getByText("Cheaper")).toBeInTheDocument();
     expect(screen.getByText(/120 contracts are bid at 45 cents/)).toBeInTheDocument();
     expect(screen.getByText(/It is not financial advice/)).toBeInTheDocument();
+    expect(screen.getByText("Practice mode: no real orders")).toBeInTheDocument();
 
-    const venueList = screen.getByRole("list", { name: "Venues" });
-    expect(within(venueList).getByText("Kalshi")).toBeInTheDocument();
-    expect(within(venueList).getByText("Planned")).toBeInTheDocument();
+    // The chosen way to sell is the one that is sent.
+    await user.click(sellNow);
+    await user.click(screen.getByRole("button", { name: "Move 4 contracts" }));
+    expect(await screen.findByText(/Move m_1 ran as a dry run/)).toBeInTheDocument();
+    expect(calls.find((call) => call.url === "/api/desk/move")?.body).toEqual({
+      slug: NBA,
+      qty: 4,
+      mode: "take",
+    });
   });
 
   it("refuses a look-alike and offers no move", async () => {
@@ -212,9 +224,7 @@ describe("MarketsPanel", () => {
     expect(await screen.findByText("Bot research, unverified")).toBeInTheDocument();
     expect(screen.getByText(/Mark them as a match/)).toBeInTheDocument();
     expect(screen.getByText("Not the same bet")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("table", { name: "What the move costs, two ways" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 
   it("shows each model's answer, and records an override before moving", async () => {
@@ -229,7 +239,7 @@ describe("MarketsPanel", () => {
     expect(within(models).getByText("TimeoutError")).toBeInTheDocument();
     expect(screen.getByText(/committed before the event/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Override and move (dry run)" }));
+    await user.click(screen.getByRole("button", { name: "Override and move 4 contracts" }));
     expect(await screen.findByText(/Move m_1 ran as a dry run/)).toBeInTheDocument();
     const posts = calls.filter((call) => call.method === "POST").map((call) => call.url);
     expect(posts).toEqual(["/api/forecasts/f_1/override", "/api/desk/move"]);

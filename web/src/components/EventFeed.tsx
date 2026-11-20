@@ -1,41 +1,49 @@
+import { useState } from "react";
+
 import { clock, describe } from "../format";
 import type { SwitchboardEvent } from "../types";
-import { StatusMark } from "./StatusMark";
+import { ToneIcon } from "./StatusMark";
 
-const SHOWN = 60;
+const FEW = 6;
+const MANY = 60;
 
-/** Newest first. Every line says what happened, why, and the reason code when there is one. */
+/** Newest first: icon, one-line title, one-line subtitle, time. */
 export function EventFeed({ events }: { events: SwitchboardEvent[] }) {
-  const recent = events.slice(-SHOWN).reverse();
+  const [all, setAll] = useState(false);
+  const recent = events.slice(-(all ? MANY : FEW)).reverse();
+  if (events.length === 0) return <p className="empty">Nothing yet.</p>;
   return (
-    <section className="panel" aria-labelledby="feed-title">
-      <h2 id="feed-title">Activity</h2>
-      {recent.length === 0 ? (
-        <p className="empty">
-          Nothing yet. Type a sentence above, or run the mock demo to see a full day replayed.
-        </p>
-      ) : (
-        <ol className="feed" aria-live="polite">
-          {recent.map((event) => {
-            const line = describe(event);
-            return (
-              <li key={event.id} className="feed-item">
-                <div className="feed-head">
-                  <StatusMark tone={line.tone} label={line.label} />
-                  <time dateTime={event.ts}>{clock(event.ts)}</time>
-                </div>
-                <p className="feed-title">{line.title}</p>
+    <>
+      <ol className="feed" aria-live="polite">
+        {recent.map((event) => {
+          const line = describe(event);
+          return (
+            <li key={event.id} className="feed-item">
+              <span className={`feed-icon tone-${line.tone}`}>
+                <ToneIcon tone={line.tone} size={18} />
+              </span>
+              <div className="feed-text">
+                <span className="feed-title">
+                  <span className="visually-hidden">{line.label} </span>
+                  {line.title}
+                </span>
                 {(line.detail || line.code) && (
-                  <p className="feed-detail">
+                  <span className="feed-detail">
                     {line.code && <code className="reason-code">{line.code}</code>}
                     {line.detail}
-                  </p>
+                  </span>
                 )}
-              </li>
-            );
-          })}
-        </ol>
+              </div>
+              <time dateTime={event.ts}>{clock(event.ts)}</time>
+            </li>
+          );
+        })}
+      </ol>
+      {events.length > FEW && (
+        <button type="button" className="link-button" onClick={() => setAll((open) => !open)}>
+          {all ? "Show fewer" : `Show more (${Math.min(events.length, MANY) - FEW})`}
+        </button>
       )}
-    </section>
+    </>
   );
 }

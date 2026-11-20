@@ -2,21 +2,22 @@ import { type FormEvent, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api";
 import { CHAIN_NAMES, duration, money, REASON_TEXT, type Tone } from "../format";
-import type { ExecuteResponse, IntentResponse, Route } from "../types";
+import { canSpeak, speak, stopSpeaking } from "../speech";
+import type { Chain, ExecuteResponse, IntentResponse, Route } from "../types";
 import { StatusMark } from "./StatusMark";
 
+// The chip shows the short label; the full sentence is what gets quoted.
 const EXAMPLES = [
-  "Move two hundred dollars from my Ethereum wallet to Sam's Solana wallet",
-  "Send 250 from my Arc wallet to Sam's Arc wallet",
-  "Send 20 from my Arc wallet to 0x9c1e8a4f2b7d6c5a3e1f0b9d8c7a6e5f4d3c4f2c",
-  "Move my Rockets position from Polymarket to Gemini",
+  {
+    label: "$200 Ethereum to Sam's Solana",
+    text: "Move two hundred dollars from my Ethereum wallet to Sam's Solana wallet",
+  },
+  { label: "$250 to Sam's Arc wallet", text: "Send 250 from my Arc wallet to Sam's Arc wallet" },
+  {
+    label: "Move my Rockets position",
+    text: "Move my Rockets position from Polymarket to Gemini",
+  },
 ];
-
-const OUTCOME: Record<string, { tone: Tone; label: string }> = {
-  pay: { tone: "good", label: "Will pay" },
-  ask: { tone: "warning", label: "Will ask you" },
-  block: { tone: "critical", label: "Will block" },
-};
 
 const RESULT: Record<ExecuteResponse["status"], { tone: Tone; label: string }> = {
   executing: { tone: "good", label: "Sending" },
@@ -29,60 +30,42 @@ export interface CommandBarProps {
   onQuote?: (plan: IntentResponse) => void;
   /** Called when a market-move sentence resolves to a market. */
   onMarketMove?: (slug: string) => void;
+  /** Takes the owner to the Markets tab. */
+  onOpenMarkets?: () => void;
   /** Lets a parent (voice input) supply the sentence. */
   text: string;
   onTextChange: (text: string) => void;
   micSlot?: React.ReactNode;
-  /** Shown under the examples (the read-aloud toggle). */
-  footer?: React.ReactNode;
   /** A sentence to quote at once, for example one that was just spoken. */
   submit?: { text: string; at: number } | null;
 }
 
-function RouteCard({
-  route,
-  same,
-  busy,
-  onRun,
-}: {
-  route: Route;
-  same: boolean;
-  busy: boolean;
-  onRun: () => void;
-}) {
-  const title = same ? "Cheapest and fastest" : route.id === "cheapest" ? "Cheapest" : "Fastest";
+/** Ethereum, Arc, Solana: the chains a route touches, in order. */
+function stops(route: Route): string[] {
+  const first = route.steps[0];
+  if (!first) return [];
+  const chains: Chain[] = [first.from_chain];
+  for (const step of route.steps) {
+    if (chains[chains.length - 1] !== step.to_chain) chains.push(step.to_chain);
+  }
+  return chains.map((chain) => CHAIN_NAMES[chain]);
+}
+
+function PhoneIcon() {
   return (
-    <div className="route">
-      <div className="route-head">
-        <strong>{title}</strong>
-        <span className="route-cost">
-          {money(route.cost_usd)} · about {duration(route.eta_s)}
-        </span>
-      </div>
-      <ol className="route-steps">
-        {route.steps.map((step, index) => (
-          <li key={index}>
-            {step.from_chain === step.to_chain
-              ? `${step.description}`
-              : `${CHAIN_NAMES[step.from_chain]} to ${CHAIN_NAMES[step.to_chain]}`}
-            <span className="muted"> · {step.rail}</span>
-          </li>
-        ))}
-      </ol>
-      <button type="button" className="primary" disabled={busy} onClick={onRun}>
-        Send by this route
-      </button>
-    </div>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+    </svg>
   );
 }
 
 export function CommandBar({
   onQuote,
   onMarketMove,
+  onOpenMarkets,
   text,
   onTextChange,
   micSlot,
-  footer,
   submit,
 }: CommandBarProps) {
   const [plan, setPlan] = useState<IntentResponse | null>(null);
@@ -123,6 +106,13 @@ export function CommandBar({
     }
   }
 
+  function cancel() {
+    stopSpeaking();
+    setPlan(null);
+    setResult(null);
+    setError("");
+  }
+
   useEffect(() => {
     if (submit) void quote(submit.text);
     // Only a new spoken sentence should trigger this, not a re-render.
@@ -134,121 +124,181 @@ export function CommandBar({
     void quote(text);
   }
 
-  const routes = plan?.routes ?? [];
-  const [first, second] = routes;
+  const [first, second] = plan?.routes ?? [];
   const sameRoute =
     !!first && !!second && JSON.stringify(first.steps) === JSON.stringify(second.steps);
-  const outcome = plan?.preview ? OUTCOME[plan.preview.outcome] : undefined;
+  const request = plan?.kind === "transfer" ? plan.request : null;
+  const outcome = plan?.preview?.outcome;
+  const route = (item: Route) =>
+    sameRoute ? "Cheapest and fastest" : item.id === "cheapest" ? "Cheapest" : "Fastest";
 
   return (
-    <section className="panel command" aria-labelledby="command-title">
-      <h2 id="command-title">Tell it where the money should go</h2>
+    <section className="card command">
+      <label htmlFor="sentence" className="command-title">
+        Where should the money go?
+      </label>
       <form onSubmit={onSubmit} className="command-form">
-        <label htmlFor="sentence" className="visually-hidden">
-          Your request, in a sentence
-        </label>
         <input
           id="sentence"
           type="text"
           value={text}
           onChange={(event) => onTextChange(event.target.value)}
-          placeholder="Move two hundred dollars from my Ethereum wallet to Sam's Solana wallet"
+          placeholder="Send $20 from my Arc wallet to Sam"
           autoComplete="off"
           maxLength={500}
         />
         {micSlot}
-        <button type="submit" className="primary" disabled={busy || !text.trim()}>
-          {busy && !plan ? "Working…" : "Get a quote"}
+        <button type="submit" className="btn btn-primary btn-big" disabled={busy || !text.trim()}>
+          {busy && !plan ? "Working…" : "Get quote"}
         </button>
       </form>
-      <div className="examples">
-        <span className="muted">Try:</span>
+      <div className="chips">
         {EXAMPLES.map((example) => (
           <button
-            key={example}
+            key={example.label}
             type="button"
             className="chip"
             onClick={() => {
-              onTextChange(example);
-              void quote(example);
+              onTextChange(example.text);
+              void quote(example.text);
             }}
           >
-            {example}
+            {example.label}
           </button>
         ))}
       </div>
 
-      {footer && <div className="command-footer">{footer}</div>}
-
       {error && (
-        <p className="notice notice-critical" role="alert">
+        <p className="note note-critical" role="alert">
           {error}
         </p>
       )}
 
-      {plan && plan.kind === "transfer" && plan.request && (
-        <div className="quote">
-          <div className="quote-head">
-            <p className="quote-summary">
-              <strong>{money(plan.request.amount_usd)}</strong> from {plan.request.source.label} to{" "}
-              {plan.request.destination.label}
-              {plan.request.to_asset === "EURC" ? ", converted to euros" : ""}
-            </p>
-            {outcome && <StatusMark tone={outcome.tone} label={outcome.label} />}
-          </div>
-          <p className="spoken">{plan.spoken_quote}</p>
-          {!result && (
-            <div className="routes">
-              {first && (
-                <RouteCard
-                  route={first}
-                  same={sameRoute}
-                  busy={busy}
-                  onRun={() => void run(first.id)}
-                />
-              )}
-              {second && !sameRoute && (
-                <RouteCard
-                  route={second}
-                  same={false}
-                  busy={busy}
-                  onRun={() => void run(second.id)}
-                />
+      {/* Always present, so a screen reader announces the quote when it appears. */}
+      <div aria-live="polite" className="quote-slot">
+        {request && first && (
+          <div className="quote">
+            <div className="quote-top">
+              <div className="quote-who">
+                <span className="muted">You're sending</span>
+                <span className="quote-amount">{money(request.amount_usd)}</span>
+                <span>
+                  to {request.destination.label}{" "}
+                  <span className="muted">
+                    {request.destination.address ? ` · ends ${request.destination.address.slice(-4)}` : ""}
+                    {request.to_asset === "EURC" ? " · as euros" : ""}
+                  </span>
+                </span>
+              </div>
+              {canSpeak() && (
+                <button type="button" className="btn" onClick={() => plan && speak(plan.spoken_quote)}>
+                  Read aloud
+                </button>
               )}
             </div>
-          )}
-          {result && (
-            <div className={`notice notice-${RESULT[result.status].tone}`} role="status">
-              <StatusMark tone={RESULT[result.status].tone} label={RESULT[result.status].label} />
-              <span>
-                {result.detail}
-                {result.reason && (
-                  <>
-                    {" "}
-                    <code className="reason-code">{result.reason}</code>
-                    {REASON_TEXT[result.reason]}
-                  </>
-                )}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
 
-      {plan && plan.kind === "market_move" && plan.market_move && (
-        <div className="quote">
-          <p className="quote-summary">
-            Move a position from <strong>{plan.market_move.from_venue}</strong> to{" "}
-            <strong>{plan.market_move.to_venue}</strong>
-            {plan.market_move.slug ? `: ${plan.market_move.slug}` : ""}
-          </p>
-          <p className="spoken">
-            {plan.market_move.slug
-              ? "The markets panel below shows whether the two contracts are the same bet, and what the move would cost."
-              : "I could not find that market in the listing. Pick one in the markets panel below."}
-          </p>
-        </div>
-      )}
+            <ol className="route-line" aria-label="Route">
+              {stops(first).map((name, index, all) => (
+                <li key={`${name}-${index}`}>
+                  {index > 0 && <span className="route-bar" aria-hidden="true" />}
+                  <span className="route-stop">
+                    <span className={`route-dot${index > 0 && index < all.length - 1 ? " route-dot-via" : ""}`} aria-hidden="true" />
+                    {name}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <dl className="facts">
+              <div>
+                <dt>Fee</dt>
+                <dd>{money(first.cost_usd)}</dd>
+              </div>
+              <div>
+                <dt>Arrives in</dt>
+                <dd>about {duration(first.eta_s)}</dd>
+              </div>
+              <div>
+                <dt>Route</dt>
+                <dd>{route(first)}</dd>
+              </div>
+            </dl>
+
+            {!result && (outcome === "ask" || outcome === "block") && plan?.preview && (
+              <p className={`note note-${outcome === "ask" ? "warning" : "critical"}`}>
+                {outcome === "ask" ? (
+                  <PhoneIcon />
+                ) : (
+                  <StatusMark tone="critical" label="Will block" />
+                )}
+                <span>{plan.preview.detail}</span>
+              </p>
+            )}
+
+            {result ? (
+              <div className={`note note-${RESULT[result.status].tone}`} role="status">
+                <StatusMark tone={RESULT[result.status].tone} label={RESULT[result.status].label} />
+                <span>
+                  {result.detail}
+                  {result.reason && (
+                    <>
+                      {" "}
+                      <code className="reason-code">{result.reason}</code>
+                      {REASON_TEXT[result.reason]}
+                    </>
+                  )}
+                </span>
+              </div>
+            ) : (
+              <div className="actions">
+                <button type="button" className="btn" onClick={cancel}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={busy}
+                  onClick={() => void run(first.id)}
+                >
+                  Send {money(request.amount_usd)}
+                </button>
+              </div>
+            )}
+
+            {!result && second && !sameRoute && (
+              <details className="fold">
+                <summary>Other route</summary>
+                <div className="other-route">
+                  <span>
+                    {route(second)} · {stops(second).join(" → ")}
+                  </span>
+                  <span className="muted">
+                    {money(second.cost_usd)} · about {duration(second.eta_s)}
+                  </span>
+                  <button type="button" className="btn" disabled={busy} onClick={() => void run(second.id)}>
+                    Send by this route
+                  </button>
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+
+        {plan?.kind === "market_move" && plan.market_move && (
+          <div className="quote quote-move">
+            <p>
+              Move a position from <strong>{plan.market_move.from_venue}</strong> to{" "}
+              <strong>{plan.market_move.to_venue}</strong>
+              {plan.market_move.slug ? "" : ". I could not find that market, pick one in Markets."}
+            </p>
+            {onOpenMarkets && (
+              <button type="button" className="btn btn-primary" onClick={onOpenMarkets}>
+                Open Markets
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

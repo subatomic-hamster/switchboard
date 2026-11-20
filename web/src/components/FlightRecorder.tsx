@@ -31,10 +31,12 @@ export interface FlightRecorderProps {
   events: SwitchboardEvent[];
   /** Called with a frame while replaying, and with null when returning to live. */
   onFrame: (frame: ReplayFrame | null) => void;
+  /** The activity list, shown between the controls and the scrub bar. */
+  children?: React.ReactNode;
 }
 
-/** A scrub bar over everything that has happened, replayed on the ring. */
-export function FlightRecorder({ events, onFrame }: FlightRecorderProps) {
+/** The Activity card: a replay over everything that has happened, shown on the ring. */
+export function FlightRecorder({ events, onFrame, children }: FlightRecorderProps) {
   const [active, setActive] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -117,52 +119,35 @@ export function FlightRecorder({ events, onFrame }: FlightRecorderProps) {
   const line = current ? describe(current) : null;
 
   return (
-    <section className="panel" aria-labelledby="recorder-title">
-      <div className="panel-head">
-        <h2 id="recorder-title">Flight recorder</h2>
-        <button type="button" className="chip" onClick={() => void hearSummary()}>
-          Hear today's summary
-        </button>
+    <section className="card activity" aria-labelledby="recorder-title">
+      <div className="card-head">
+        <h2 id="recorder-title">Activity</h2>
+        <div className="head-actions">
+          {active && (
+            <button type="button" className="chip" onClick={backToLive}>
+              Back to live
+            </button>
+          )}
+          {playing ? (
+            <button type="button" className="chip" onClick={() => setPlaying(false)}>
+              Pause
+            </button>
+          ) : (
+            <button type="button" className="chip" disabled={total === 0} onClick={play}>
+              {active && position > 0 && position < total ? "Resume" : "Replay today"}
+            </button>
+          )}
+          <button
+            type="button"
+            className="chip"
+            title="Hear today's summary"
+            onClick={() => void hearSummary()}
+          >
+            Hear summary
+          </button>
+        </div>
       </div>
-      <div className="row recorder-controls">
-        {playing ? (
-          <button type="button" onClick={() => setPlaying(false)}>
-            Pause
-          </button>
-        ) : (
-          <button type="button" className="primary" disabled={total === 0} onClick={play}>
-            {active && position > 0 && position < total ? "Resume" : "Replay the day"}
-          </button>
-        )}
-        <label className="toggle">
-          Speed
-          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>
-            {SPEEDS.map((value) => (
-              <option key={value} value={value}>
-                {value}x
-              </option>
-            ))}
-          </select>
-        </label>
-        {active && (
-          <button type="button" onClick={backToLive}>
-            Back to live
-          </button>
-        )}
-      </div>
-      <label className="scrub">
-        <span className="visually-hidden">Position in the recording</span>
-        <input
-          type="range"
-          min={0}
-          max={total}
-          step={1}
-          value={Math.min(position, total)}
-          disabled={total === 0}
-          onChange={(event) => scrub(Number(event.target.value))}
-        />
-      </label>
-      <p className="muted recorder-status" role="status">
+      <p className={active ? "muted recorder-status" : "visually-hidden"} role="status">
         {total === 0
           ? "Nothing recorded yet."
           : active
@@ -170,14 +155,42 @@ export function FlightRecorder({ events, onFrame }: FlightRecorderProps) {
             : `${total} events recorded. The ring is showing live activity.`}
       </p>
       {line && current && (
-        <div className="recorder-event">
+        <p className="recorder-event">
           <StatusMark tone={line.tone} label={line.label} />
           <span>
             {clock(current.ts)} · {line.title}
           </span>
-        </div>
+        </p>
       )}
       {summary && <p className="spoken">{summary}</p>}
+      {children}
+      <details className="fold" open={active}>
+        <summary>Scrub and speed</summary>
+        <div className="scrub-row">
+          <label className="scrub">
+            <span className="visually-hidden">Position in the recording</span>
+            <input
+              type="range"
+              min={0}
+              max={total}
+              step={1}
+              value={Math.min(position, total)}
+              disabled={total === 0}
+              onChange={(event) => scrub(Number(event.target.value))}
+            />
+          </label>
+          <label className="inline-field">
+            Speed
+            <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))}>
+              {SPEEDS.map((value) => (
+                <option key={value} value={value}>
+                  {value}x
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </details>
     </section>
   );
 }

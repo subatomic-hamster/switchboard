@@ -7,20 +7,27 @@ const GLYPH: Record<Tone, string> = {
   neutral: "M4 8h8",
 };
 
-/** A status mark: a shape plus a label, so state never depends on color alone. */
+/** The shape for a tone, so state never depends on color alone. */
+export function ToneIcon({ tone, size = 14 }: { tone: Tone; size?: number }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true">
+      <path
+        d={GLYPH[tone]}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** A status mark: a shape plus a label. */
 export function StatusMark({ tone, label }: { tone: Tone; label: string }) {
   return (
     <span className={`status status-${tone}`}>
-      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-        <path
-          d={GLYPH[tone]}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <ToneIcon tone={tone} />
       <span className="status-label">{label}</span>
     </span>
   );

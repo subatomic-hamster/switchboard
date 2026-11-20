@@ -82,14 +82,14 @@ describe("ConnectorsPanel", () => {
     expect(within(second).getByText(/Asks you every time/)).toBeVisible();
     expect(screen.queryByText("Old")).not.toBeInTheDocument();
     expect(screen.getByText("1 revoked connector not shown.")).toBeVisible();
-    expect(screen.getByText(/Transfers are simulated here/)).toBeVisible();
+    expect(screen.getByText(/simulated transfers/)).toBeVisible();
   });
 
   it("says so when nothing outside this computer can reach it", async () => {
     respond({ "GET /api/connectors": listOf([], { public: false }) });
     render(<ConnectorsPanel refreshKey={0} />);
     expect(await screen.findByText(/No public address is set/)).toBeVisible();
-    expect(screen.getByText("No assistant is connected.")).toBeVisible();
+    expect(screen.getByText(/None connected/)).toBeVisible();
   });
 
   it("connects an assistant that asks every time and shows its secret once", async () => {
@@ -105,9 +105,9 @@ describe("ConnectorsPanel", () => {
     });
     const user = userEvent.setup();
     render(<ConnectorsPanel refreshKey={0} />);
-    await screen.findByText("No assistant is connected.");
-    expect(screen.getByText(/At 0 it asks you about every transfer/)).toBeVisible();
-    expect(screen.getByText(/anyone who has the address can act as this assistant/)).toBeVisible();
+    await screen.findByText(/None connected/);
+    // The extra options are folded away, but the hint is there.
+    expect(screen.getByText(/At 0 it asks you about every transfer/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Connect" }));
 
@@ -123,7 +123,8 @@ describe("ConnectorsPanel", () => {
     // A secret address is the secret: it is shown, and the bare key is not shown beside it.
     const shown = screen.getAllByTestId("connector-secret").map((node) => node.textContent);
     expect(shown).toEqual([secret]);
-    expect(screen.getByText(/turn on developer mode/)).toBeVisible();
+    expect(screen.getByText(/Anyone who has the address can act as this assistant/)).toBeVisible();
+    expect(screen.getByText(/turn on developer mode/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "I have copied it" }));
     expect(screen.queryByText(secret)).not.toBeInTheDocument();
@@ -141,7 +142,7 @@ describe("ConnectorsPanel", () => {
     });
     const user = userEvent.setup();
     render(<ConnectorsPanel refreshKey={0} />);
-    await screen.findByText("No assistant is connected.");
+    await screen.findByText(/None connected/);
     await user.selectOptions(screen.getByLabelText("Assistant"), "other");
     expect(screen.getByLabelText("How it connects")).toHaveValue("header");
     await user.click(screen.getByRole("button", { name: "Connect" }));
@@ -191,9 +192,7 @@ describe("ApprovalPanel", () => {
       />,
     );
     expect(screen.getByText("OVER_AGENT_LIMIT")).toBeVisible();
-    expect(
-      screen.getByText(/asked for by ChatGPT, a connected assistant, not by you here/),
-    ).toBeVisible();
-    expect(screen.getByText(/more than that assistant may send without asking/)).toBeVisible();
+    expect(screen.getByText(/asked by ChatGPT, not you/)).toBeVisible();
+    expect(screen.getByText(/More than that assistant may send without asking/)).toBeVisible();
   });
 });

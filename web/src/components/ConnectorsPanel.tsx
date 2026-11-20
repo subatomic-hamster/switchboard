@@ -126,13 +126,13 @@ function ConnectorRow({
             {connector.auth === "link" ? "secret address" : "key"} ending {connector.token_hint}
           </span>
         </p>
-        <div className="row">
-          <button type="button" disabled={busy} onClick={() => setEditing((open) => !open)}>
+        <div className="actions">
+          <button type="button" className="btn" disabled={busy} onClick={() => setEditing((open) => !open)}>
             {editing ? "Close" : "Change limit"}
           </button>
           <button
             type="button"
-            className="danger"
+            className="btn btn-danger"
             disabled={busy}
             onClick={() => void run(() => api.revokeConnector(connector.id))}
           >
@@ -140,14 +140,16 @@ function ConnectorRow({
           </button>
         </div>
       </div>
-      <p className="feed-detail">
+      <p
+        className="row-detail"
+        title={connector.last_used ? `Last used ${clock(connector.last_used)}` : "Never used"}
+      >
         {limitText(connector)} · sent {money(connector.sent_today_usd)} today · asked you{" "}
-        {connector.asks_today} time{connector.asks_today === 1 ? "" : "s"} today ·{" "}
-        {connector.last_used ? `last used ${clock(connector.last_used)}` : "never used"}
+        {connector.asks_today} time{connector.asks_today === 1 ? "" : "s"} today
       </p>
       {editing && (
         <form
-          className="row"
+          className="field-row"
           onSubmit={(event: FormEvent) => {
             event.preventDefault();
             if (singleValue === null || dailyValue === null) return;
@@ -181,7 +183,7 @@ function ConnectorRow({
           </label>
           <button
             type="submit"
-            className="primary"
+            className="btn btn-primary"
             disabled={busy || singleValue === null || dailyValue === null}
           >
             Save limit
@@ -247,26 +249,22 @@ export function ConnectorsPanel({ refreshKey }: { refreshKey: number }) {
   const revoked = (list?.connectors.length ?? 0) - live.length;
 
   return (
-    <section className="panel" aria-labelledby="connectors-title">
-      <h2 id="connectors-title">Connected assistants</h2>
-      <p className="muted">
-        Let ChatGPT, Claude, Grok or another assistant ask Switchboard to send. Each one gets its
-        own key and its own limit. It can pay only people already in your wallet book. It cannot
-        approve anything, change a limit or see your word.
-      </p>
+    <section className="card" aria-labelledby="connectors-title">
+      <div className="card-head">
+        <h2 id="connectors-title">Assistants</h2>
+        <span className="muted">
+          {live.length === 0 ? "None connected" : `${live.length} connected`}
+          {list?.simulated ? " · simulated transfers" : ""}
+        </span>
+      </div>
       {list && !list.public && (
-        <p className="notice notice-warning">
-          No public address is set, so only programs on this computer can reach Switchboard. To
-          connect an assistant that runs elsewhere, open a tunnel and set PUBLIC_BASE_URL.
+        <p className="note note-warning">
+          No public address is set, so only this computer can connect. Set PUBLIC_BASE_URL and open a
+          tunnel for others.
         </p>
       )}
-      {list?.simulated && (
-        <p className="muted">Transfers are simulated here; an assistant is told so.</p>
-      )}
 
-      {live.length === 0 ? (
-        <p className="empty">No assistant is connected.</p>
-      ) : (
+      {live.length > 0 && (
         <ul className="connectors">
           {live.map((connector) => (
             <ConnectorRow key={connector.id} connector={connector} onChanged={load} />
@@ -279,10 +277,9 @@ export function ConnectorsPanel({ refreshKey }: { refreshKey: number }) {
         </p>
       )}
 
-      <form className="subpanel connector-form" onSubmit={(event) => void connect(event)}>
-        <h3>Connect an assistant</h3>
-        <div className="row">
-          <label>
+      <form className="connector-form" onSubmit={(event) => void connect(event)}>
+        <div className="field-row">
+          <label className="field-label">
             Assistant
             <select
               value={kind}
@@ -299,28 +296,8 @@ export function ConnectorsPanel({ refreshKey }: { refreshKey: number }) {
               ))}
             </select>
           </label>
-          <label>
-            Name on the approval call
-            <input
-              type="text"
-              value={name}
-              placeholder={chosenLabel}
-              maxLength={40}
-              autoComplete="off"
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label>
-            How it connects
-            <select value={auth} onChange={(event) => setAuth(event.target.value as Auth)}>
-              <option value="link">Secret address (no key field needed)</option>
-              <option value="header">Key in a header</option>
-            </select>
-          </label>
-        </div>
-        <div className="row">
-          <label>
-            Without asking, up to
+          <label className="field-label">
+            No-ask limit
             <input
               type="number"
               min={0}
@@ -329,8 +306,8 @@ export function ConnectorsPanel({ refreshKey }: { refreshKey: number }) {
               onChange={(event) => setSingle(event.target.value)}
             />
           </label>
-          <label>
-            In a day, up to
+          <label className="field-label">
+            Per day
             <input
               type="number"
               min={0}
@@ -341,40 +318,71 @@ export function ConnectorsPanel({ refreshKey }: { refreshKey: number }) {
           </label>
           <button
             type="submit"
-            className="primary"
+            className="btn btn-primary"
             disabled={busy || singleValue === null || dailyValue === null}
           >
             Connect
           </button>
         </div>
         <p className="muted">
-          {singleValue === 0
-            ? "At 0 it asks you about every transfer."
-            : "Your vault's own limits still apply on top of these."}{" "}
-          {list ? `An assistant can have you asked ${list.max_asks_per_day} times a day.` : ""}
+          Assistants can only pay people in your wallet book, and can't change limits.
         </p>
-        {auth === "link" && (
+        <details className="fold">
+          <summary>More options</summary>
+          <div className="field-row">
+            <label className="field-label">
+              Name on the approval call
+              <input
+                type="text"
+                value={name}
+                placeholder={chosenLabel}
+                maxLength={40}
+                autoComplete="off"
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+            <label className="field-label">
+              How it connects
+              <select value={auth} onChange={(event) => setAuth(event.target.value as Auth)}>
+                <option value="link">Secret address (no key field needed)</option>
+                <option value="header">Key in a header</option>
+              </select>
+            </label>
+          </div>
           <p className="muted">
-            With a secret address, anyone who has the address can act as this assistant, inside
-            its limit. Keep the limit low, and revoke it if the address gets out.
+            {singleValue === 0
+              ? "At 0 it asks you about every transfer."
+              : "Your vault's own limits still apply on top of these."}{" "}
+            {list ? `An assistant can have you asked ${list.max_asks_per_day} times a day.` : ""}
           </p>
-        )}
+        </details>
       </form>
 
       {created && (
-        <div className="notice notice-good connector-created" role="status">
+        <div className="note note-good connector-created" role="status">
           <div>
             <p>
-              <strong>{created.connector.name} is connected.</strong> This is shown once. Copy it
-              now; Switchboard keeps only a fingerprint of it.
+              <strong>{created.connector.name} is connected.</strong> Copy it now; it is shown
+              once.
             </p>
             <Secret
               label={created.connector.auth === "link" ? "Secret address" : "Address"}
               value={created.mcp_url}
             />
             {created.connector.auth === "header" && <Secret label="Key" value={created.token} />}
-            <p className="muted">{KINDS.find((item) => item.id === created.connector.kind)?.setup}</p>
-            <button type="button" onClick={() => setCreated(null)}>
+            {created.connector.auth === "link" && (
+              <p className="muted">
+                Anyone who has the address can act as this assistant, inside its limit. Revoke it if
+                the address gets out.
+              </p>
+            )}
+            <details className="fold">
+              <summary>How to add it</summary>
+              <p className="muted">
+                {KINDS.find((item) => item.id === created.connector.kind)?.setup}
+              </p>
+            </details>
+            <button type="button" className="btn" onClick={() => setCreated(null)}>
               I have copied it
             </button>
           </div>

@@ -54,7 +54,7 @@ describe("RulesBox", () => {
     const user = userEvent.setup();
     render(<RulesBox callsLive={false} refreshKey={0} onChanged={onChanged} />);
 
-    await user.type(screen.getByLabelText("A rule, in a sentence"), "raise my transfer limit to 300");
+    await user.type(screen.getByLabelText("Change a rule in words"), "raise my transfer limit to 300");
     await user.click(screen.getByRole("button", { name: "Read it back" }));
     expect(await screen.findByText(/raise your per-transfer limit from 200 dollars/)).toBeInTheDocument();
     expect(screen.getByText("lantern")).toBeInTheDocument();
@@ -83,7 +83,7 @@ describe("RulesBox", () => {
     });
     const user = userEvent.setup();
     render(<RulesBox callsLive={false} refreshKey={0} onChanged={() => undefined} />);
-    await user.type(screen.getByLabelText("A rule, in a sentence"), "set my transfer limit to 900");
+    await user.type(screen.getByLabelText("Change a rule in words"), "set my transfer limit to 900");
     await user.click(screen.getByRole("button", { name: "Read it back" }));
     expect(await screen.findByRole("status")).toHaveTextContent("above your daily budget");
   });
@@ -112,13 +112,13 @@ describe("HostileBox", () => {
     const onChanged = vi.fn();
     const user = userEvent.setup();
     render(<HostileBox onChanged={onChanged} />);
-    const box = screen.getByLabelText<HTMLTextAreaElement>("Hostile content");
+    const box = screen.getByLabelText<HTMLTextAreaElement>("Text from a web page");
     expect(box.value).toContain("SYSTEM OVERRIDE");
     await user.click(screen.getByRole("button", { name: "Feed it to the agent" }));
 
     expect(await screen.findByText("Worst case: a phone call")).toBeInTheDocument();
     expect(screen.getByText("claims special authority")).toBeInTheDocument();
-    expect(screen.getByText(/It asks the vault for \$5,000 to new address ending bad0/)).toBeInTheDocument();
+    expect(screen.getByText(/it would ask the vault for \$5,000 to new address ending bad0/)).toBeInTheDocument();
     expect(screen.getByText("OVER_TRANSFER_CAP")).toBeInTheDocument();
     expect(screen.getByText(/The reader has no tools/)).toBeInTheDocument();
     expect(calls[0]?.url).toBe("/api/hostile");

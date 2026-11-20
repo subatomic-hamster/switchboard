@@ -38,15 +38,10 @@ export function HostileBox({ onChanged }: { onChanged: () => void }) {
   }
 
   return (
-    <div className="subpanel">
-      <h3>Try to trick it</h3>
-      <p className="muted">
-        Write what a malicious web page or market description might say. The text is treated as
-        outside content.
-      </p>
+    <div className="hostile">
       <form onSubmit={onSubmit}>
-        <label htmlFor="hostile" className="visually-hidden">
-          Hostile content
+        <label htmlFor="hostile" className="field-label">
+          Text from a web page
         </label>
         <textarea
           id="hostile"
@@ -55,18 +50,17 @@ export function HostileBox({ onChanged }: { onChanged: () => void }) {
           onChange={(event) => setContent(event.target.value)}
           maxLength={4000}
         />
-        <button type="submit" disabled={busy || !content.trim()}>
+        <button type="submit" className="btn" disabled={busy || !content.trim()}>
           Feed it to the agent
         </button>
       </form>
       {error && (
-        <p className="notice notice-critical" role="alert">
+        <p className="note note-critical" role="alert">
           {error}
         </p>
       )}
       {result && (
         <div className="hostile-result" role="status">
-          <h4>What happened</h4>
           <p>{result.reader_outcome}</p>
           {result.reader_flags.length > 0 && (
             <ul className="flags">
@@ -75,11 +69,11 @@ export function HostileBox({ onChanged }: { onChanged: () => void }) {
               ))}
             </ul>
           )}
-          <h4>If the agent itself were hijacked</h4>
           <p className="muted">
-            It asks the vault for {money(result.demanded_amount_usd)} to {result.demanded_payee}.
+            If the agent itself were hijacked, it would ask the vault for{" "}
+            {money(result.demanded_amount_usd)} to {result.demanded_payee}.
           </p>
-          <div className={`notice notice-${OUTCOME[result.worst_case].tone}`}>
+          <div className={`note note-${OUTCOME[result.worst_case].tone}`}>
             <StatusMark
               tone={OUTCOME[result.worst_case].tone}
               label={OUTCOME[result.worst_case].label}
