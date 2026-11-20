@@ -66,8 +66,8 @@ describe("format", () => {
         dry_run: true,
       }),
     );
-    expect(line.title).toBe("Sell 4 at 0.46 on polymarket");
-    expect(line.detail).toContain("dry run, no order placed");
+    expect(line.title).toBe("Sell 4 at 46¢ on Polymarket US");
+    expect(line.detail).toBe("Practice: no order placed");
   });
 });
 
@@ -191,6 +191,9 @@ describe("stream blips", () => {
     expect(collapseBlips(outage)).toHaveLength(2);
     const open = [stale(true, "2026-11-19T12:00:00+00:00")];
     expect(collapseBlips(open)).toBe(open);
+    // Two restarts with no recovery between: one row, the first.
+    const twice = [stale(true, "2026-11-19T12:00:00+00:00"), stale(true, "2026-11-19T12:20:00+00:00")];
+    expect(collapseBlips(twice)).toEqual([twice[0]]);
   });
 
   it("the feed shows nothing for a restart blip", () => {

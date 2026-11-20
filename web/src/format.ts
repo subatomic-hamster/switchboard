@@ -8,6 +8,8 @@ export const CHAIN_NAMES: Record<Chain, string> = {
   "arc-testnet": "Arc",
 };
 
+const VENUE_NAME: Record<string, string> = { polymarket: "Polymarket US", gemini: "Gemini" };
+
 export const REASON_TEXT: Record<Reason, string> = {
   OVER_TRANSFER_CAP: "over the per-transfer limit",
   OVER_DAILY_BUDGET: "over the daily budget",
@@ -131,8 +133,10 @@ export function describe(event: SwitchboardEvent): EventLine {
       return {
         tone: "neutral",
         label: event.type === "trade.posted" ? "Order posted" : "Order filled",
-        title: `${d.side === "sell" ? "Sell" : "Buy"} ${d.qty} at ${d.price.toFixed(2)} on ${d.venue}`,
-        detail: `${d.slug}${d.dry_run ? " (dry run, no order placed)" : ""}`,
+        title: `${d.side === "sell" ? "Sell" : "Buy"} ${d.qty} at ${Math.round(d.price * 100)}¢ on ${
+          VENUE_NAME[d.venue] ?? d.venue
+        }`,
+        detail: d.dry_run ? "Practice: no order placed" : d.slug,
       };
     }
     case "stream.stale":
@@ -192,8 +196,8 @@ export function describe(event: SwitchboardEvent): EventLine {
       return {
         tone: "neutral",
         label: "Forecast sealed",
-        title: `Opinion on ${event.data.slug} hashed before the event`,
-        detail: `${event.data.commitment.slice(0, 18)}…`,
+        title: "Opinion sealed before the event",
+        detail: event.data.slug,
       };
     case "forecast.revealed": {
       const d = event.data;
@@ -274,7 +278,9 @@ export function collapseBlips(events: SwitchboardEvent[], windowMs = 60_000): Sw
   for (const e of events) {
     if (e.type !== "stream.stale") continue;
     if (e.data.stale) {
-      open = e;
+      // A second "went quiet" with no recovery between (a server restart) says nothing new.
+      if (open) drop.add(e.id);
+      else open = e;
     } else {
       if (open && Date.parse(e.ts) - Date.parse(open.ts) <= windowMs) {
         drop.add(open.id).add(e.id);
