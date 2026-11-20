@@ -346,6 +346,7 @@ def _mount_dashboard(app: FastAPI, dist: Path) -> None:
     if assets.is_dir():
         app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
+    @app.get("/claim", include_in_schema=False)  # the claim link's path; the page reads the hash
     @app.get("/", include_in_schema=False)
     async def dashboard() -> FileResponse:
         return FileResponse(index)

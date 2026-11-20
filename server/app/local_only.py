@@ -29,6 +29,11 @@ PUBLIC_PREFIXES = (
     # A recipient claims a payment with the secret from their claim link. Only this one path:
     # create, refund, status and payment requests under /api/escrow stay on this machine.
     "/api/escrow/claim",
+    "/api/escrow/peek",  # same credential: shows the claim page the amount
+    # The claim page itself and its script. It holds no data; every API call it makes is still
+    # gated above. `/claim` also matches `/claim/x`, which is a 404.
+    "/claim",
+    "/assets/",
     "/api/health",
 )
 LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "[::1]"})
