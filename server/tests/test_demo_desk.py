@@ -238,6 +238,29 @@ async def test_a_closed_btc_window_settles_and_is_no_longer_offered() -> None:
         assert "Move BTC hourly to Gemini" not in labels
 
 
+@respx.mock
+async def test_bet_down_on_the_current_btc_5m_market() -> None:
+    async with stage() as s:
+        s.venues.data["markets"][BTC5] = BTC5_PM
+        s.venues.data["pm_books"][BTC5] = BTC_PM_BOOK  # Up bid 0.15, ask 0.16
+        sentence = "place a bet on DOWN on the current btc up or down 5m market"
+        assert "Bet Down on BTC 5m" in labels(await get(s, "/api/demo/suggestions"))
+        plan = await post(s, "/api/intent", {"text": sentence})
+        buy = plan["market_buy"]
+        assert plan["kind"] == "market_buy" and buy["slug"] == BTC5  # 15:00-15:05, NOW 15:01
+        assert buy["side"] == "Down" and buy["price"] == 0.85  # 1 - the Up bid
+        assert buy["amount_usd"] == 30 and buy["from_place"] == "Ethereum wallet"
+        await post(s, f"/api/plans/{plan['plan_id']}/execute", {"route_id": "cheapest"})
+        held = next(
+            p for p in (await get(s, "/api/demo/portfolio"))["positions"] if p["slug"] == BTC5
+        )
+        assert held["side"] == "Down" and held["price"] == 0.84  # 1 - the Up ask
+        assert "Bet Down on BTC 5m" not in labels(await get(s, "/api/demo/suggestions"))
+        # Up is still the side when the sentence says only "up or down".
+        plan = await post(s, "/api/intent", {"text": "bet 10 dollars on the btc up or down 5m"})
+        assert plan["market_buy"]["side"] == "Up" and plan["market_buy"]["price"] == 0.16
+
+
 async def offer_and_move_rockets(s: Stage) -> None:
     await post(s, "/api/demo/offer")
     await post(s, "/api/desk/move", {"slug": NBA, "qty": 320, "mode": "take"})

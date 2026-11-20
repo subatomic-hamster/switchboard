@@ -59,6 +59,12 @@ CHAIN_PLACE = {
     "arc-testnet": "Arc wallet",
 }
 BTC_PHRASE = re.compile(r"\b(?:bitcoin|btc)\W+(?:hourly|(?:1|one)\W*hour)\b", re.I)
+# "the current btc up or down 5m market": the 5-minute window in progress.
+BTC5_PREFIX = "cpc-btc-updown-5m-"
+BTC5_PHRASE = re.compile(
+    r"\b(?:bitcoin|btc)\b(?:\W+up\W+or\W+down)?\W+(?:5|five)\W*(?:m|mins?|minutes?)\b", re.I
+)
+DEFAULT_BET_USD = Decimal(30)  # a bet said without an amount
 BUY_VERB = re.compile(r"\b(?:put|buy|bet|invest|stake|add)\b", re.I)
 MOVE_SENTENCE = re.compile(r"\bmove\b.*\bposition\b.*\bto (gemini|polymarket(?: us)?)\b", re.I)
 MONTHS = {
@@ -391,6 +397,12 @@ def current_window(now: datetime) -> tuple[datetime, datetime, str]:
     return start, end, f"{BTC_PREFIX}{start:%Y-%m-%d-%H%M}z"
 
 
+def current_5m_window(now: datetime) -> tuple[datetime, datetime, str]:
+    """The 5-minute BTC window in progress (listed only once it starts)."""
+    start = now.replace(minute=now.minute - now.minute % 5, second=0, microsecond=0)
+    return start, start + timedelta(minutes=5), f"{BTC5_PREFIX}{start:%Y-%m-%d-%H%M}z"
+
+
 def spoken_buy(b: MarketBuyIntent) -> str:
     ends = f", closes {b.ends_at:%H:%M} UTC" if b.ends_at else ""
     return (
@@ -511,7 +523,9 @@ class DemoDesk:
         except (VenueError, UnknownMarket) as exc:
             log.warning("demo price for %s: %s", p.id, exc)
         else:
-            if book.best_bid:
+            if p.side == "Down" and book.best_ask:
+                p.price = Decimal(1) - book.best_ask.price  # selling Down is buying Up
+            elif p.side != "Down" and book.best_bid:
                 p.price = book.best_bid.price
         self._pcache[p.id] = time.monotonic()
 
@@ -703,6 +717,14 @@ class DemoDesk:
                     text="Put 30 dollars from my Ethereum wallet into the Bitcoin hourly "
                     "market on Polymarket",
                     why="This hour's Bitcoin up-or-down market is open on Polymarket US.",
+                )
+            )
+        if not any(p.slug.startswith(BTC5_PREFIX) and p.status == "open" for p in self._pos):
+            out.append(
+                DemoSuggestion(
+                    label="Bet Down on BTC 5m",
+                    text="Place a bet on DOWN on the current BTC up or down 5m market",
+                    why="A five-minute Bitcoin window is open on Polymarket US right now.",
                 )
             )
         sends = [
@@ -925,35 +947,50 @@ class DemoDesk:
         lowered = text.lower()
         if not BUY_VERB.search(text) or re.search(r"\bmove\b", lowered) or "gemini" in lowered:
             return None
-        market = BTC_PHRASE.search(text)
+        five = BTC5_PHRASE.search(text)
+        market = five or BTC_PHRASE.search(text)
         held = None
         if market is None:
             slug = self.slug_for(text)
             held = self.held(slug) if slug else None
-            if held is None or held.slug.startswith(BTC_PREFIX):
+            if held is None or held.slug.startswith((BTC_PREFIX, BTC5_PREFIX)):
                 return None
         amount = read_amount(text[: market.start()] if market else text)
+        if amount is None and five:
+            amount = DEFAULT_BET_USD  # "place a bet on Down on the 5m market"
         if amount is None or amount <= 0:
             raise IntentError("How much should I put in? I did not catch an amount.")
         after_from = re.search(r"\bfrom\b(.*)", lowered)
         chain = _chain_in(after_from[1]) if after_from else None
-        if held is not None and chain is None:
-            chain = Chain.ETH_SEPOLIA  # adding to a bet: the wallet the winnings land in
+        if (held is not None or five) and chain is None:
+            chain = Chain.ETH_SEPOLIA  # the wallet the winnings land in
         wallet = self._ctx.wallets.find("me", chain) if chain else None
         if wallet is None:
             raise IntentError("Which wallet should it come from, Ethereum, Solana or Arc?")
         if held is not None:
             return await self._buy_more(held, amount, wallet.label.removeprefix("my "))
-        start, end, slug = current_window(self._now())
+        # "up or down" names the market; a lone "down" picks the side.
+        side = (
+            "Down" if re.search(r"\bdown\b", re.sub(r"\bup\W+or\W+down\b", "", lowered)) else "Up"
+        )
+        window = current_5m_window if five else current_window
+        start, end, slug = window(self._now())
         try:
             book = await self._pm.book(slug)
         except UnknownMarket as exc:
+            which = "five-minute" if five else "hour's"
             raise IntentError(
-                "This hour's Bitcoin market is not listed yet. Try again in a moment."
+                f"This {which} Bitcoin market is not listed yet. Try again in a moment."
             ) from exc
-        if book.best_ask is None:
+        if side == "Down":
+            # Buying Down is selling Up: it costs one dollar less the best Up bid.
+            if book.best_bid is None:
+                raise IntentError("Nobody is offering Down contracts in that window right now.")
+            ask = Decimal(1) - book.best_bid.price
+        elif book.best_ask is None:
             raise IntentError("Nobody is offering contracts in that window right now.")
-        ask = book.best_ask.price
+        else:
+            ask = book.best_ask.price
         per = ask + taker_fee(POLYMARKET_TAKER_RATE, Decimal(1), ask)
         contracts = (amount / per).quantize(CENT, rounding=ROUND_DOWN)
         if contracts <= 0:
@@ -963,7 +1000,7 @@ class DemoDesk:
             venue=PM_US,
             slug=slug,
             title=f"Bitcoin up or down, {start:%H:%M} to {end:%H:%M} UTC",
-            side="Up",
+            side=side,
             amount_usd=amount,
             price=ask,
             contracts=contracts,
@@ -1015,7 +1052,9 @@ class DemoDesk:
                 Decimal("0.0001")
             )
             held.contracts = total
+            what = f"Added to {buy.title}"
         else:
+            what = "Bet on Bitcoin going up this hour" if btc else f"Bet {buy.side} on {buy.title}"
             self._pos.append(
                 _Pos(
                     self._next_id(),
@@ -1035,7 +1074,7 @@ class DemoDesk:
             DemoAction(
                 ts=self._now(),
                 kind="bet",
-                title="Bet on Bitcoin going up this hour" if btc else f"Added to {buy.title}",
+                title=what,
                 detail=f"{buy.contracts.normalize():f} contracts at "
                 f"{(buy.price * 100).normalize():f} cents",
                 amount_usd=cost,
@@ -1047,7 +1086,7 @@ class DemoDesk:
             # List a new market on Markets now, not at the next timed refresh.
             await self._ctx.markets.refresh()
         await self._changed(
-            "Bought Bitcoin hourly" if btc else f"Added to {buy.title}",
+            "Bought Bitcoin hourly" if btc else what,
             f"{buy.contracts.normalize():f} {buy.side} for ${cost}.",
         )
         return True, f"Bought {buy.contracts.normalize():f} {buy.side} contracts (simulated)."
