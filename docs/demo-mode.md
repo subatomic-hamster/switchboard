@@ -43,7 +43,9 @@ offer, and Settle Rockets as a win.
 
 With `CALLS_ENABLED=true` and the AgentPhone webhook registered, call the AgentPhone number and
 talk to the agent (`app/phone_line.py`). Say what you want; it reads back the quote or the
-verdict, and runs it only after a yes ("no" cancels, "bye" hangs up):
+verdict, and runs it only after a yes ("no" cancels). With no request ("no" to "Anything
+else?", "nothing", "I'm good", "bye", or silence after the greeting) it says "Thank you,
+goodbye" and hangs up:
 
 - "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet"
 - "Put 30 dollars from my Ethereum wallet into the Bitcoin hourly market" (then what you hold,

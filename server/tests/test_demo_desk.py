@@ -779,7 +779,21 @@ async def test_calling_in_sends_buys_adds_and_moves_with_a_yes() -> None:
         assert "now sit on Gemini" in await call(s, "yes")
         held = (await get(s, "/api/demo/portfolio"))["positions"]
         assert any(p["venue"] == "Gemini" and p["slug"] == NBA for p in held)
-        assert (await call(s, "that's all, bye")).endswith("[hangup]")
+        assert await call(s, "that's all, bye") == "Thank you, goodbye. [hangup]"
+
+
+@respx.mock
+async def test_calling_in_with_no_request_ends_the_call() -> None:
+    bye = "Thank you, goodbye. [hangup]"
+    async with stage(**PHONE) as s:
+        assert "Switchboard here" in await call(s, "", call_id="quiet")
+        assert await call(s, "", call_id="quiet") == bye  # greeted, still nothing asked
+        for said in ["No.", "Nothing, thanks", "No thanks", "I'm good"]:
+            assert await call(s, said, call_id=said) == bye
+        # A "no" to a quote cancels it and stays on the line.
+        await call(s, "Send 150 dollars from my Ethereum wallet to Sam's Solana wallet")
+        assert "Anything else?" in await call(s, "no thanks")
+        assert await call(s, "no") == bye
 
 
 @respx.mock

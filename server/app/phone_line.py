@@ -40,7 +40,14 @@ YES = re.compile(
 )
 NO = re.compile(r"\b(no|nope|cancel|stop|don'?t|never ?mind|hold off|wait)\b", re.I)
 HELLO = re.compile(r"\W*(hi|hello|hey|hiya|good (morning|afternoon|evening))( there)?\W*", re.I)
-BYE = re.compile(r"\b(bye|goodbye|that'?s (all|it)|nothing else|hang up)\b", re.I)
+BYE = re.compile(r"\b(bye|goodbye|that'?s (all|it)|hang up)\b", re.I)
+# No request at all: "nothing", "nothing else", "no thanks", "I'm good", "all set".
+NOTHING = re.compile(
+    r"^\W*(no,? )?(nothing( else)?|no thanks?( you)?|i'?m (good|fine|all set)|all set|"
+    r"that'?s everything)\b",
+    re.I,
+)
+GOODBYE: dict[str, Any] = {"text": "Thank you, goodbye.", "hangup": True}
 
 
 @dataclass
@@ -61,13 +68,24 @@ class PhoneLine:
         self._ctx = ctx
         # ponytail: per-call state in memory, lost on restart; a restart ends the call anyway.
         self._pending: dict[str, _Pending] = {}
+        self._greeted: set[str] = set()
 
     async def turn(self, data: dict[str, Any]) -> AsyncIterator[dict[str, Any]]:
         """One thing the caller said. Yields what to say back (`interim` chunks, then one)."""
         call_id = str(data.get("callId") or "")
         said = str(data.get("transcript") or "").strip()
+        pending = self._pending.get(call_id)
+        if not said and call_id in self._greeted and pending is None:
+            # Greeted already and still no request: end the call.
+            yield GOODBYE
+            return
         if not said or HELLO.fullmatch(said):
+            self._greeted.add(call_id)
             yield {"text": GREETING}
+            return
+        if pending is None and (NO.fullmatch(said.strip(" .!,")) or NOTHING.search(said)):
+            # "No" to "Anything else?", or "nothing": no request, so end the call.
+            yield GOODBYE
             return
         pending = self._pending.pop(call_id, None)
         if pending is not None:
@@ -80,8 +98,7 @@ class PhoneLine:
                 return
             # Neither: treat it as a new request, and the old one lapses.
         if BYE.search(said):
-            self._pending.pop(call_id, None)
-            yield {"text": "Goodbye.", "hangup": True}
+            yield GOODBYE
             return
         yield {"text": "One moment.", "interim": True}
         try:
