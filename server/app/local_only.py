@@ -26,6 +26,9 @@ PUBLIC_PREFIXES = (
     # create and revoke those tokens are under /api/connectors and stay on this machine.
     "/api/connect/",
     "/api/hooks/",  # P1's Stream webhook, HMAC-verified
+    # A recipient claims a payment with the secret from their claim link. Only this one path:
+    # create, refund, status and payment requests under /api/escrow stay on this machine.
+    "/api/escrow/claim",
     "/api/health",
 )
 LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "[::1]"})

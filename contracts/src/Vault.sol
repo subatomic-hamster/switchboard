@@ -58,7 +58,12 @@ contract Vault {
         bool used;
     }
 
-    enum Status { None, Pending, Approved, Denied }
+    enum Status {
+        None,
+        Pending,
+        Approved,
+        Denied
+    }
 
     struct Request {
         address agent;
@@ -174,7 +179,13 @@ contract Vault {
 
         _requests.push(
             Request(
-                msg.sender, payee, uint128(amount), uint64(block.timestamp) + p.approvalTtl, Status.Pending, purposeHash, reason
+                msg.sender,
+                payee,
+                uint128(amount),
+                uint64(block.timestamp) + p.approvalTtl,
+                Status.Pending,
+                purposeHash,
+                reason
             )
         );
         id = _requests.length;
@@ -279,6 +290,8 @@ contract Vault {
         uint256 n = es.length;
         uint256 cutoff = block.timestamp > WINDOW ? block.timestamp - WINDOW : 0;
         while (h < n && es[h].ts <= cutoff) h++;
-        for (uint256 i = h; i < n; i++) total += es[i].amount;
+        for (uint256 i = h; i < n; i++) {
+            total += es[i].amount;
+        }
     }
 }

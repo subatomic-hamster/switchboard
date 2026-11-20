@@ -196,5 +196,26 @@ export function describe(event: SwitchboardEvent): EventLine {
         detail: d.brier != null ? `Brier score ${d.brier.toFixed(3)}` : "",
       };
     }
+    case "escrow.updated": {
+      const d = event.data;
+      const label = { deposited: "Held for claim", claimed: "Claimed", refunded: "Refunded" }[
+        d.status
+      ];
+      return {
+        tone: d.status === "claimed" ? "good" : "neutral",
+        label,
+        title: `${money(d.amount_usd)} in escrow ${d.escrow_id}`,
+        detail: d.to ? `to ${d.to}` : "",
+      };
+    }
+    case "payment.updated": {
+      const d = event.data;
+      return {
+        tone: d.status === "paid" ? "good" : "neutral",
+        label: d.status === "paid" ? "Request paid" : "Payment requested",
+        title: `${money(d.amount_usd)} request ${d.request_id}`,
+        detail: d.memo,
+      };
+    }
   }
 }

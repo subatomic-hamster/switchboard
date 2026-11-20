@@ -358,6 +358,28 @@ class ForecastData(Model):
     brier: Money | None = None
 
 
+class EscrowData(Model):
+    """A deposit held for a recipient with no wallet: waiting, paid out, or refunded."""
+
+    escrow_id: str
+    status: Literal["deposited", "claimed", "refunded"]
+    amount_usd: Money
+    # Who the money went to: the recipient for claimed, the refund address for refunded.
+    to: str = ""
+    expiry: datetime | None = None
+
+
+class PaymentData(Model):
+    """A payment request, and whether it has been paid."""
+
+    request_id: str
+    status: Literal["requested", "paid"]
+    amount_usd: Money
+    requester: str
+    payer: str = ""
+    memo: str = ""
+
+
 class _EventBase(Model):
     id: int
     ts: datetime
@@ -433,6 +455,16 @@ class ForecastRevealedEvent(_EventBase):
     data: ForecastData
 
 
+class EscrowUpdatedEvent(_EventBase):
+    type: Literal["escrow.updated"] = "escrow.updated"
+    data: EscrowData
+
+
+class PaymentUpdatedEvent(_EventBase):
+    type: Literal["payment.updated"] = "payment.updated"
+    data: PaymentData
+
+
 SwitchboardEvent = Annotated[
     TransferSentEvent
     | TransferArrivedEvent
@@ -447,7 +479,9 @@ SwitchboardEvent = Annotated[
     | CallEndedEvent
     | PolicyUpdatedEvent
     | ForecastCommittedEvent
-    | ForecastRevealedEvent,
+    | ForecastRevealedEvent
+    | EscrowUpdatedEvent
+    | PaymentUpdatedEvent,
     Field(discriminator="type"),
 ]
 
@@ -466,6 +500,8 @@ EVENT_PAYLOADS: dict[str, type[Model]] = {
     "policy.updated": PolicyData,
     "forecast.committed": ForecastData,
     "forecast.revealed": ForecastData,
+    "escrow.updated": EscrowData,
+    "payment.updated": PaymentData,
 }
 
 FROZEN_EVENT_TYPES: tuple[str, ...] = (

@@ -546,3 +546,25 @@ async def test_an_approval_is_not_settled_while_stale_but_a_denial_is(
     said = await ctx.approvals.approve(one.request_id, Decimal(250), one.challenge)
     assert said.ok and said.status == "approved"
     assert await ctx.vault.spent_today() == Decimal(250)
+
+
+async def test_escrow_spending_stops_while_frozen_or_stale(
+    client: httpx.AsyncClient, ctx: AppContext
+) -> None:
+    class Untouchable:
+        def __getattr__(self, name: str) -> Any:
+            raise AssertionError(f"escrow.{name} was called while spending is paused")
+
+    ctx.escrow = Untouchable()  # type: ignore[assignment]
+    calls = [("/api/escrow/create", {"amount_usd": 5}), ("/api/escrow/requests/1/pay", None)]
+
+    await force_stale(client, True)
+    for url, body in calls:
+        response = await client.post(url, json=body)
+        assert response.status_code == 409 and "stale" in response.json()["detail"], url
+    await force_stale(client, False)
+
+    await ctx.vault.freeze(True, via="test")
+    for url, body in calls:
+        response = await client.post(url, json=body)
+        assert response.status_code == 409 and "frozen" in response.json()["detail"], url

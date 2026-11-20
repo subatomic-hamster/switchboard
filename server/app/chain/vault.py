@@ -37,6 +37,8 @@ log = logging.getLogger("switchboard.chain")
 ARTIFACT = REPO_ROOT / "contracts" / "out" / "Vault.sol" / "Vault.json"
 USDC_DECIMALS = 6
 EVM_ADDRESS = re.compile(r"^0x[0-9a-fA-F]{40}$")
+# Shared with the Ledger and Escrow clients (`contract.py`): they sign with the same agent key.
+TX_LOCK = threading.Lock()
 
 # The contract's reason codes (Vault.sol: OVER_TRANSFER_CAP .. FROZEN).
 REASONS: dict[int, Reason] = {
@@ -146,7 +148,7 @@ class ChainVault:
         # Permits that `approve` already paid (the contract pays in the approving transaction),
         # so the planner's `redeem` of them is a no-op.
         self._prepaid: set[str] = set()
-        self._tx_lock = threading.Lock()  # one transaction at a time, so nonces never clash
+        self._tx_lock = TX_LOCK  # one transaction at a time, so nonces never clash
         # The allowlist as the rest of P2 sees it. Starts from the wallet book. EVM entries are
         # looked up on chain each time (the contract is the authority); entries that are not EVM
         # addresses are kept here only.

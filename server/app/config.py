@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     anomaly_burst_count: int = Field(default=4, ge=2)
     anomaly_burst_window_s: int = Field(default=600, gt=0)
 
+    # Ledger (forecast receipts, trade records) and Escrow (claim links, payment requests).
+    # Blank keeps the stub anchor and leaves the escrow routes answering 503.
+    ledger_address: str = ""
+    escrow_address: str = ""
+
     # policy mirror (the contract is the authority once P1's vault is wired in)
     policy_transfer_cap_usd: Decimal = Decimal("200")
     policy_daily_budget_usd: Decimal = Decimal("500")

@@ -53,4 +53,6 @@ export const EVENT_TYPES: EventType[] = [
   "policy.updated",
   "forecast.committed",
   "forecast.revealed",
+  "escrow.updated",
+  "payment.updated",
 ];
