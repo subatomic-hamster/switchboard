@@ -138,6 +138,34 @@ def published(ctx: AppContext) -> list[tuple[str, dict[str, Any]]]:
     return [(e.type, e.data) for e in ctx.bus.history() if e.type != "stream.stale"]
 
 
+async def test_a_failed_delivery_stays_retryable(
+    hook: Hook, real_ctx: AppContext, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """QuickNode retries with the same nonce; a delivery we failed on must not be a "replay"."""
+    import app.chain.stream as stream
+
+    real_publish = stream.publish_log
+    calls = 0
+
+    async def flaky(ctx: AppContext, event: dict[str, Any]) -> bool:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("bus down")
+        return await real_publish(ctx, event)
+
+    monkeypatch.setattr(stream, "publish_log", flaky)
+    body = flat(approval_log())
+    headers = sign(body)
+    with pytest.raises(RuntimeError):
+        await hook(body, headers)
+    retry = await hook(body, headers)
+    assert retry.status_code == 200
+    assert [t for t, _ in published(real_ctx)] == ["approval.requested"]
+    again = await hook(body, headers)
+    assert again.status_code == 401  # once handled, the same delivery is a replay
+
+
 def test_decode_vault_log() -> None:
     event = decode_vault_log(approval_log())
     assert event is not None

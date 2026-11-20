@@ -230,7 +230,18 @@ async def publish_escrow_log(ctx: AppContext, event: dict[str, Any]) -> bool:
 async def quicknode_hook(request: Request, ctx: Ctx) -> OkResponse:
     """QuickNode Streams delivery of the vault's logs."""
     body = verify(ctx.settings.quicknode_stream_secret, request.headers, await request.body())
-    reject_replay(ctx, request.headers["x-qn-nonce"], request.headers["x-qn-timestamp"])
+    key = (request.headers["x-qn-nonce"], request.headers["x-qn-timestamp"])
+    reject_replay(ctx, *key)
+    try:
+        return await _handle(ctx, body)
+    except Exception:
+        # A delivery we failed to handle must stay retryable: QuickNode retries with the same
+        # nonce, and answering every retry 401 would terminate the Stream after 10 tries.
+        ctx.stream_nonces.pop(key, None)
+        raise
+
+
+async def _handle(ctx: AppContext, body: bytes) -> OkResponse:
     try:
         payload = json.loads(body)
     except ValueError as exc:
