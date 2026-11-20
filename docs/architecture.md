@@ -12,6 +12,8 @@ Demo mode simulates the money and keeps the market data live. The owner can also
 
 ## 1. System architecture
 
+Rendered: [PNG](diagrams/system-architecture.png) · [SVG](diagrams/system-architecture.svg)
+
 ```mermaid
 flowchart LR
   owner(["Owner<br/>types or speaks"])
@@ -138,6 +140,8 @@ sequenceDiagram
 The planner fixes the route and the amount from the owner's own sentence before any outside content is read. `preview` predicts the vault's answer so the quote can say what will happen. The vault decides. Every request resolves to **pay** (permit issued), **ask** (`OVER_TRANSFER_CAP`, `OVER_DAILY_BUDGET`, `PAYEE_NOT_ALLOWED`) or **block** (`FROZEN`, `STREAM_STALE`, `CALL_CAP_REACHED`). Everything that happens is published once on the bus, which feeds the dashboard over SSE and the stored log.
 
 ## 3. Security layers
+
+Rendered: [PNG](diagrams/security-layers.png) · [SVG](diagrams/security-layers.svg)
 
 ```mermaid
 flowchart TB
