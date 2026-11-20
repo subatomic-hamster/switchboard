@@ -175,6 +175,7 @@ describe("CommandBar", () => {
     expect(screen.getByText(/Ends in 2:0\d|Ends in 2:1\d|Ends in 1:5\d/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText("Bought 57.69 contracts.")).toBeInTheDocument();
+    expect(screen.getByText("Bought")).toBeInTheDocument();
     expect(calls[1]).toEqual({ url: "/api/plans/p_9/execute", body: { route_id: "cheapest" } });
   });
 

@@ -333,7 +333,10 @@ export function CommandBar({
             )}
             {result ? (
               <div className={`note note-${RESULT[result.status].tone}`} role="status">
-                <StatusMark tone={RESULT[result.status].tone} label={RESULT[result.status].label} />
+                <StatusMark
+                  tone={RESULT[result.status].tone}
+                  label={result.status === "executing" ? "Bought" : RESULT[result.status].label}
+                />
                 <span>{result.detail}</span>
               </div>
             ) : (
