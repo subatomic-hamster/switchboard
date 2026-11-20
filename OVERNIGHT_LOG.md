@@ -94,15 +94,20 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    token); the dashboard, the approvals list with the word, freeze, the event stream and
    connector management all answer 403. A quick tunnel lasts only while it runs and gets a
    new address next time, so this step repeats, and steps 7 and 11 with it.
-   **Found while doing it:** the AgentPhone settings are no longer in `.env`
-   (`AGENTPHONE_API_KEY`, `AGENTPHONE_AGENT_ID`, `AGENTPHONE_NUMBER_ID`, `CALL_PROVIDER`).
-   I did not remove them and git never touched the file. If you rotated the key, add the new
-   one and `CALL_PROVIDER=agentphone`, then run `agentphone_setup --write-env` to save the
-   two ids again. Until then the webhook cannot be registered and calls stay in dry run.
+   **Reopened on 20 November.** The first quick tunnel stopped working overnight (Cloudflare
+   answered "Tunnel not found"), so both scheduled routines failed that evening with a
+   connection error. I opened a new one, saved its address in `PUBLIC_BASE_URL`, checked the
+   same routes from outside with the same results, registered it with AgentPhone (item 7) and
+   gave it to the Bot (item 11). It will happen again: a quick tunnel is for one sitting. An
+   address that stays the same needs either a Cloudflare account with a domain or Tailscale
+   Funnel switched on for this machine; both are yours to set up.
+   **The AgentPhone settings are back in `.env`.** They had gone missing; you gave me the key
+   on 20 November and `agentphone_setup --write-env` saved the two ids again.
 6. ~~Switch your AgentPhone agent to webhook mode.~~ **Done on 19 November, on your say.** I ran
    `uv run python -m scripts.agentphone_setup --set-webhook-mode` and read the agent back: its
    `voiceMode` is `webhook`. AgentPhone clears the hosted prompt and greeting when it switches.
-7. **Register the webhook with AgentPhone.**
+7. **Register the webhook with AgentPhone.** Done on 20 November, on your say, against the
+   new tunnel address; the check now lists only `CALLS_ENABLED`. To repeat it:
    `uv run python -m scripts.agentphone_setup --register-webhook`. It sets the agent's webhook
    to `PUBLIC_BASE_URL/api/voice/hooks/agentphone` and saves the signing secret in `.env` as
    `AGENTPHONE_WEBHOOK_SECRET`. A quick tunnel gets a new address each time it starts, so
@@ -135,16 +140,24 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
     with `Switchboard: daily summary` (daily, about 18:00 ET), `Switchboard: reconciliation`
     (daily, about 18:30 ET) and `Switchboard: missed call` (webhook) as routines. The Bot
     saved `Switchboard: equivalence research` as a skill you run by asking, because a routine
-    needs a schedule or a trigger. None has run successfully yet. Yours to do:
-    - **Paste `BOT_TOKEN` into the secret card** the Bot put in its chat ("Switchboard bot
-      token", then "Send securely"). I do not type secrets into web pages. Until then every
-      run says the token is missing.
-    - **Copy the missed-call routine's webhook address and key** from the Bot's Routines into
-      `.env` as `GROK_MISSED_CALL_WEBHOOK_URL` and `GROK_MISSED_CALL_WEBHOOK_KEY`, and restart.
+    needs a schedule or a trigger. Where each one stands on 20 November:
+    - **Daily summary:** ran once by hand on 19 November and fetched live figures. Its first
+      scheduled run failed because the tunnel was down.
+    - **Reconciliation:** has not run successfully. Its first scheduled run failed for the
+      same reason.
+    - **Missed call:** works. You gave me the webhook address and key from the Grok Bot
+      desktop app and they are in `.env`. I posted the notice for a test request to the
+      webhook; it answered 200, the routine checked the request against the server through
+      the tunnel and messaged you. The server's own trigger was not exercised: see decision 56.
+    - **Equivalence research:** not run.
+    Yours to do:
     - **Keep the server and the tunnel running** when the routines fire. Their text carries
       the quick tunnel's address, which changes when the tunnel restarts; then tell the Bot
-      the new address for each one.
-    - Run each once and save the chats under `bots/exports/`.
+      the new address for each one (done once, on 20 November).
+    - **Answer the Bot's question about time.** It says your time zone now shows as Central
+      and the two daily routines are still set to Eastern, so they run at about 17:00 and
+      17:30 Central. I did not change them.
+    - Run the other three once and save the chats under `bots/exports/`.
 12. **Record the demo video.** `uv run python -m app.demo_mock` paces a full run for the screen
     (it needs `CALLS_ENABLED=false`); the call audio needs items 1 to 8.
 13. **Decide the wording for Kalshi, Limitless and Phantom.** You asked for them to be
@@ -433,3 +446,12 @@ agreement because they touch the shared interface.
     of its secret. I typed no token anywhere; the Bot asked for it with a secret card, which
     is left for you. One difference from the plan's four routines: research on demand is a
     skill, not a routine.
+56. **The missed-call test went to the webhook directly, and why.** The documented test
+    (a request left to expire) did not reach the webhook: the tests of 19 November had used
+    the day's 5 approval calls, so the server denied the test request without calling, which
+    is the limit working. I did not raise the limit. I posted the same notice the server
+    builds, for that same denied request, to the routine's webhook with its key from `.env`.
+    Two things to know. The webhook address is on `api2.cursor.sh` and the key begins `crsr_`,
+    not an x.ai address; I used them as you gave them. And a request denied by the call limit
+    does not notify the routine at all, because the notice says "Switchboard called"; it shows
+    on the dashboard as blocked and is counted in the daily summary. Left as it is.
