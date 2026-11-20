@@ -197,7 +197,9 @@ class GeminiClient:
         if maker_or_cancel:
             fields["makerOrCancel"] = True
         return self._signed(
-            "/v1/prediction-markets/order", fields, f"gemini {side} {qty:f} {symbol} @ {price:f}"
+            "/v1/prediction-markets/order",
+            fields,
+            f"gemini {side} {fields['quantity']} {symbol} @ {fields['price']}",
         )
 
     def prepare_cancel(self, order_id: int) -> PreparedRequest:

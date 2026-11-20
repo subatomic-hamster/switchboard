@@ -266,7 +266,10 @@ class PolymarketClient:
             "manualOrderIndicator": "MANUAL_ORDER_INDICATOR_AUTOMATIC",
         }
         return self._prepare(
-            "POST", "/v1/orders", body, f"polymarket {intent} {qty:f} {slug} @ {price:f}"
+            "POST",
+            "/v1/orders",
+            body,
+            f"polymarket {intent} {qty.normalize():f} {slug} @ {price.normalize():f}",
         )
 
     def prepare_cancel(self, order_id: str, slug: str) -> PreparedRequest:
