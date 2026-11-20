@@ -40,6 +40,10 @@ after 10 failed retries (the maximum).
 | **Live dry-run move with an onchain trade record**: `POST /api/desk/move` 2 contracts of the Rockets/Nuggets game (Polymarket US ↔ Gemini, live books, verdict match). Both orders signed with dummy keys and logged "DRY RUN, not sent"; `trade.posted`/`trade.filled` marked `dry_run`; the trade record's hash was committed to the Ledger by the agent (entry 1, tx `0x68b0…5969`) | — |
 | **Live forecast receipt onchain**: `POST /api/forecasts` for the Rockets/Nuggets game: four model families, stance hold at 47.5 % (market 47.5 %); the SHA-256 commitment `bb08…0d13` went to the Ledger as entry 2 (tx `0xb1c3…173d`) before the game | — |
 | **Live dead man's switch**: paused the Stream in QuickNode; `stream.stale` true 71 s later (90 s after the last delivery) and "send 1 dollar … to sam's arc wallet" previewed `block` / `STREAM_STALE`. Resumed: recovered in 9 s and the same sentence previewed `pay` | — |
+| **Unplanned outage, handled**: the quick tunnel dropped ~07:07–07:38 UTC; the server went stale and refused spends; QuickNode kept retrying, caught up 65 deliveries, and spending resumed on its own at 07:39 | — |
+| Send by link (Home) and a standalone claim page at `/claim#id:secret`; public `POST /api/escrow/peek` answers only to the secret's holder; claim page checked against the live Escrow with a wrong secret (clean "not valid", no gas) | `2dfb1e6` merge, `306418b` |
+| Activity: explorer links for real tx hashes (Arcscan, Etherscan, Solana Explorer), plain cross-chain titles, restart blips folded; ring shows a transfer in flight | merge of `7b6584c`, `9215930` |
+| README rewritten for the integrated build: status table, contracts, Stream, CCTP, escrow, safety, markets, live-vs-sandboxed, configuration | `9ac7ce2` merge, `5579fd1` |
 | Phase 2 cross-chain: `CctpTransfers` (CCTP V2 burn on Arc, Circle Forwarding Service mints on the destination, so no destination gas), Iris attestation watch, `transfer.attested` event, sourced rail fees/ETAs in `fixtures/rails.json`, research in `server/app/chain/RAILS.md`; StableFX written against the API but blocked (permissioned) | `848821c` merge |
 | **Live CCTP Arc → Ethereum Sepolia**: "send 1 dollar from my arc wallet to my ethereum wallet". Burn `0xfaf3…e49f` on Arc 06:48:40, attested 06:48:46, forwarded mint `0x668d…cfc2` on Sepolia 06:51:42. Owner's Sepolia USDC 0 → 1.000000 | — |
 | **Live CCTP Arc → Solana devnet**: burn `0x5249…6778` (1.214 USDC incl. forward fee and token-account creation), attested and minted 7 s later (`4chE6dAM…nMox6`). "my Solana wallet" holds 1 USDC on devnet | — |
@@ -107,14 +111,12 @@ after 10 failed retries (the maximum).
    process env vars when starting the server.
 3. `PUBLIC_BASE_URL` in `.env` points at an old quick tunnel, so claim links use a dead host. Set
    it to the current tunnel (or a named tunnel) before demoing claim links.
-4. **Re-activate the QuickNode Stream.** The quick tunnel flapped around 07:13–07:17 UTC (QUIC
-   dials failing on this machine's network), deliveries stopped after ~07:07, and QuickNode
-   terminates a Stream after 10 failed retries. The Chrome extension disconnected, so I could not
-   re-activate it. Until then the dashboard shows "Stale" and every spend is blocked
-   (`STREAM_STALE`), which is the dead man's switch doing its job. Fix: QuickNode → Streams →
-   `switchboard-vault-arc` → toggle on → "Continue where it left off". If the tunnel URL changed,
-   update the destination first. For the demo, a named tunnel or `cloudflared --protocol http2`
-   avoids the QUIC flaps.
+4. **Use a steadier tunnel for the demo.** The quick tunnel flapped around 07:07–07:38 UTC (QUIC
+   dials failing on this machine's network). The Stream went stale, spending was blocked, and
+   it recovered by itself at 07:39 when QuickNode's retries got through and it caught up. If it
+   ever shows "terminated" instead: QuickNode → Streams → `switchboard-vault-arc` → toggle on →
+   "Continue where it left off". A named tunnel, or `cloudflared --protocol http2`, avoids the
+   QUIC flaps.
 5. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
    (`POST /api/forecasts/f_1/reveal` with the outcome, or from the dashboard). That publishes the
    preimage onchain (Ledger entry 2) and scores it.

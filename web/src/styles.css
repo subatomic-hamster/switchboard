@@ -1030,6 +1030,13 @@ textarea {
   white-space: nowrap;
 }
 
+/* On a phone the title wraps instead of cutting off; it is the one line that matters. */
+@media (max-width: 600px) {
+  .feed-title {
+    white-space: normal;
+  }
+}
+
 .feed-explorer {
   flex: none;
   font-size: 0.85rem;
