@@ -229,6 +229,27 @@ describe("MarketsPanel", () => {
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 
+  it("says plainly when Gemini has no matching market, without five unknown rows", async () => {
+    const unknown = "unknown" as const;
+    serve({
+      [NBA]: matchBrief,
+      [BTC]: {
+        ...refuseBrief,
+        match: {
+          verdict: "refuse",
+          checks: { event: unknown, strike: unknown, direction: unknown, time: unknown, source: unknown },
+          gemini_symbol: null,
+          notes: ["no Gemini contract found for the same event"],
+        },
+      },
+    });
+    render(<MarketsPanel refreshKey={0} selectedSlug={BTC} />);
+    expect(await screen.findByText("No matching market on Gemini")).toBeInTheDocument();
+    expect(screen.queryByText(/checks match/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Equivalence checks" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Move/ })).not.toBeInTheDocument();
+  });
+
   it("shows each model's answer, and records an override before moving", async () => {
     const calls = serve({ [NBA]: { ...matchBrief, opinion } });
     const user = userEvent.setup();

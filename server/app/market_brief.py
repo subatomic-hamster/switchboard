@@ -112,6 +112,11 @@ def bid_answer(quote: MarketQuoteResponse, listing: MarketListing | None, qty: D
 
 
 def refusal_text(match: MarketMatchResponse) -> str:
+    if match.gemini_symbol is None and "different" not in match.checks.model_dump().values():
+        return (
+            "I can't move that. Gemini has no market that is the same bet, so there is nothing "
+            "to move it into."
+        )
     differing = [
         CHECK_NAMES[name]
         for name, value in match.checks.model_dump().items()

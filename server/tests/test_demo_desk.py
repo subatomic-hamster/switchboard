@@ -438,6 +438,8 @@ async def test_btc_hourly_has_no_gemini_twin_and_is_tracked() -> None:
     async with stage() as s:
         match = await get(s, "/api/markets/match", slug=BTC)
         assert match["verdict"] == "refuse" and match["gemini_symbol"] is None
+        brief = await get(s, "/api/desk/brief", slug=BTC, qty=10)
+        assert "Gemini has no market that is the same bet" in str(brief)
         await buy_btc(s)
         assert BTC in s.ctx.markets._tracked  # type: ignore[attr-defined]
         # Listed on Markets right after the buy, not at the next timed refresh.
@@ -623,6 +625,9 @@ async def test_grok_words_the_insight_but_never_changes_the_verdict() -> None:
         assert data["body"] == answer and data["verdict"] == "against"
         body = route.calls.last.request.read().decode()
         assert '"temperature":0.2' in body.replace(" ", "") and "x-ai/grok-4.7" in body
+        # Grok gets the code's reason to build on, prices in cents, and no empty lists.
+        assert "Reason: Gemini lists no market" in body and "price_cents" in body
+        assert "'checks': []" not in body
         await get(s, "/api/demo/insight", position_id=BTC_POS)
         assert route.call_count == 1  # cached for a minute per (position, verdict)
 

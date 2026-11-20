@@ -185,6 +185,11 @@ export function MarketsPanel({ selectedSlug, selectedQty, refreshKey }: MarketsP
   const matched = brief
     ? CHECKS.filter((check) => ["same", "n/a"].includes(brief.match.checks[check.key])).length
     : 0;
+  // Nothing on Gemini to compare against: five "unknown" rows would say nothing.
+  const noTwin =
+    !!brief &&
+    !brief.match.gemini_symbol &&
+    CHECKS.every((check) => brief.match.checks[check.key] === "unknown");
   const holding = brief?.opinion?.stance === "hold" && !brief.opinion.overridden;
 
   return (
@@ -255,10 +260,14 @@ export function MarketsPanel({ selectedSlug, selectedQty, refreshKey }: MarketsP
               <span className="verdict-icon">
                 <ToneIcon tone={refused ? "critical" : "good"} size={20} />
               </span>
-              <span className="verdict-title">{refused ? "Not the same bet" : "Same bet on both"}</span>
-              <span className="verdict-count">· {matched} of {CHECKS.length} checks match</span>
+              <span className="verdict-title">
+                {noTwin ? "No matching market on Gemini" : refused ? "Not the same bet" : "Same bet on both"}
+              </span>
+              {!noTwin && (
+                <span className="verdict-count">· {matched} of {CHECKS.length} checks match</span>
+              )}
             </summary>
-            <ul className="checks" aria-label="Equivalence checks">
+            <ul className="checks" aria-label="Equivalence checks" hidden={noTwin}>
               {CHECKS.map((check) => {
                 const value = brief.match.checks[check.key];
                 return (
