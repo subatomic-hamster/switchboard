@@ -323,6 +323,12 @@ class Planner:
     async def _plan_transfer(self, row: PlanRow, request: TransferRequest) -> IntentResponse:
         routes = self.routes(request)
         if not routes:
+            if self._live_only and request.source.chain != "arc-testnet":
+                # Only Arc-origin rails move real money; say what does work instead of a dead end.
+                where = request.source.label.removeprefix("my ")
+                raise IntentError(
+                    f"Sending from your {where} isn't live yet. I can send from your Arc wallet."
+                )
             raise IntentError("I have no route between those two wallets.")
         decision = await self.preview(request)
         row.request_json = request.model_dump_json()

@@ -8,11 +8,13 @@ from decimal import Decimal
 from typing import Any
 
 import httpx
+import pytest
 
 from app.chain.stub import StubTransfers
 from app.chain.transfer import CctpTransfers
 from app.config import FIXTURES_DIR, Settings
 from app.db import Database
+from app.intent import IntentError
 from app.main import build_context, create_app
 from app.planner import load_rails
 from app.schemas import Chain, Party, TransferRequest
@@ -75,6 +77,17 @@ def test_the_planner_offers_only_routes_it_can_run() -> None:
     assert same_chain[0].steps[0].rail == "arc-native"
     assert planner.routes(_request(Chain.ETH_SEPOLIA, Chain.ARC_TESTNET)) == []
     assert planner.routes(_request(Chain.ARC_TESTNET, Chain.ETH_SEPOLIA, "EURC")) == []
+
+
+async def test_a_transfer_not_from_arc_says_what_does_work() -> None:
+    planner = build_context(real_settings(), Database(None)).planner
+    request = _request(Chain.ETH_SEPOLIA, Chain.SOLANA_DEVNET).model_copy(
+        update={"source": Party(label="my Ethereum wallet", chain=Chain.ETH_SEPOLIA, known=True)}
+    )
+    with pytest.raises(
+        IntentError, match=r"from your Ethereum wallet isn't live yet\..*Arc wallet"
+    ):
+        await planner.plan_transfer(request, "test", "test")
 
 
 async def test_the_direct_transfer_route_is_closed_when_transfers_are_real() -> None:
