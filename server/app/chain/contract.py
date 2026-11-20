@@ -135,7 +135,9 @@ class Client:
                     }
                 )
             except (ContractLogicError, Web3RPCError) as exc:
-                raise ContractRevert(self.name, self.artifact.revert_name(exc), str(exc)) from exc
+                name = self.artifact.revert_name(exc)
+                # A known custom error says it all; the raw node message is only useful without one.
+                raise ContractRevert(self.name, name, "" if name else str(exc)) from exc
             tx_hash = w3.eth.send_raw_transaction(account.sign_transaction(tx).raw_transaction)
             receipt: dict[str, Any] = w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
         if receipt["status"] != 1:

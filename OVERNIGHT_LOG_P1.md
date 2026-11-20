@@ -40,6 +40,7 @@ after 10 failed retries (the maximum).
 | **Live dry-run move with an onchain trade record**: `POST /api/desk/move` 2 contracts of the Rockets/Nuggets game (Polymarket US ↔ Gemini, live books, verdict match). Both orders signed with dummy keys and logged "DRY RUN, not sent"; `trade.posted`/`trade.filled` marked `dry_run`; the trade record's hash was committed to the Ledger by the agent (entry 1, tx `0x68b0…5969`) | — |
 | **Live forecast receipt onchain**: `POST /api/forecasts` for the Rockets/Nuggets game: four model families, stance hold at 47.5 % (market 47.5 %); the SHA-256 commitment `bb08…0d13` went to the Ledger as entry 2 (tx `0xb1c3…173d`) before the game | — |
 | **Live dead man's switch**: paused the Stream in QuickNode; `stream.stale` true 71 s later (90 s after the last delivery) and "send 1 dollar … to sam's arc wallet" previewed `block` / `STREAM_STALE`. Resumed: recovered in 9 s and the same sentence previewed `pay` | — |
+| **Live payment request**: `POST /api/escrow/requests` $0.50 "lunch" (request 1, `0x1e06…3d5e`), paid by the agent (`0x39e2…c271`); paying again refused `AlreadyPaid` | — |
 | **Unplanned outage, handled**: the quick tunnel dropped ~07:07–07:38 UTC; the server went stale and refused spends; QuickNode kept retrying, caught up 65 deliveries, and spending resumed on its own at 07:39 | — |
 | Send by link (Home) and a standalone claim page at `/claim#id:secret`; public `POST /api/escrow/peek` answers only to the secret's holder; claim page checked against the live Escrow with a wrong secret (clean "not valid", no gas). **Live end to end in the browser**: created a $1, 1-day link on Home (escrow 3), opened it, the page showed $1 and the deadline, claimed to Sam's Arc wallet (`0x5d73…e78e`, status 1); reopening the link said "already been claimed" | `2dfb1e6` merge, `306418b` |
 | Activity: explorer links for real tx hashes (Arcscan, Etherscan, Solana Explorer), plain cross-chain titles, restart blips folded; ring shows a transfer in flight | `8eec181` merge, `9215930` |
@@ -117,7 +118,11 @@ after 10 failed retries (the maximum).
    ever shows "terminated" instead: QuickNode → Streams → `switchboard-vault-arc` → toggle on →
    "Continue where it left off". A named tunnel, or `cloudflared --protocol http2`, avoids the
    QUIC flaps.
-5. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
+5. **Daily budget.** Tonight's live checks used $9 of the agent's $10 rolling 24-hour budget, so
+   until about 07:00 UTC on 21 Nov most sends will ask for approval (`OVER_DAILY_BUDGET`). That
+   is correct behaviour; to demo an instant send sooner, raise the budget with the owner key
+   (`setPolicy`) or wait.
+6. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
    (`POST /api/forecasts/f_1/reveal` with the outcome, or from the dashboard). That publishes the
    preimage onchain (Ledger entry 2) and scores it.
 

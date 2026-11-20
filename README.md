@@ -628,9 +628,9 @@ the route.
 with the secret (`0xc17d…6a10`, Sam +1 USDC); a replayed claim and a refund both reverted
 `AlreadySettled`. Escrow 2: a refund before expiry reverted `NotExpired`, and after expiry it paid
 back (`0xc059…18fd`). Escrow 3 went through the browser end to end: a $1 link made on Home,
-opened, claimed to Sam (`0x5d73…e78e`); reopening it said "already been claimed". Payment
-requests are covered by tests; the log records no live one. Claim
-links use `PUBLIC_BASE_URL`, so it must point at the current tunnel.
+opened, claimed to Sam (`0x5d73…e78e`); reopening it said "already been claimed". A $0.50
+payment request was made and paid (`0x1e06…3d5e`, `0x39e2…c271`); paying it again reverted
+`AlreadyPaid`. Payment requests have no dashboard screen yet (API only). Claim links use `PUBLIC_BASE_URL`, so it must point at the current tunnel.
 
 ## Safety depth
 
