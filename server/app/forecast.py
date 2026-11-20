@@ -222,10 +222,14 @@ def combine(market_price: Decimal, probabilities: list[float]) -> Decimal:
     return Decimal(str(1 / (1 + math.exp(-blended)))).quantize(PRICE, rounding=ROUND_HALF_UP)
 
 
+def preimage_for(payload: dict[str, Any]) -> bytes:
+    """The canonical JSON of the opinion, salt included: what the commitment hashes."""
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+
+
 def commitment_for(payload: dict[str, Any]) -> str:
     """SHA-256 over the canonical JSON of the opinion, salt included."""
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode()).hexdigest()
+    return hashlib.sha256(preimage_for(payload)).hexdigest()
 
 
 def brier(probability: Decimal, outcome: bool) -> Decimal:
@@ -357,10 +361,9 @@ class Forecaster:
             "salt": salt,
         }
 
-    def verify(self, row: ForecastRow) -> bool:
-        """Does the stored opinion still hash to what was committed before the event?"""
+    def _row_payload(self, row: ForecastRow) -> dict[str, Any]:
         answers = [ModelForecast.model_validate(item) for item in json.loads(row.models_json)]
-        payload = self._payload(
+        return self._payload(
             row.slug,
             from_micro(row.market_price_micro).quantize(PRICE),
             from_micro(row.probability_micro).quantize(PRICE),
@@ -369,7 +372,10 @@ class Forecaster:
             row.created,
             row.salt,
         )
-        return commitment_for(payload) == row.commitment
+
+    def verify(self, row: ForecastRow) -> bool:
+        """Does the stored opinion still hash to what was committed before the event?"""
+        return commitment_for(self._row_payload(row)) == row.commitment
 
     def _view(self, row: ForecastRow, all_in_buy_price: Decimal | None = None) -> Opinion:
         probability = from_micro(row.probability_micro)
@@ -466,6 +472,12 @@ class Forecaster:
         with self._ctx.db.session() as session:
             session.add(row)
             session.commit()
+        try:
+            # Publish the preimage onchain next to the commitment. Best effort: the opinion is
+            # already scored and stored, and a chain hiccup must not undo that.
+            await self._ctx.anchor.reveal(row.anchor_ref, preimage_for(self._row_payload(row)))
+        except Exception:
+            log.warning("onchain reveal of %s failed", receipt_id, exc_info=True)
         await self._ctx.bus.publish(
             "forecast.revealed",
             ForecastData(

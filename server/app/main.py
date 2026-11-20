@@ -30,8 +30,11 @@ from app import (
     speech,
     voice,
 )
+from app.chain import escrow as escrow_routes
 from app.chain import stream
 from app.chain import stub as chain_stub
+from app.chain.anchor import ChainAnchor
+from app.chain.escrow import ChainEscrow
 from app.chain.vault import ChainVault
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
@@ -43,7 +46,7 @@ from app.intent import IntentError, IntentParser, make_llm_call
 from app.local_only import LocalOnly
 from app.markets import stub as markets_stub
 from app.planner import PlanError, Planner
-from app.ports import VaultPort
+from app.ports import AnchorPort, VaultPort
 from app.schemas import (
     ExecuteRequest,
     ExecuteResponse,
@@ -100,7 +103,7 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
                 "so no approval.requested event will arrive"
             )
         log.warning(
-            "real vault on chain %s; transfers, markets and anchor are STUBS", settings.arc_chain_id
+            "real vault on chain %s; transfers and markets are STUBS", settings.arc_chain_id
         )
     tasks = Tasks()
     # The stubs number their requests, permits, transfers and moves from 1 in memory. On a
@@ -118,6 +121,17 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         else ChainVault(settings, wallets.allowlist(), bus)
     )
     vault = HoldingVault(inner, bus, first_id=first_id)
+    anchor: AnchorPort = chain_stub.StubAnchor()
+    escrow: ChainEscrow | None = None
+    if not settings.use_p1_stubs:
+        if settings.ledger_address:
+            anchor = ChainAnchor(settings)
+        else:
+            log.warning("LEDGER_ADDRESS is not set: forecast receipts use the STUB anchor")
+        if settings.escrow_address:
+            escrow = ChainEscrow(settings)
+        else:
+            log.warning("ESCROW_ADDRESS is not set: /api/escrow routes answer 503")
     ctx = AppContext(
         settings=settings,
         db=database,
@@ -127,7 +141,8 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         vault=vault,
         transfers=chain_stub.StubTransfers(tasks.spawn, bus, settings, first_id=first_id),
         markets=markets_stub.StubMarkets(bus, settings, first_id=first_id),
-        anchor=chain_stub.StubAnchor(),
+        anchor=anchor,
+        escrow=escrow,
     )
 
     async def track_stream(event: StoredEvent) -> None:
@@ -188,6 +203,7 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
     app.include_router(events.router)
     app.include_router(chain_stub.router)
     app.include_router(chain_stub.hook_router if settings.use_p1_stubs else stream.router)
+    app.include_router(escrow_routes.router)
     app.include_router(markets_stub.router)
     app.include_router(voice.router)
     app.include_router(voice.dashboard)

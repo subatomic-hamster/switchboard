@@ -9,6 +9,11 @@ Published here, from the vault's logs, and nowhere else:
   ApprovalRequested (reason 1 to 3)  ->  approval.requested
   Resolved                           ->  approval.resolved   (via "chain")
   Frozen                             ->  frozen              (via "chain")
+The Ledger (LEDGER_ADDRESS) and Escrow (ESCROW_ADDRESS) are watched too, by log address:
+  Escrow Deposited / Claimed / Refunded  ->  escrow.updated
+  Escrow PaymentRequested / PaymentPaid  ->  payment.updated
+  Ledger Committed / Revealed            ->  nothing (the forecast module publishes its own
+                                             forecast.committed and forecast.revealed)
 Not published: ApprovalRequested with reason 4 (FROZEN: nothing to ask the owner), and Spent and
 PermitIssued, because the planner's `transfers.start` already publishes `transfer.sent`.
 
@@ -25,19 +30,23 @@ import json
 import logging
 import time
 import zlib
-from collections.abc import Iterator
+from collections.abc import Awaitable, Callable, Iterator
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.chain.contract import load_artifact
 from app.chain.vault import REASONS, decode_vault_log, from_units
 from app.context import AppContext, get_ctx
 from app.db import utcnow
 from app.schemas import (
     ApprovalRequestedData,
     ApprovalResolvedData,
+    EscrowData,
     FrozenData,
     OkResponse,
+    PaymentData,
     Reason,
 )
 
@@ -46,6 +55,9 @@ log = logging.getLogger("switchboard.chain")
 MAX_SKEW_S = 300
 MAX_INFLATE_BYTES = 10 * 1024 * 1024
 SEEN_LIMIT = 4096
+
+Decoder = Callable[[dict[str, Any]], dict[str, Any] | None]
+Publisher = Callable[[AppContext, dict[str, Any]], Awaitable[bool]]
 
 router = APIRouter(prefix="/api", tags=["chain"])
 Ctx = Annotated[AppContext, Depends(get_ctx)]
@@ -141,6 +153,66 @@ async def publish_log(ctx: AppContext, event: dict[str, Any]) -> bool:
     return True
 
 
+async def publish_ledger_log(ctx: AppContext, event: dict[str, Any]) -> bool:
+    """Ledger events are recognised but not published: the forecast module already publishes
+    `forecast.committed` and `forecast.revealed` itself when it commits and reveals, so doing it
+    here too would show each one twice."""
+    return False
+
+
+async def publish_escrow_log(ctx: AppContext, event: dict[str, Any]) -> bool:
+    """Escrow events -> `escrow.updated` and `payment.updated`."""
+    name = event["event"]
+    zero = "0x" + "00" * 20
+    if name == "Deposited":
+        await ctx.bus.publish(
+            "escrow.updated",
+            EscrowData(
+                escrow_id=str(event["id"]),
+                status="deposited",
+                amount_usd=from_units(event["amount"]),
+                expiry=datetime.fromtimestamp(event["expiry"], UTC),
+            ),
+        )
+    elif name in ("Claimed", "Refunded"):
+        await ctx.bus.publish(
+            "escrow.updated",
+            EscrowData(
+                escrow_id=str(event["id"]),
+                status="claimed" if name == "Claimed" else "refunded",
+                amount_usd=from_units(event["amount"]),
+                to=event["to"] if name == "Claimed" else event["refundTo"],
+            ),
+        )
+    elif name == "PaymentRequested":
+        payer = event["payer"]
+        await ctx.bus.publish(
+            "payment.updated",
+            PaymentData(
+                request_id=str(event["id"]),
+                status="requested",
+                amount_usd=from_units(event["amount"]),
+                requester=event["requester"],
+                payer="" if payer.lower() == zero else payer,
+                memo=event["memo"],
+            ),
+        )
+    elif name == "PaymentPaid":
+        await ctx.bus.publish(
+            "payment.updated",
+            PaymentData(
+                request_id=str(event["id"]),
+                status="paid",
+                amount_usd=from_units(event["amount"]),
+                requester=event["requester"],
+                payer=event["payer"],
+            ),
+        )
+    else:
+        return False  # ClaimCommitted is plumbing, not news
+    return True
+
+
 @router.post("/hooks/quicknode", response_model=OkResponse)
 async def quicknode_hook(request: Request, ctx: Ctx) -> OkResponse:
     """QuickNode Streams delivery of the vault's logs."""
@@ -151,14 +223,24 @@ async def quicknode_hook(request: Request, ctx: Ctx) -> OkResponse:
         raise HTTPException(status_code=400, detail="invalid json") from exc
     # Groundwork for the dead man's switch (Phase 4): when did the Stream last deliver?
     ctx.last_stream_delivery = utcnow()
-    vault = ctx.settings.vault_address.lower()
+    s = ctx.settings
+    # Each watched contract has its own decoder and publisher, chosen by the log's address.
+    watched: dict[str, tuple[Decoder, Publisher]] = {}
+    if s.vault_address:
+        watched[s.vault_address.lower()] = (decode_vault_log, publish_log)
+    if s.ledger_address:
+        watched[s.ledger_address.lower()] = (load_artifact("Ledger").decode, publish_ledger_log)
+    if s.escrow_address:
+        watched[s.escrow_address.lower()] = (load_artifact("Escrow").decode, publish_escrow_log)
     published = 0
     for entry in walk_logs(payload):
-        if not vault or str(entry["address"]).lower() != vault:
+        handler = watched.get(str(entry["address"]).lower())
+        if handler is None:
             continue
-        event = decode_vault_log(entry)
+        decode_log, publish = handler
+        event = decode_log(entry)
         if event is None or _already_seen(ctx, entry):
             continue
-        if await publish_log(ctx, event):
+        if await publish(ctx, event):
             published += 1
     return OkResponse(ok=True, status=f"published {published}")
