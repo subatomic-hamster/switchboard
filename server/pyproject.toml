@@ -15,6 +15,8 @@ dependencies = [
     "webauthn>=2.2",
     "mcp>=2.3",
     "web3>=8.0.0",
+    "cryptography>=43",
+    "websockets>=13",
 ]
 
 [dependency-groups]
@@ -25,7 +27,6 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "cbor2>=5.6",
-    "cryptography>=43",
 ]
 
 [tool.uv]
@@ -36,7 +37,11 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["."]
 testpaths = ["tests"]
-markers = ["anvil: needs the anvil binary from Foundry (~/.foundry/bin) and a built contracts/out"]
+markers = [
+    "anvil: needs the anvil binary from Foundry (~/.foundry/bin) and a built contracts/out",
+    "live: hits the real public Gemini and Polymarket US endpoints; run with -m live",
+]
+addopts = "-m 'not live'"
 
 [tool.ruff]
 line-length = 100

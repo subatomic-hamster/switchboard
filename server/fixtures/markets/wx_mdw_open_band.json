@@ -1,0 +1,247 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/tc-temp-mdwhigh-2026-11-20-lt64f",
+  "https://gateway.polymarket.us/v1/market/slug/tc-temp-mdwhigh-2026-11-20-gte66lt67f",
+  "https://api.gemini.com/v1/prediction-markets/events/WXHIGH-CHI-2611210459"
+ ],
+ "polymarket": [
+  {
+   "id": "2670329",
+   "slug": "tc-temp-mdwhigh-2026-11-20-lt64f",
+   "question": "Highest temperature in Chicago on November 20?",
+   "title": "63 or below",
+   "description": "Will the highest temperature recorded at Chicago Midway Airport (KMDW) in Chicago for 2026-11-20 as reported by the National Weather Service's Climatological Report (Daily) be less than or equal to 63F? Outcome verified from NWS Climatological Report.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "futures",
+   "sportsMarketType": "futures",
+   "gameStartTime": "2026-11-20T06:00:00Z",
+   "endDate": "2026-11-21T11:00:00Z",
+   "assetPriceTerms": null,
+   "bestAskQuote": {
+    "value": "0.0500",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.0500",
+     "team": null
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": null,
+     "team": null
+    }
+   ]
+  },
+  {
+   "id": "2670333",
+   "slug": "tc-temp-mdwhigh-2026-11-20-gte66lt67f",
+   "question": "Highest temperature in Chicago on November 20?",
+   "title": "66 to 67",
+   "description": "Will the highest temperature recorded at Chicago Midway Airport (KMDW) in Chicago for 2026-11-20 as reported by the National Weather Service's Climatological Report (Daily) be between 66F and 67F? Outcome verified from NWS Climatological Report.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "futures",
+   "sportsMarketType": "futures",
+   "gameStartTime": "2026-11-20T06:00:00Z",
+   "endDate": "2026-11-21T11:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.1000",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.1100",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.1100",
+     "team": null
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": "0.9",
+     "team": null
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "480760",
+   "title": "Highest temperature in Chicago on November 20, 2026?",
+   "ticker": "WXHIGH-CHI-2611210459",
+   "status": "active",
+   "category": "Weather",
+   "expiryDate": "2026-11-21T04:59:59.000Z",
+   "series": "WXHIGH",
+   "participants": [],
+   "description": "Highest temperature in Chicago on November 20, 2026?",
+   "volume": "4",
+   "contracts": [
+    {
+     "label": "68°F to 69°F",
+     "ticker": "68TO69",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-68TO69",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.67",
+       "no": "0.38"
+      },
+      "sell": {
+       "yes": "0.62",
+       "no": "0.33"
+      },
+      "bestBid": "0.62",
+      "bestAsk": "0.67"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    },
+    {
+     "label": "70°F to 71°F",
+     "ticker": "70TO71",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-70TO71",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.29",
+       "no": "0.77"
+      },
+      "sell": {
+       "yes": "0.23",
+       "no": "0.71"
+      },
+      "bestBid": "0.23",
+      "bestAsk": "0.29"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    },
+    {
+     "label": "66°F to 67°F",
+     "ticker": "66TO67",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-66TO67",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.1",
+       "no": "0.93"
+      },
+      "sell": {
+       "yes": "0.07",
+       "no": "0.9"
+      },
+      "bestBid": "0.07",
+      "bestAsk": "0.1"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    },
+    {
+     "label": "65°F or below",
+     "ticker": "LO65",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-LO65",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "below",
+      "value": "65"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.04",
+       "no": "0.98"
+      },
+      "sell": {
+       "yes": "0.02",
+       "no": "0.96"
+      },
+      "bestAsk": "0.04",
+      "lastTradePrice": "0.02"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    },
+    {
+     "label": "72°F to 73°F",
+     "ticker": "72TO73",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-72TO73",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.01"
+      },
+      "sell": {
+       "no": "0.99"
+      },
+      "bestAsk": "0.01"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    },
+    {
+     "label": "74°F or above",
+     "ticker": "HI74",
+     "instrumentSymbol": "GEMI-WXHIGH-CHI-2611210459-HI74",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "above",
+      "value": "74"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.01"
+      },
+      "sell": {
+       "no": "0.99"
+      },
+      "bestAsk": "0.01"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Chicago-Midway, IL on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Chicago-Midway, IL.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Chicago-Midway on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as documented by the NWS. If the Expiration Value "
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {},
+  "gemini": {}
+ }
+}

@@ -60,6 +60,14 @@ class Settings(BaseSettings):
     # P1 stubs
     use_p1_stubs: bool = True
 
+    # P1 markets: live public data from Gemini and Polymarket US (USE_REAL_MARKETS), and the
+    # trading keys. Orders are dry-run unless trading_enabled and all four keys are set.
+    use_real_markets: bool = False
+    gemini_api_key: str = ""
+    gemini_api_secret: str = ""
+    polymarket_access_key: str = ""
+    polymarket_private_key: str = ""
+
     # P1's vault on Arc (used when USE_P1_STUBS=false). The three keys are the owner, the
     # agent (asks for spends, redeems permits) and the approver (approves, denies, freezes).
     vault_address: str = ""

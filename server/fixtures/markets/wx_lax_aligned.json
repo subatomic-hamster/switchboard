@@ -1,0 +1,211 @@
+{
+ "recorded_at": "2026-11-20T06:15:38+00:00",
+ "synthetic": false,
+ "sources": [
+  "https://gateway.polymarket.us/v1/market/slug/tc-temp-laxhigh-2026-11-20-gte66lt67f",
+  "https://api.gemini.com/v1/prediction-markets/events/WXHIGH-LA-2611210459"
+ ],
+ "polymarket": [
+  {
+   "id": "2670358",
+   "slug": "tc-temp-laxhigh-2026-11-20-gte66lt67f",
+   "question": "Highest temperature in Los Angeles on November 20?",
+   "title": "66 to 67",
+   "description": "Will the highest temperature recorded at Los Angeles International Airport (KLAX) in Los Angeles for 2026-11-20 as reported by the National Weather Service's Climatological Report (Daily) be between 66F and 67F? Outcome verified from NWS Climatological Report.",
+   "status": "MARKET_STATUS_OPEN",
+   "active": true,
+   "closed": false,
+   "marketType": "futures",
+   "sportsMarketType": "futures",
+   "gameStartTime": "2026-11-20T08:00:00Z",
+   "endDate": "2026-11-21T13:00:00Z",
+   "assetPriceTerms": null,
+   "bestBidQuote": {
+    "value": "0.6300",
+    "currency": "USD"
+   },
+   "bestAskQuote": {
+    "value": "0.6500",
+    "currency": "USD"
+   },
+   "minimumTradeQty": 0.01,
+   "feeCoefficient": 0.095,
+   "orderPriceMinTickSize": 0.01,
+   "marketSides": [
+    {
+     "long": true,
+     "description": "Yes",
+     "price": "0.6500",
+     "team": null
+    },
+    {
+     "long": false,
+     "description": "No",
+     "price": "0.37",
+     "team": null
+    }
+   ]
+  }
+ ],
+ "gemini": [
+  {
+   "id": "480753",
+   "title": "Highest temperature in Los Angeles on November 20, 2026?",
+   "ticker": "WXHIGH-LA-2611210459",
+   "status": "active",
+   "category": "Weather",
+   "expiryDate": "2026-11-21T04:59:59.000Z",
+   "series": "WXHIGH",
+   "participants": [],
+   "description": "Highest temperature in Los Angeles on November 20, 2026?",
+   "volume": "4",
+   "contracts": [
+    {
+     "label": "66°F to 67°F",
+     "ticker": "66TO67",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-66TO67",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.65",
+       "no": "0.38"
+      },
+      "sell": {
+       "yes": "0.62",
+       "no": "0.35"
+      },
+      "bestBid": "0.62",
+      "bestAsk": "0.65"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    },
+    {
+     "label": "64°F to 65°F",
+     "ticker": "64TO65",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-64TO65",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.2",
+       "no": "0.82"
+      },
+      "sell": {
+       "yes": "0.18",
+       "no": "0.8"
+      },
+      "bestBid": "0.18",
+      "bestAsk": "0.2",
+      "lastTradePrice": "0.18"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    },
+    {
+     "label": "68°F to 69°F",
+     "ticker": "68TO69",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-68TO69",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.14",
+       "no": "0.88"
+      },
+      "sell": {
+       "yes": "0.12",
+       "no": "0.86"
+      },
+      "bestBid": "0.12",
+      "bestAsk": "0.14"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    },
+    {
+     "label": "70°F or above",
+     "ticker": "HI70",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-HI70",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "above",
+      "value": "70"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.03",
+       "no": "0.99"
+      },
+      "sell": {
+       "yes": "0.01",
+       "no": "0.97"
+      },
+      "bestBid": "0.01",
+      "bestAsk": "0.03"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    },
+    {
+     "label": "62°F to 63°F",
+     "ticker": "62TO63",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-62TO63",
+     "status": "active",
+     "marketState": "open",
+     "prices": {
+      "buy": {
+       "yes": "0.02"
+      },
+      "sell": {
+       "no": "0.98"
+      },
+      "bestAsk": "0.02"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    },
+    {
+     "label": "61°F or below",
+     "ticker": "LO61",
+     "instrumentSymbol": "GEMI-WXHIGH-LA-2611210459-LO61",
+     "status": "active",
+     "marketState": "open",
+     "strike": {
+      "type": "below",
+      "value": "61"
+     },
+     "prices": {
+      "buy": {
+       "yes": "0.01"
+      },
+      "sell": {
+       "no": "0.99"
+      },
+      "bestAsk": "0.01"
+     },
+     "expiryDate": "2026-11-21T04:59:59.000Z",
+     "quantityMinimum": "0.01",
+     "priceIncrement": "0.01",
+     "description": "This market will resolve based on the highest temperature recorded at Los Angeles Intl Airport CA, CA on November 20, 2026. The resolution source for this market will be the National Weather Service (\"NWS\") Climatological Report (Daily) for Los Angeles Intl Airport CA, CA.\n\nSpecifically, this contract will resolve to Yes if the highest temperature recorded at Los Angeles Intl Airport CA on November 20, 2026, as reported in the first published version of the applicable NWS Climatological Report (Daily), satisfies the temperature range specified in this contract. Otherwise, this contract will resolve to No. The Expiration Value shall be the maximum temperature for November 20, 2026 as document"
+    }
+   ]
+  }
+ ],
+ "books": {
+  "polymarket": {},
+  "gemini": {}
+ }
+}
