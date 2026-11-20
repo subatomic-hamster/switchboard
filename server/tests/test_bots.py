@@ -72,14 +72,14 @@ async def test_summary_says_what_happened(
     summary = (await client.get("/api/bots/summary", headers=bot_headers)).json()
     assert summary["transfers"] == 1
     assert summary["sent_total_usd"] == 200
-    assert summary["fees_total_usd"] == 0.6
+    assert summary["fees_total_usd"] == 0.22
     assert (summary["approvals_asked"], summary["approvals_denied"]) == (1, 1)
     assert summary["blocked"] == {"FROZEN": 1}
     assert summary["frozen"] is True
     spoken = summary["spoken"]
     assert spoken.startswith(
         "In the last 24 hours Switchboard sent 1 transfer totalling 200 dollars, "
-        "paying 60 cents in fees."
+        "paying 22 cents in fees."
     )
     assert "It asked for your approval 1 time: 0 approved, 1 denied." in spoken
     assert "It blocked 1 without asking: 1 for FROZEN." in spoken

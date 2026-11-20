@@ -29,6 +29,7 @@ from app.ports import SpendResult
 from app.schemas import (
     ApprovalRequestedData,
     ApprovalResolvedData,
+    Chain,
     ChainTransferRequest,
     ChainTransferResponse,
     FrozenData,
@@ -98,7 +99,9 @@ class StubVault:
         self._spends = [(ts, amount) for ts, amount in self._spends if ts >= cutoff]
         return sum((amount for _, amount in self._spends), Decimal(0))
 
-    async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
+    async def request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None = None
+    ) -> SpendResult:
         if self._frozen:
             # The contract reverts spends while frozen; nothing is queued for approval.
             return SpendResult(reason=Reason.FROZEN)
@@ -259,7 +262,15 @@ Ctx = Annotated[AppContext, Depends(get_ctx)]
 
 @router.post("/chain/transfer", response_model=ChainTransferResponse)
 async def chain_transfer(body: ChainTransferRequest, ctx: Ctx) -> ChainTransferResponse:
-    """STUB. Pretends to send a transfer; emits `transfer.sent`, then `transfer.arrived`."""
+    """STUB. Pretends to send a transfer; emits `transfer.sent`, then `transfer.arrived`.
+
+    Refused when transfers are real: this route skips the vault, so it would burn the agent
+    wallet's own USDC with no limit, no allowlist and no approval."""
+    if ctx.settings.use_real_transfers and not ctx.settings.use_p1_stubs:
+        raise HTTPException(
+            status_code=403,
+            detail="real transfers only run through a plan the vault has permitted",
+        )
     transfer_id = await ctx.transfers.start(body)
     return ChainTransferResponse(transfer_id=transfer_id)
 

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 
 from app.events import EventBus
 from app.ports import SpendResult, VaultPort
-from app.schemas import ApprovalRequestedData, ApprovalResolvedData, Policy, Reason
+from app.schemas import ApprovalRequestedData, ApprovalResolvedData, Chain, Policy, Reason
 
 if TYPE_CHECKING:
     from app.chain.anomaly import AnomalyDetector
@@ -38,6 +38,7 @@ class _Hold:
     payee: str
     amount: Decimal
     reason: Reason
+    chain: Chain | None = None
     resolved: bool = False
 
 
@@ -64,11 +65,16 @@ class HoldingVault:
         return self._notes.get(request_id, "")
 
     async def hold(
-        self, payee: str, amount_usd: Decimal, reason: Reason, note: str = ""
+        self,
+        payee: str,
+        amount_usd: Decimal,
+        reason: Reason,
+        note: str = "",
+        chain: Chain | None = None,
     ) -> SpendResult:
         """Ask the owner first. Publishes `approval.requested`, so the phone rings."""
         request_id = f"{HOLD_PREFIX}{next(self._ids)}"
-        self._holds[request_id] = _Hold(payee=payee, amount=amount_usd, reason=reason)
+        self._holds[request_id] = _Hold(payee=payee, amount=amount_usd, reason=reason, chain=chain)
         if note:
             self._notes[request_id] = note  # before the event, which the call is built from
         await self._bus.publish(
@@ -102,18 +108,24 @@ class HoldingVault:
 
     # ------------------------------------------------------------------ VaultPort
 
-    async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
+    async def request_spend(
+        self, payee: str, amount_usd: Decimal, purpose: str, chain: Chain | None = None
+    ) -> SpendResult:
         if self._anomaly is not None:
             anomaly = self._anomaly.assess(payee, amount_usd)
             # Only a spend the vault would allow is turned into an ask: if the vault would
             # refuse it, the vault's own (stronger) reason and request stand.
             if (
                 anomaly is not None
-                and await self._vault_objection(_Hold(payee, amount_usd, Reason.UNUSUAL_SPEND))
+                and await self._vault_objection(
+                    _Hold(payee, amount_usd, Reason.UNUSUAL_SPEND, chain=chain)
+                )
                 is None
             ):
-                return await self.hold(payee, amount_usd, Reason.UNUSUAL_SPEND, anomaly.text)
-        return await self._inner.request_spend(payee, amount_usd, purpose)
+                return await self.hold(
+                    payee, amount_usd, Reason.UNUSUAL_SPEND, anomaly.text, chain=chain
+                )
+        return await self._inner.request_spend(payee, amount_usd, purpose, chain)
 
     async def redeem(self, permit_id: str) -> None:
         await self._inner.redeem(permit_id)
@@ -127,7 +139,9 @@ class HoldingVault:
         objection = await self._vault_objection(hold)
         if objection is not None:
             raise ValueError(objection)
-        result = await self._inner.request_spend(hold.payee, hold.amount, f"hold {request_id}")
+        result = await self._inner.request_spend(
+            hold.payee, hold.amount, f"hold {request_id}", hold.chain
+        )
         if result.permit_id is None:
             if result.request_id is not None:
                 await self._inner.deny(result.request_id, via="superseded")

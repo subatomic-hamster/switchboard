@@ -86,6 +86,20 @@ class Settings(BaseSettings):
     ledger_address: str = ""
     escrow_address: str = ""
 
+    # Real cross-chain transfers (Circle CCTP V2, burn on Arc). Needs USE_P1_STUBS=false.
+    # Circle's Forwarding Service submits the destination mint, so no destination gas is needed.
+    # With CCTP_FORWARD=false the server mints itself: only possible on Ethereum Sepolia, with
+    # ETH_SEPOLIA_RPC_URL set and the agent key holding Sepolia ETH.
+    use_real_transfers: bool = False
+    iris_url: str = "https://iris-api-sandbox.circle.com"
+    cctp_forward: bool = True
+    cctp_poll_interval_s: float = Field(default=3.0, gt=0)
+    cctp_timeout_s: float = Field(default=1800.0, gt=0)
+    eth_sepolia_rpc_url: str = ""
+    eth_sepolia_chain_id: int = 11155111
+    # StableFX is permissioned (chain/fx.py, RAILS.md). Blank means dry-run quotes only.
+    stablefx_api_key: str = ""
+
     # policy mirror (the contract is the authority once P1's vault is wired in)
     policy_transfer_cap_usd: Decimal = Decimal("200")
     policy_daily_budget_usd: Decimal = Decimal("500")
