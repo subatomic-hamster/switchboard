@@ -166,6 +166,51 @@ describe("ring model", () => {
     expect(stale.state.stale).toBe(true);
   });
 
+  it.each(["eth-sepolia", "solana-devnet"] as const)(
+    "arc to %s: lights the destination, in flight from sent until arrived",
+    (to) => {
+      const base = { transfer_id: "t_9", to_chain: to, amount_usd: 1 };
+      const sent = applyEvent(
+        EMPTY,
+        event<EventOf<"transfer.sent">>("transfer.sent", {
+          ...base, from_chain: "arc-testnet", payee_label: "", route_id: "", eta_s: 0,
+        }),
+        0,
+        wallets,
+      ).state;
+      expect(sent.particles[0]).toMatchObject({ node: to });
+      expect(sent.inFlight).toEqual([{ id: "t_9", node: to, at: 0 }]);
+      const attested = applyEvent(
+        sent,
+        event<EventOf<"transfer.attested">>("transfer.attested", {
+          ...base, tx_hash: "", forwarding: true, detail: "",
+        }),
+        100,
+        wallets,
+      ).state;
+      expect(attested.inFlight).toHaveLength(1);
+      const arrived = applyEvent(
+        attested,
+        event<EventOf<"transfer.arrived">>("transfer.arrived", { ...base, tx_hash: "" }),
+        200,
+        wallets,
+      ).state;
+      expect(arrived.inFlight).toEqual([]);
+      expect(arrived.pulses).toEqual([{ node: to, at: 200 }]);
+      // A missed `sent` still shows in flight once attested; stale markers expire.
+      const lone = applyEvent(
+        EMPTY,
+        event<EventOf<"transfer.attested">>("transfer.attested", {
+          ...base, tx_hash: "", forwarding: false, detail: "",
+        }),
+        0,
+        wallets,
+      ).state;
+      expect(lone.inFlight[0]).toMatchObject({ node: to });
+      expect(prune(lone, TIMING.inFlight + 1).inFlight).toEqual([]);
+    },
+  );
+
   it("places nodes on a circle around the vault", () => {
     expect(distance(polar(0, 100))).toBeCloseTo(100);
     expect(polar(270, 100).y).toBeCloseTo(CENTER.y - 100);

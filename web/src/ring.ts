@@ -80,6 +80,8 @@ export interface RingState {
   particles: Particle[];
   flashes: Flash[];
   pulses: Pulse[];
+  /** Transfers sent but not yet arrived; their destination node shows a pulsing ring. */
+  inFlight: { id: string; node: NodeId; at: number }[];
   frozen: boolean;
   stale: boolean;
 }
@@ -88,6 +90,7 @@ export const EMPTY: RingState = {
   particles: [],
   flashes: [],
   pulses: [],
+  inFlight: [],
   frozen: false,
   stale: false,
 };
@@ -99,6 +102,8 @@ export const TIMING = {
   flash: 900,
   pulse: 900,
   inbound: 1300,
+  /** Give up on an "in flight" marker whose arrival never showed up. */
+  inFlight: 15 * 60_000,
 };
 
 export type Sound = "pass" | "ask" | "block" | null;
@@ -143,11 +148,34 @@ export function applyEvent(
         label: dollars(d.amount_usd),
         start: now,
       };
-      return { state: { ...state, particles: [...state.particles, particle] }, sound: "pass" };
+      return {
+        state: {
+          ...state,
+          particles: [...state.particles, particle],
+          inFlight: [...state.inFlight, { id: d.transfer_id, node, at: now }],
+        },
+        sound: "pass",
+      };
+    }
+    case "transfer.attested": {
+      const d = event.data;
+      // Normally already in flight from `sent`; add it if the sent event was missed.
+      if (state.inFlight.some((item) => item.id === d.transfer_id)) return { state, sound: null };
+      return {
+        state: {
+          ...state,
+          inFlight: [...state.inFlight, { id: d.transfer_id, node: d.to_chain, at: now }],
+        },
+        sound: null,
+      };
     }
     case "transfer.arrived":
       return {
-        state: { ...state, pulses: [...state.pulses, { node: event.data.to_chain, at: now }] },
+        state: {
+          ...state,
+          pulses: [...state.pulses, { node: event.data.to_chain, at: now }],
+          inFlight: state.inFlight.filter((item) => item.id !== event.data.transfer_id),
+        },
         sound: null,
       };
     case "approval.requested": {
@@ -261,14 +289,16 @@ export function prune(state: RingState, now: number): RingState {
   const particles = state.particles.filter((p) => now - p.start < lifetime(p));
   const flashes = state.flashes.filter((f) => now - f.at < TIMING.flash);
   const pulses = state.pulses.filter((p) => now - p.at < TIMING.pulse);
+  const inFlight = state.inFlight.filter((item) => now - item.at < TIMING.inFlight);
   if (
     particles.length === state.particles.length &&
     flashes.length === state.flashes.length &&
-    pulses.length === state.pulses.length
+    pulses.length === state.pulses.length &&
+    inFlight.length === state.inFlight.length
   ) {
     return state;
   }
-  return { ...state, particles, flashes, pulses };
+  return { ...state, particles, flashes, pulses, inFlight };
 }
 
 export function isAnimating(state: RingState): boolean {

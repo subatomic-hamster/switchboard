@@ -1001,6 +1001,18 @@ textarea {
   white-space: nowrap;
 }
 
+.feed-explorer {
+  flex: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.feed-explorer:hover,
+.feed-explorer:focus-visible {
+  color: var(--text);
+}
+
 .feed time {
   color: var(--muted);
   font-size: 0.93rem;
@@ -1068,11 +1080,28 @@ textarea {
   stroke-width: 1.5;
 }
 
-/* The view is 640 wide and shown in a card about half that, so SVG text is set large. */
+/* The view is 640 wide and shown in a card about 400px wide (scale ~0.62), so SVG text is set
+   large: 22px here is about 13.6px on screen. */
 .vault-label {
   fill: var(--text);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 600;
+}
+
+/* A transfer sent but not yet arrived: dashed ring around its destination. Static (still
+   visible) under prefers-reduced-motion, since the global rule turns animations off. */
+.ring-inflight {
+  fill: none;
+  stroke: var(--good);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+  animation: ring-inflight 1.4s ease-in-out infinite;
+}
+
+@keyframes ring-inflight {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .ring-node {
@@ -1083,13 +1112,13 @@ textarea {
 
 .node-label {
   fill: var(--text-2);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 500;
 }
 
 .node-sub {
   fill: var(--muted);
-  font-size: 15px;
+  font-size: 20px;
 }
 
 .ring .node-sub {
@@ -1107,7 +1136,7 @@ textarea {
 
 .particle-label {
   fill: var(--text);
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 600;
   paint-order: stroke;
   stroke: var(--card);
