@@ -32,6 +32,26 @@ const usdWhole = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+/** A venue's long question as a short bet name with its day, e.g. "Rockets vs Nuggets · Nov 21". */
+export function betName(title: string, eventTime?: string | null): string {
+  const game = /event (.+?) scheduled for/.exec(title);
+  const versus = /^Will (?:Club )?(.+?) win against (.+?) in the/.exec(title);
+  const name = game?.[1]
+    ? game[1].replace(/\b[A-Z]{2,4} (?=[A-Z][a-z])/g, "")
+    : versus
+      ? `${versus[1]} to beat ${versus[2]}`
+      : title.replace(/ scheduled for .*$/, "").replace(/\?$/, "");
+  if (!eventTime || /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d/.test(name)) {
+    return name;
+  }
+  const day = new Date(eventTime).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  return `${name} · ${day}`;
+}
+
 export function money(amount: number): string {
   return Number.isInteger(amount) ? usdWhole.format(amount) : usd.format(amount);
 }

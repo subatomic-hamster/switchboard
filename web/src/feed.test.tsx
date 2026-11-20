@@ -2,7 +2,14 @@ import { render, screen, within } from "@testing-library/react";
 
 import { EventFeed } from "./components/EventFeed";
 import { mergeEvents } from "./events";
-import { collapseBlips, describe as describeEvent, duration, explorerLink, money } from "./format";
+import {
+  betName,
+  collapseBlips,
+  describe as describeEvent,
+  duration,
+  explorerLink,
+  money,
+} from "./format";
 import { event } from "./test-fixtures";
 import type { EventOf } from "./types";
 
@@ -177,6 +184,26 @@ describe("cross-chain wording", () => {
     );
     expect(arrived.title).toBe("$1 arrived on Ethereum");
     expect(arrived.detail).toBe("");
+  });
+});
+
+describe("bet names", () => {
+  it("shortens the venues' long questions", () => {
+    expect(
+      betName(
+        "Who will win in the upcoming basketball event HOU Rockets vs DEN Nuggets scheduled for November 21, 2026 at 3:00 AM UTC?",
+        "2026-11-21T03:00:00Z",
+      ),
+    ).toBe("Rockets vs Nuggets · Nov 21");
+    expect(
+      betName(
+        "Will Club Atletico de Madrid win against Getafe CF in the La Liga match scheduled for Nov 22, 2026?",
+        "2026-11-22T20:00:00Z",
+      ),
+    ).toBe("Atletico de Madrid to beat Getafe CF · Nov 22");
+    expect(
+      betName("Highest temperature in San Francisco on November 20?", "2026-11-20T00:00:00Z"),
+    ).toBe("Highest temperature in San Francisco on November 20");
   });
 });
 

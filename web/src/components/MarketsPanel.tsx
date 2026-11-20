@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { ApiError, api } from "../api";
-import { money, type Tone } from "../format";
+import { betName, money, type Tone } from "../format";
 import { canSpeak, speak } from "../speech";
 import type { BotNote, MarketBrief, MarketListing, MoveOption, Opinion, TrackRecord } from "../types";
 import { StatusMark, ToneIcon } from "./StatusMark";
@@ -200,8 +200,8 @@ export function MarketsPanel({ selectedSlug, refreshKey }: MarketsPanelProps) {
           Bet
           <select value={slug} onChange={(event) => setSlug(event.target.value)}>
             {markets.map((market) => (
-              <option key={market.slug} value={market.slug}>
-                {market.title}
+              <option key={market.slug} value={market.slug} title={market.title}>
+                {betName(market.title, market.event_time)}
               </option>
             ))}
           </select>
