@@ -70,6 +70,11 @@ def _no_ambient_keys(monkeypatch: pytest.MonkeyPatch) -> None:
         "GROK_MISSED_CALL_WEBHOOK_KEY",
         "CALLS_ENABLED",
         "TRADING_ENABLED",
+        "USE_REAL_MARKETS",
+        "GEMINI_API_KEY",
+        "GEMINI_API_SECRET",
+        "POLYMARKET_ACCESS_KEY",
+        "POLYMARKET_PRIVATE_KEY",
     ):
         monkeypatch.delenv(name, raising=False)
 

@@ -40,7 +40,7 @@ import httpx
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.markets.book import Book, Level, PreparedRequest, RateLimiter, VenueError
-from app.markets.stub import GuardRefused
+from app.markets.stub import GuardRefused, UnknownMarket
 
 log = logging.getLogger("switchboard.markets")
 
@@ -185,6 +185,8 @@ class PolymarketClient:
         await self._limiter.wait()
         try:
             resp = await self._http.get(self._gateway + path, params=params, timeout=20)
+            if resp.status_code == 404:
+                raise UnknownMarket(f"polymarket has no {path}")
             resp.raise_for_status()
             return resp.json()
         except (httpx.HTTPError, ValueError) as exc:
@@ -257,7 +259,7 @@ class PolymarketClient:
             "marketSlug": slug,
             "intent": intent,
             "type": "ORDER_TYPE_LIMIT",
-            "price": {"value": f"{price:f}", "currency": "USD"},
+            "price": {"value": f"{price.normalize():f}", "currency": "USD"},
             # The docs type quantity as a JSON number (double); 0.01 steps are exact enough.
             "quantity": float(qty),
             "tif": tif,

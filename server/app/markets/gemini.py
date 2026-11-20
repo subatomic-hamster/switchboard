@@ -38,7 +38,7 @@ from typing import Any, Literal
 import httpx
 
 from app.markets.book import Book, Level, PreparedRequest, VenueError
-from app.markets.stub import GuardRefused
+from app.markets.stub import GuardRefused, UnknownMarket
 
 GEMINI_API = "https://api.gemini.com"
 PAGE = 50
@@ -105,6 +105,8 @@ class GeminiClient:
     async def _get(self, path: str, params: Mapping[str, Any] | None = None) -> Any:
         try:
             resp = await self._http.get(self._base + path, params=params, timeout=20)
+            if resp.status_code == 404:
+                raise UnknownMarket(f"gemini has no {path}")
             resp.raise_for_status()
             return resp.json()
         except (httpx.HTTPError, ValueError) as exc:
@@ -187,8 +189,8 @@ class GeminiClient:
             "symbol": symbol,
             "orderType": "limit",
             "side": side,
-            "quantity": f"{qty:f}",
-            "price": f"{price:f}",
+            "quantity": f"{qty.normalize():f}",
+            "price": f"{price.normalize():f}",
             "outcome": "yes",
             "timeInForce": time_in_force,
         }
