@@ -261,6 +261,25 @@ export function applyEvent(
       };
       return { state: { ...state, particles: [...state.particles, particle] }, sound: null };
     }
+    case "escrow.updated": {
+      // A link payment: leaves for a new address, lights it when claimed, comes back if refunded.
+      const d = event.data;
+      if (d.status === "claimed") {
+        return { state: { ...state, pulses: [...state.pulses, { node: "new", at: now }] }, sound: null };
+      }
+      const particle: Particle = {
+        key,
+        kind: d.status === "refunded" ? "inbound" : "pass",
+        node: "new",
+        tone: d.status === "refunded" ? "neutral" : "good",
+        label: dollars(d.amount_usd),
+        start: now,
+      };
+      return {
+        state: { ...state, particles: [...state.particles, particle] },
+        sound: d.status === "deposited" ? "pass" : null,
+      };
+    }
     case "frozen":
       return { state: { ...state, frozen: event.data.frozen }, sound: event.data.frozen ? "block" : null };
     case "stream.stale":

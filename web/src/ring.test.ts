@@ -211,6 +211,16 @@ describe("ring model", () => {
     },
   );
 
+  it("shows a link payment leaving, being claimed, and coming back", () => {
+    const escrow = (status: "deposited" | "claimed" | "refunded") =>
+      event<EventOf<"escrow.updated">>("escrow.updated", { escrow_id: "3", status, amount_usd: 1, to: "" });
+    const sent = applyEvent(EMPTY, escrow("deposited"), 0, wallets);
+    expect(sent.sound).toBe("pass");
+    expect(sent.state.particles[0]).toMatchObject({ kind: "pass", node: "new", label: "$1" });
+    expect(applyEvent(EMPTY, escrow("claimed"), 5, wallets).state.pulses).toEqual([{ node: "new", at: 5 }]);
+    expect(applyEvent(EMPTY, escrow("refunded"), 0, wallets).state.particles[0]?.kind).toBe("inbound");
+  });
+
   it("places nodes on a circle around the vault", () => {
     expect(distance(polar(0, 100))).toBeCloseTo(100);
     expect(polar(270, 100).y).toBeCloseTo(CENTER.y - 100);
