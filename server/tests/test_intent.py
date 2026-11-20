@@ -25,7 +25,7 @@ NEW_ADDRESS = "0x9c1e8a4f2b7d6c5a3e1f0b9d8c7a6e5f4d3c4f2c"
 
 @pytest.fixture
 def parser() -> IntentParser:
-    return IntentParser(WalletBook())
+    return IntentParser(WalletBook(TEST_WALLETS))
 
 
 @pytest.mark.parametrize(
@@ -153,7 +153,7 @@ async def test_llm_cannot_change_the_amount() -> None:
     async def llm(text: str) -> IntentDraft:
         return IntentDraft(amount_usd="9000", from_owner="me", to_owner="sam")
 
-    parsed = await IntentParser(WalletBook(), llm).parse("send 20 dollars to sam")
+    parsed = await IntentParser(WalletBook(TEST_WALLETS), llm).parse("send 20 dollars to sam")
     assert parsed.transfer is not None
     assert parsed.transfer.amount_usd == Decimal("20")
 
@@ -162,7 +162,7 @@ async def test_llm_cannot_invent_an_address() -> None:
     async def llm(text: str) -> IntentDraft:
         return IntentDraft(amount_usd="20", from_owner="me", to_address=NEW_ADDRESS)
 
-    parsed = await IntentParser(WalletBook(), llm).parse("send 20 dollars to sam")
+    parsed = await IntentParser(WalletBook(TEST_WALLETS), llm).parse("send 20 dollars to sam")
     assert parsed.transfer is not None
     assert parsed.transfer.destination.label == "Sam's Arc wallet"
     assert parsed.transfer.destination.address != NEW_ADDRESS
@@ -172,7 +172,7 @@ async def test_llm_failure_falls_back_to_rules() -> None:
     async def llm(text: str) -> IntentDraft:
         raise RuntimeError("network down")
 
-    parsed = await IntentParser(WalletBook(), llm).parse("send 20 dollars to sam")
+    parsed = await IntentParser(WalletBook(TEST_WALLETS), llm).parse("send 20 dollars to sam")
     assert parsed.parser == "rules"
     assert parsed.transfer is not None
 

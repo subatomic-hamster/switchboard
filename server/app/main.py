@@ -82,7 +82,7 @@ VENUES: list[Venue] = [
 def build_context(settings: Settings, db: Database | None = None) -> AppContext:
     database = db or Database(settings.database_file)
     bus = EventBus(database)
-    wallets = WalletBook()
+    wallets = WalletBook(Path(settings.wallets_path) if settings.wallets_path else None)
     if not settings.use_p1_stubs:
         missing = [
             name.upper()

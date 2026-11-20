@@ -1,0 +1,11 @@
+{
+  "_note": "TEST FIXTURE. The original placeholder wallet book the tests were written against; the app uses server/fixtures/wallets.json (real testnet burners).",
+  "wallets": [
+    {"owner": "me", "label": "my Ethereum wallet", "chain": "eth-sepolia", "address": "0x1111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "me", "label": "my Solana wallet", "chain": "solana-devnet", "address": "Mine1111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "me", "label": "my Arc wallet", "chain": "arc-testnet", "address": "0x5834D6f0784AaacE5ece312C1e18D04a1CfFc2e8", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Ethereum wallet", "chain": "eth-sepolia", "address": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Solana wallet", "chain": "solana-devnet", "address": "Sam11111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Arc wallet", "chain": "arc-testnet", "address": "0x4ccFA9e40f035038edfe5b6A5c5111993B1bEFfA", "allowlisted": true}
+  ]
+}

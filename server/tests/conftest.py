@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from decimal import Decimal
+from pathlib import Path
 
 import httpx
 import pytest
@@ -16,10 +17,13 @@ from app.main import create_app
 
 VOICE_TOKEN = "test-voice-token"
 BOT_TOKEN = "test-bot-token"
+# The placeholder wallet book the tests were written against (the app's is real burners).
+TEST_WALLETS = Path(__file__).parent / "fixtures" / "wallets.json"
 
 
 def make_settings(**overrides: object) -> Settings:
     base: dict[str, object] = {
+        "wallets_path": str(TEST_WALLETS),
         "use_p1_stubs": True,
         "trading_enabled": False,
         "calls_enabled": False,

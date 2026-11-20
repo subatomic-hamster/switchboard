@@ -1,11 +1,11 @@
 {
-  "_note": "FIXTURE. The two Arc wallets are real testnet addresses (the owner, and a burner for Sam). The Ethereum and Solana wallets are still placeholders until Phase 2, when the cross-chain transfer module supplies real ones.",
+  "_note": "FIXTURE. Real testnet burner addresses. EVM wallets use the same key on Arc and Ethereum Sepolia: 'my' = the vault owner, 'Sam' = a receive-only burner. The Solana devnet wallets are burners generated for the cross-chain demo.",
   "wallets": [
-    {"owner": "me", "label": "my Ethereum wallet", "chain": "eth-sepolia", "address": "0x1111111111111111111111111111111111111111", "allowlisted": true},
-    {"owner": "me", "label": "my Solana wallet", "chain": "solana-devnet", "address": "Mine1111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "me", "label": "my Ethereum wallet", "chain": "eth-sepolia", "address": "0x5834D6f0784AaacE5ece312C1e18D04a1CfFc2e8", "allowlisted": true},
+    {"owner": "me", "label": "my Solana wallet", "chain": "solana-devnet", "address": "Cfp5m8zb16cWK6uUCjGwPCokm5zg9BJyaDgianBpCEic", "allowlisted": true},
     {"owner": "me", "label": "my Arc wallet", "chain": "arc-testnet", "address": "0x5834D6f0784AaacE5ece312C1e18D04a1CfFc2e8", "allowlisted": true},
-    {"owner": "sam", "label": "Sam's Ethereum wallet", "chain": "eth-sepolia", "address": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a", "allowlisted": true},
-    {"owner": "sam", "label": "Sam's Solana wallet", "chain": "solana-devnet", "address": "Sam11111111111111111111111111111111111111111", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Ethereum wallet", "chain": "eth-sepolia", "address": "0x4ccFA9e40f035038edfe5b6A5c5111993B1bEFfA", "allowlisted": true},
+    {"owner": "sam", "label": "Sam's Solana wallet", "chain": "solana-devnet", "address": "AHSZcy39qMpnuKWybxP75vtxzL5LojXuc6d8Jzsa7bqE", "allowlisted": true},
     {"owner": "sam", "label": "Sam's Arc wallet", "chain": "arc-testnet", "address": "0x4ccFA9e40f035038edfe5b6A5c5111993B1bEFfA", "allowlisted": true}
   ]
 }

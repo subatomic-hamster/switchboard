@@ -86,6 +86,9 @@ class Settings(BaseSettings):
     ledger_address: str = ""
     escrow_address: str = ""
 
+    # The wallet book. Blank = server/fixtures/wallets.json (real testnet burners).
+    wallets_path: str = ""
+
     # Real cross-chain transfers (Circle CCTP V2, burn on Arc). Needs USE_P1_STUBS=false.
     # Circle's Forwarding Service submits the destination mint, so no destination gas is needed.
     # With CCTP_FORWARD=false the server mints itself: only possible on Ethereum Sepolia, with
