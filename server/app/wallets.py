@@ -35,7 +35,8 @@ class WalletBook:
         return None
 
     def allowlist(self) -> list[str]:
-        return [wallet.address for wallet in self.wallets if wallet.allowlisted]
+        # One EVM address can back several wallets (Arc and Ethereum); list it once.
+        return list(dict.fromkeys(wallet.address for wallet in self.wallets if wallet.allowlisted))
 
     def label_for(self, address: str) -> str:
         """A speakable name for an address: its wallet-book label, or its last four characters."""
