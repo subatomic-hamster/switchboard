@@ -395,3 +395,27 @@ async def test_routes_create_locally_claim_publicly_and_events_follow(
         assert response.json()["status"] == "published 2"  # Deposited and Claimed, not the commit
     statuses = [e.data["status"] for e in ctx.bus.history() if e.type == "escrow.updated"]
     assert statuses == ["deposited", "claimed"]
+
+
+async def test_peek_shows_the_amount_only_to_the_holder_of_the_secret(
+    real_app: FastAPI,
+) -> None:
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=real_app), base_url="http://localhost"
+    ) as http:
+        beat = b'{"heartbeat": 1}'
+        await http.post("/api/hooks/quicknode", content=beat, headers=sign(beat))
+        created = (await http.post("/api/escrow/create", json={"amount_usd": 4.5})).json()
+        body = {"escrow_id": created["escrow_id"], "secret": created["secret"]}
+        seen = await http.post("/api/escrow/peek", json=body, headers=TUNNEL)  # via the tunnel
+        assert seen.status_code == 200
+        assert seen.json()["amount_usd"] == 4.5 and seen.json()["settled"] is False
+        assert set(seen.json()) == {"amount_usd", "expiry", "settled"}  # no refund address
+        wrong = await http.post(
+            "/api/escrow/peek", json={**body, "secret": "0x" + "cd" * 32}, headers=TUNNEL
+        )
+        assert wrong.status_code == 409 and "WrongSecret" in wrong.json()["detail"]
+        nope = await http.post("/api/escrow/peek", json={**body, "escrow_id": "99"}, headers=TUNNEL)
+        assert nope.status_code == 409 and "UnknownDeposit" in nope.json()["detail"]
+        await http.post("/api/escrow/claim", json={**body, "to": PAYEE}, headers=TUNNEL)
+        assert (await http.post("/api/escrow/peek", json=body)).json()["settled"] is True

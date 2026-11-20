@@ -4,6 +4,7 @@ import { ApiError, api } from "../api";
 import { CHAIN_NAMES, duration, money, REASON_TEXT, type Tone } from "../format";
 import { canSpeak, speak, stopSpeaking } from "../speech";
 import type { Chain, ExecuteResponse, IntentResponse, Route } from "../types";
+import { SendByLink } from "./SendByLink";
 import { StatusMark } from "./StatusMark";
 
 // The chip shows the short label; the full sentence is what gets quoted.
@@ -166,6 +167,7 @@ export function CommandBar({
             {example.label}
           </button>
         ))}
+        <SendByLink />
       </div>
 
       {error && (

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import httpx
 import pytest
 from fastapi import FastAPI
 
 from app.context import AppContext
 from app.local_only import host_name
+from app.main import _mount_dashboard
 
 TUNNEL = {"Host": "random-words.trycloudflare.com", "Cf-Connecting-Ip": "203.0.113.9"}
 OVER_CAP = "send 250 from my arc wallet to sam's arc wallet"
@@ -51,6 +54,22 @@ async def test_dashboard_routes_are_refused_through_a_tunnel(
     assert response.status_code == 403
     assert "only served on the machine" in response.json()["detail"]
     assert ctx.bus.history() == []
+
+
+async def test_claim_page_and_assets_are_public_but_the_dashboard_root_is_not(
+    app: FastAPI, tmp_path: Path
+) -> None:
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "a.js").write_text("x")
+    (tmp_path / "index.html").write_text("<html>spa</html>")
+    _mount_dashboard(app, tmp_path)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost"
+    ) as http:
+        page = await http.get("/claim", headers=TUNNEL)
+        assert page.status_code == 200 and "spa" in page.text
+        assert (await http.get("/assets/a.js", headers=TUNNEL)).status_code == 200
+        assert (await http.get("/", headers=TUNNEL)).status_code == 403
 
 
 async def test_the_challenge_word_cannot_be_fetched_from_outside(

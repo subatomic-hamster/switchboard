@@ -85,6 +85,14 @@ class EscrowStatus(_Out):
     settled: bool
 
 
+class EscrowPeek(_Out):
+    """What the holder of a claim link may see: no refund address, no id."""
+
+    amount_usd: Money
+    expiry: datetime
+    settled: bool
+
+
 class TxResult(_Out):
     tx_hash: str
 
@@ -177,6 +185,22 @@ class ChainEscrow:
         receipt = self._client.send(contract.functions.claim(escrow_id, secret, to), gas=CLAIM_GAS)
         return TxResult(tx_hash=_hex(receipt["transactionHash"]))
 
+    async def peek(self, escrow_id: str, secret_hex: str) -> EscrowPeek:
+        return await asyncio.to_thread(self._peek, int(escrow_id), secret_hex)
+
+    def _peek(self, escrow_id: int, secret_hex: str) -> EscrowPeek:
+        """Amount, expiry and state for whoever holds the secret. Read-only, costs no gas."""
+        _, contract = self._client.web3()
+        secret = bytes.fromhex(secret_hex.removeprefix("0x"))
+        deposit = self._call(contract.functions.getDeposit(escrow_id))
+        if Web3.keccak(secret) != bytes(deposit[4]):
+            raise ContractRevert("Escrow", "WrongSecret")
+        return EscrowPeek(
+            amount_usd=from_units(deposit[1]),
+            expiry=datetime.fromtimestamp(deposit[2], UTC),
+            settled=deposit[3],
+        )
+
     async def refund(self, escrow_id: str) -> TxResult:
         return await asyncio.to_thread(self._refund, int(escrow_id))
 
@@ -245,10 +269,13 @@ class CreateEscrow(BaseModel):
     refund_to: str | None = None
 
 
-class ClaimEscrow(BaseModel):
+class PeekEscrow(BaseModel):
     model_config = ConfigDict(extra="forbid")
     escrow_id: str = Field(pattern=r"^[0-9]{1,18}$")
     secret: str = Field(pattern=r"^(0x)?[0-9a-fA-F]{64}$")
+
+
+class ClaimEscrow(PeekEscrow):
     to: str
 
 
@@ -312,6 +339,16 @@ async def claim(body: ClaimEscrow, ctx: Ctx) -> TxResult:
     _evm(body.to, "to")
     try:
         return await escrow.claim(body.escrow_id, body.secret, body.to)
+    except ValueError as exc:
+        raise _refused(exc) from exc
+
+
+@router.post("/peek", response_model=EscrowPeek)
+async def peek(body: PeekEscrow, ctx: Ctx) -> EscrowPeek:
+    """Public: the secret is the credential. Shows the claim page the amount and expiry."""
+    escrow = _escrow(ctx)
+    try:
+        return await escrow.peek(body.escrow_id, body.secret)
     except ValueError as exc:
         raise _refused(exc) from exc
 
