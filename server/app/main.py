@@ -34,8 +34,10 @@ from app.chain import escrow as escrow_routes
 from app.chain import stream
 from app.chain import stub as chain_stub
 from app.chain.anchor import ChainAnchor
+from app.chain.anomaly import AnomalyDetector
 from app.chain.escrow import ChainEscrow
 from app.chain.vault import ChainVault
+from app.chain.watchdog import Watchdog
 from app.config import REPO_ROOT, Settings, get_settings
 from app.context import AppContext, Tasks, get_ctx
 from app.db import Database, EventRow
@@ -120,7 +122,8 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         if settings.use_p1_stubs
         else ChainVault(settings, wallets.allowlist(), bus)
     )
-    vault = HoldingVault(inner, bus, first_id=first_id)
+    anomaly = AnomalyDetector(settings, database, bus) if settings.anomaly_on else None
+    vault = HoldingVault(inner, bus, first_id=first_id, anomaly=anomaly)
     anchor: AnchorPort = chain_stub.StubAnchor()
     escrow: ChainEscrow | None = None
     if not settings.use_p1_stubs:
@@ -149,6 +152,8 @@ def build_context(settings: Settings, db: Database | None = None) -> AppContext:
         ctx.stream_stale = bool(event.data.get("stale"))
 
     bus.on("stream.stale", track_stream)
+    if not settings.use_p1_stubs:
+        ctx.watchdog = Watchdog(ctx)  # stale until the Stream's first delivery
     ctx.holds = vault
     ctx.planner = Planner(ctx, IntentParser(wallets, make_llm_call(settings)))
     ctx.approvals = voice.Approvals(ctx)
@@ -182,6 +187,8 @@ def create_app(settings: Settings | None = None, db: Database | None = None) -> 
                 "calls stay in dry run until these are set: %s", ", ".join(settings.call_blockers)
             )
         await ctx.approvals.resume()
+        if ctx.watchdog is not None:
+            ctx.tasks.spawn(ctx.watchdog.run(), "stream-watchdog")
         if settings.anthropic_api_key:
             # The first structured-output call compiles the schema and is slow; do it now.
             ctx.tasks.spawn(ctx.planner.warm_up(), "intent-warm-up")

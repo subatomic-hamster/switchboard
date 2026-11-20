@@ -21,10 +21,14 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from app.events import EventBus
 from app.ports import SpendResult, VaultPort
 from app.schemas import ApprovalRequestedData, ApprovalResolvedData, Policy, Reason
+
+if TYPE_CHECKING:
+    from app.chain.anomaly import AnomalyDetector
 
 HOLD_PREFIX = "h"
 
@@ -38,19 +42,35 @@ class _Hold:
 
 
 class HoldingVault:
-    def __init__(self, inner: VaultPort, bus: EventBus, first_id: int = 1) -> None:
+    def __init__(
+        self,
+        inner: VaultPort,
+        bus: EventBus,
+        first_id: int = 1,
+        anomaly: AnomalyDetector | None = None,
+    ) -> None:
         self._inner = inner
         self._bus = bus
+        self._anomaly = anomaly
         # Numbered above everything an earlier run recorded, for the same reason as the stubs.
         self._ids = itertools.count(first_id)
         self._holds: dict[str, _Hold] = {}
+        self._notes: dict[str, str] = {}
 
     # ------------------------------------------------------------------ holds
 
-    async def hold(self, payee: str, amount_usd: Decimal, reason: Reason) -> SpendResult:
+    def note(self, request_id: str) -> str:
+        """The objection a hold carries (the anomaly baseline's), for the approval call."""
+        return self._notes.get(request_id, "")
+
+    async def hold(
+        self, payee: str, amount_usd: Decimal, reason: Reason, note: str = ""
+    ) -> SpendResult:
         """Ask the owner first. Publishes `approval.requested`, so the phone rings."""
         request_id = f"{HOLD_PREFIX}{next(self._ids)}"
         self._holds[request_id] = _Hold(payee=payee, amount=amount_usd, reason=reason)
+        if note:
+            self._notes[request_id] = note  # before the event, which the call is built from
         await self._bus.publish(
             "approval.requested",
             ApprovalRequestedData(
@@ -83,6 +103,16 @@ class HoldingVault:
     # ------------------------------------------------------------------ VaultPort
 
     async def request_spend(self, payee: str, amount_usd: Decimal, purpose: str) -> SpendResult:
+        if self._anomaly is not None:
+            anomaly = self._anomaly.assess(payee, amount_usd)
+            # Only a spend the vault would allow is turned into an ask: if the vault would
+            # refuse it, the vault's own (stronger) reason and request stand.
+            if (
+                anomaly is not None
+                and await self._vault_objection(_Hold(payee, amount_usd, Reason.UNUSUAL_SPEND))
+                is None
+            ):
+                return await self.hold(payee, amount_usd, Reason.UNUSUAL_SPEND, anomaly.text)
         return await self._inner.request_spend(payee, amount_usd, purpose)
 
     async def redeem(self, permit_id: str) -> None:

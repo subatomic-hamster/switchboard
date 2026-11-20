@@ -265,6 +265,19 @@ def _escrow(ctx: AppContext) -> ChainEscrow:
     return ctx.escrow
 
 
+async def _spending_allowed(ctx: AppContext) -> None:
+    """Escrow deposits and request payments spend the agent wallet without going through the
+    vault, so they honour the kill switch here: nothing while frozen or while the Stream is
+    stale (see `chain/watchdog.py`). Claims and refunds return money that is already escrowed,
+    so they are not held up."""
+    if await ctx.vault.is_frozen():
+        raise HTTPException(status_code=409, detail="the vault is frozen, so spending is paused")
+    if ctx.stream_stale:
+        raise HTTPException(
+            status_code=409, detail="the event stream is stale, so spending is paused"
+        )
+
+
 def _evm(address: str | None, what: str) -> None:
     if address is not None and not is_evm(address):
         raise HTTPException(status_code=422, detail=f"{what} must be an EVM address")
@@ -280,6 +293,7 @@ async def create(body: CreateEscrow, ctx: Ctx) -> EscrowCreated:
     """Local only. Hold USDC for a recipient with no wallet; returns the claim secret and link."""
     escrow = _escrow(ctx)
     _evm(body.refund_to, "refund_to")
+    await _spending_allowed(ctx)
     cap = (await ctx.vault.get_policy()).transfer_cap_usd
     if body.amount_usd > cap:
         raise HTTPException(
@@ -318,6 +332,7 @@ async def pay_request(request_id: str, ctx: Ctx) -> TxResult:
     escrow = _escrow(ctx)
     if not request_id.isdigit():
         raise HTTPException(status_code=422, detail="request ids are numbers")
+    await _spending_allowed(ctx)
     try:
         cap = (await ctx.vault.get_policy()).transfer_cap_usd
         return await escrow.pay(request_id, cap)

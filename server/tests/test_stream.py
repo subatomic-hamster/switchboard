@@ -8,6 +8,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import hmac
+import itertools
 import json
 import time
 from collections.abc import AsyncIterator, Callable
@@ -77,8 +78,15 @@ def spent_log() -> dict[str, Any]:
     )
 
 
-def sign(body: bytes, ts: int | None = None, secret: str = SECRET) -> dict[str, str]:
-    nonce, stamp = "n0nce", str(int(time.time()) if ts is None else ts)
+_nonces = itertools.count(1)
+
+
+def sign(
+    body: bytes, ts: int | None = None, secret: str = SECRET, nonce: str | None = None
+) -> dict[str, str]:
+    """Headers for one delivery. Each call gets a fresh nonce, as QuickNode's do."""
+    nonce = nonce or f"n0nce-{next(_nonces)}"
+    stamp = str(int(time.time()) if ts is None else ts)
     mac = hmac.new(secret.encode(), nonce.encode() + stamp.encode() + body, hashlib.sha256)
     return {"x-qn-nonce": nonce, "x-qn-timestamp": stamp, "x-qn-signature": mac.hexdigest()}
 
@@ -126,7 +134,8 @@ async def hook(real_app: FastAPI) -> AsyncIterator[Hook]:
 
 
 def published(ctx: AppContext) -> list[tuple[str, dict[str, Any]]]:
-    return [(e.type, e.data) for e in ctx.bus.history()]
+    """Vault events only: the watchdog's `stream.stale` has its own tests."""
+    return [(e.type, e.data) for e in ctx.bus.history() if e.type != "stream.stale"]
 
 
 def test_decode_vault_log() -> None:

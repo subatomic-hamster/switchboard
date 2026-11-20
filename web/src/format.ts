@@ -16,6 +16,7 @@ export const REASON_TEXT: Record<Reason, string> = {
   STREAM_STALE: "the event stream is stale",
   CALL_CAP_REACHED: "the daily limit on approval calls was reached",
   OVER_AGENT_LIMIT: "more than that assistant may send without asking",
+  UNUSUAL_SPEND: "unlike this agent's usual spending",
   TRADING_DISABLED: "trading is switched off",
   OVER_ORDER_CAP: "over the order size limit",
   NOT_EQUIVALENT: "the two markets are not the same bet",

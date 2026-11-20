@@ -358,6 +358,9 @@ async def test_routes_create_locally_claim_publicly_and_events_follow(
         assert (
             await http.post("/api/escrow/requests", json={"amount_usd": 1}, headers=TUNNEL)
         ).status_code == 403
+        # Spending waits for the Stream's first delivery (the dead man's switch).
+        beat = b'{"heartbeat": 1}'
+        await http.post("/api/hooks/quicknode", content=beat, headers=sign(beat))
         over = await http.post("/api/escrow/create", json={"amount_usd": 150})
         assert over.status_code == 409 and "per-transfer limit" in over.json()["detail"]
 

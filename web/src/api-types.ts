@@ -2783,7 +2783,7 @@ export interface components {
          *     that happen before or around the contract call.
          * @enum {string}
          */
-        Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "OVER_AGENT_LIMIT" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
+        Reason: "OVER_TRANSFER_CAP" | "OVER_DAILY_BUDGET" | "PAYEE_NOT_ALLOWED" | "FROZEN" | "STREAM_STALE" | "CALL_CAP_REACHED" | "OVER_AGENT_LIMIT" | "UNUSUAL_SPEND" | "TRADING_DISABLED" | "OVER_ORDER_CAP" | "NOT_EQUIVALENT" | "UNSUPPORTED";
         /** ReceiveWallet */
         ReceiveWallet: {
             /** Address */

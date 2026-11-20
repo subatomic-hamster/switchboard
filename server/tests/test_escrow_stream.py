@@ -134,7 +134,7 @@ async def test_escrow_logs_become_events(real_app: FastAPI, deliver: Deliver) ->
     assert response.status_code == 200
     assert response.json()["status"] == "published 5"  # the commit is plumbing
 
-    events = [(e.type, e.data) for e in ctx.bus.history()]
+    events = [(e.type, e.data) for e in ctx.bus.history() if e.type != "stream.stale"]
     assert [t for t, _ in events] == [
         "escrow.updated",
         "escrow.updated",
@@ -173,7 +173,7 @@ async def test_ledger_logs_are_recognised_but_not_republished(
     )
     response = await deliver(committed, revealed)
     assert response.json()["status"] == "published 0"
-    assert ctx.bus.history() == []
+    assert [e.type for e in ctx.bus.history() if e.type != "stream.stale"] == []
 
 
 async def test_logs_from_other_addresses_are_ignored(deliver: Deliver, real_app: FastAPI) -> None:

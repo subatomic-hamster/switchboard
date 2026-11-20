@@ -39,7 +39,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from app.chain.contract import load_artifact
 from app.chain.vault import REASONS, decode_vault_log, from_units
 from app.context import AppContext, get_ctx
-from app.db import utcnow
 from app.schemas import (
     ApprovalRequestedData,
     ApprovalResolvedData,
@@ -88,6 +87,20 @@ def verify(secret: str, headers: Any, body: bytes) -> bytes:
     if not hmac.compare_digest(mac.hexdigest(), signature.lower()):
         raise HTTPException(status_code=401, detail="bad signature")
     return body
+
+
+def reject_replay(ctx: AppContext, nonce: str, timestamp: str) -> None:
+    """A signed delivery re-sent inside the skew window is a replay: 401 on a repeated
+    (nonce, timestamp). In memory and bounded: entries older than the window are dropped (the
+    skew check refuses them anyway), and the cache never holds more than SEEN_LIMIT."""
+    seen = ctx.stream_nonces
+    cutoff = time.time() - MAX_SKEW_S
+    while seen and (next(iter(seen.values())) < cutoff or len(seen) >= SEEN_LIMIT):
+        seen.popitem(last=False)
+    key = (nonce, timestamp)
+    if key in seen:
+        raise HTTPException(status_code=401, detail="replayed delivery")
+    seen[key] = int(timestamp)
 
 
 def walk_logs(node: object) -> Iterator[dict[str, Any]]:
@@ -217,12 +230,14 @@ async def publish_escrow_log(ctx: AppContext, event: dict[str, Any]) -> bool:
 async def quicknode_hook(request: Request, ctx: Ctx) -> OkResponse:
     """QuickNode Streams delivery of the vault's logs."""
     body = verify(ctx.settings.quicknode_stream_secret, request.headers, await request.body())
+    reject_replay(ctx, request.headers["x-qn-nonce"], request.headers["x-qn-timestamp"])
     try:
         payload = json.loads(body)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="invalid json") from exc
-    # Groundwork for the dead man's switch (Phase 4): when did the Stream last deliver?
-    ctx.last_stream_delivery = utcnow()
+    # Every authenticated delivery, heartbeat or logs, feeds the dead man's switch.
+    assert ctx.watchdog is not None
+    await ctx.watchdog.delivered()
     s = ctx.settings
     # Each watched contract has its own decoder and publisher, chosen by the log's address.
     watched: dict[str, tuple[Decoder, Publisher]] = {}
