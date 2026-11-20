@@ -105,11 +105,11 @@ after 10 failed retries (the maximum).
    and the same names (blank / false) to `.env.example`, plus `CCTP_FORWARD=true`,
    `STREAM_STALE_AFTER_S=90`, `ANOMALY_ENABLED=`, `WALLETS_PATH=`. Until then I pass them as
    process env vars when starting the server.
+3. `PUBLIC_BASE_URL` in `.env` points at an old quick tunnel, so claim links use a dead host. Set
+   it to the current tunnel (or a named tunnel) before demoing claim links.
 4. After the Rockets/Nuggets game (21 Nov, 03:00 UTC tip-off), reveal forecast `f_1`
    (`POST /api/forecasts/f_1/reveal` with the outcome, or from the dashboard). That publishes the
    preimage onchain (Ledger entry 2) and scores it.
-3. `PUBLIC_BASE_URL` in `.env` points at an old quick tunnel, so claim links use a dead host. Set
-   it to the current tunnel (or a named tunnel) before demoing claim links.
 
 ## How to run
 
