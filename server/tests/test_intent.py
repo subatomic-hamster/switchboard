@@ -17,7 +17,7 @@ from app.intent import (
 )
 from app.schemas import Chain
 from app.wallets import WalletBook
-from tests.conftest import make_settings
+from tests.conftest import TEST_WALLETS, make_settings
 
 SAM_SOL = "Sam11111111111111111111111111111111111111111"
 NEW_ADDRESS = "0x9c1e8a4f2b7d6c5a3e1f0b9d8c7a6e5f4d3c4f2c"
@@ -141,7 +141,7 @@ async def test_llm_reading_is_used_when_it_agrees_with_the_sentence() -> None:
             to_chain=Chain.SOLANA_DEVNET,
         )
 
-    parsed = await IntentParser(WalletBook(), llm).parse(
+    parsed = await IntentParser(WalletBook(TEST_WALLETS), llm).parse(
         "shift 200 bucks off my eth over to sam on sol"
     )
     assert parsed.parser == "llm"
