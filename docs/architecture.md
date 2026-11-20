@@ -16,82 +16,38 @@ Rendered: [PNG](diagrams/system-architecture.png) · [SVG](diagrams/system-archi
 
 ```mermaid
 flowchart LR
-  owner(["Owner<br/>types or speaks"])
-  assistants(["Connected assistants<br/>ChatGPT, Claude, Grok via MCP"])
-
-  subgraph web["Dashboard (React + Vite)"]
-    ui["Command bar, approvals,<br/>markets, ring view,<br/>flight recorder"]
+  subgraph you["You"]
+    ui["Dashboard<br/>type or speak"]
+    eleven["ElevenLabs<br/>calls and voice"]
+    mcp["Other assistants<br/>via MCP"]
   end
 
-  subgraph srv["Server (FastAPI, one process)"]
-    direction TB
-    mw["local_only middleware<br/>dashboard routes stay on localhost"]
-    intent["intent.py<br/>sentence to request"]
-    planner["planner.py<br/>routes, pay / ask / block"]
-    holds["holds.py + anomaly.py<br/>extra reasons to ask"]
-    voice["voice.py + call_script.py<br/>approval rules and call"]
-    phone["phone_line.py<br/>calling in (demo)"]
-    desk["market_brief.py, demo_desk.py,<br/>forecast.py"]
-    bus(("event bus<br/>events.py"))
-    watch["watchdog.py<br/>stream dead man's switch"]
-    mcp["mcp_http.py, bots.py<br/>connector and bot routes"]
+  subgraph server["Switchboard server"]
+    plan["Intent + planner<br/>Claude parses, code decides"]
+    gates["Safety gates<br/>watchdog, anomaly"]
+    desk["Markets desk<br/>match, quote, 4-model forecast"]
   end
 
-  subgraph chain["Arc testnet"]
-    vault[("Vault.sol<br/>caps, budget, allowlist, freeze")]
-    ledger[("Ledger.sol<br/>trade and forecast records")]
-    escrow[("Escrow.sol<br/>claim links")]
+  subgraph money["Money"]
+    vault[("Vault on Arc<br/>limits, approvals")]
+    cctp["Circle CCTP<br/>Ethereum, Solana"]
+    qn["QuickNode Stream"]
   end
 
-  cctp["Circle CCTP V2<br/>burn, attest, Forwarding Service"]
-  dest["Ethereum Sepolia<br/>Solana devnet"]
-  qn["QuickNode Stream<br/>signed webhooks and heartbeat"]
-
-  subgraph venues["Market venues"]
-    pm["Polymarket US"]
-    gem["Gemini"]
+  subgraph mk["Markets"]
+    venues["Polymarket US<br/>Gemini"]
   end
 
-  subgraph llms["Models"]
-    claude["Claude<br/>intent parser"]
-    grok["Grok via OpenRouter<br/>explains verdicts"]
-    fore["Forecast models<br/>four families"]
-  end
+  ui --> plan
+  eleven --> plan
+  mcp --> plan
+  ui --> desk
+  plan --> gates --> vault --> cctp
+  vault -. events .-> qn -.-> gates
+  desk --> venues
 
-  eleven["ElevenLabs<br/>voice calls, speech-to-text,<br/>text-to-speech"]
-  bots["Grok Bot routines<br/>read and leave notes"]
-
-  owner --> ui
-  ui -- "/api" --> mw
-  bus -- "/events (SSE)" --> ui
-  mw --> intent
-  intent --> planner
-  planner --> holds
-  holds -- "request spend, redeem" --> vault
-  planner --> bus
-  vault -- "events" --> qn
-  qn -- "HMAC webhook" --> bus
-  qn -. "heartbeat" .-> watch
-  watch -. "stream.stale" .-> bus
-  bus --> voice
-  voice -- "approve or deny as approver" --> vault
-  voice -- "outbound call" --> eleven
-  eleven -- "rings, signed turns" --> voice
-  eleven -- "inbound call" --> phone
-  phone --> planner
-  ui -- "microphone, lines to read" --> eleven
-  planner -- "agent burns on Arc" --> cctp
-  cctp --> dest
-  desk -- "books, match, quote" --> pm
-  desk -- "books, match, quote" --> gem
-  desk -- "records" --> ledger
-  intent --> claude
-  desk --> grok
-  desk --> fore
-  assistants --> mcp
-  mcp --> planner
-  bots --> mcp
-  planner -. "escrow routes" .-> escrow
+  classDef chain fill:#ecfdf5,stroke:#10b981,color:#064e3b
+  class vault chain
 ```
 
 The dashboard talks to one FastAPI process. Everything that touches money reaches the vault, the transfer layer, the anchor and the venues through four ports in `server/app/ports.py`. Each port has an in-memory stub (the default) and a real module chosen by settings. QuickNode tells the server what the vault did instead of the server polling, and a silent Stream stops spending. ElevenLabs covers every voice path: the approval call, the call-in line, and the dashboard's speech-to-text and text-to-speech.
@@ -145,50 +101,29 @@ Rendered: [PNG](diagrams/security-layers.png) · [SVG](diagrams/security-layers.
 
 ```mermaid
 flowchart TB
-  src(["Sentence, assistant request,<br/>or hostile text"])
+  req(["A request to spend"])
+  web(["Web pages, bot notes"])
+  reader["Tool-less reader<br/>can flag, cannot spend"]
 
-  subgraph L1["Input handling"]
-    p1["Parser sees only the owner's sentence<br/>amount and address cross-checked by rules"]
-    p2["Outside content reaches only tool-less readers<br/>output stored as unverified"]
-  end
+  g1["1. Parser<br/>only your sentence, checked by rules"]
+  g2["2. Server gates<br/>stream alive, anomaly, assistant limits"]
+  g3["3. Vault on Arc<br/>cap, daily budget, allowlist, freeze"]
+  you["4. You approve<br/>ElevenLabs call: amount + one-time word<br/>passkey above $1,000"]
+  ok(["Single-use permit, 10 min"])
+  no(["Denied"])
 
-  subgraph L2["Server gates before the vault"]
-    s1["Stream watchdog<br/>silent for 90 s means no spending"]
-    s2["Holds for connected assistants<br/>own limit, 3 asks a day"]
-    s3["Anomaly baseline<br/>odd amount, payee, burst or hour means ask"]
-    s4["Call cap<br/>5 approval calls a day, then denied"]
-  end
+  req --> g1 --> g2 --> g3
+  g3 -- pay --> ok
+  g3 -- ask --> you
+  g3 -- block --> no
+  you -- yes --> ok
+  you -- "no or timeout" --> no
+  web -.-> reader
 
-  subgraph L3["Vault contract (the authority)"]
-    v1["Per-transfer cap, rolling 24 h budget,<br/>payee allowlist, freeze"]
-    v2["Roles: owner sets policy and unfreezes,<br/>agent only asks and redeems,<br/>approver approves, denies, freezes"]
-    v3["Single-use permit, 10 min TTL<br/>pending requests expire to denied"]
-  end
-
-  subgraph L4["Human approval"]
-    h1["Voice: exact amount + one-time word<br/>word never sent to the voice agent<br/>3 wrong tries deny, expiry denies"]
-    h2["Passkey as well above 1,000 dollars<br/>challenge bound to one request"]
-  end
-
-  subgraph L5["Surface and money-side limits"]
-    n1["local_only: dashboard routes refuse<br/>non-localhost and proxied requests"]
-    n2["Public prefixes check their own credential<br/>HMAC webhooks, bearer tokens, claim secret"]
-    n3["Orders: TRADING_ENABLED false by default,<br/>hard 2 dollar cap is a code constant"]
-  end
-
-  src --> p1
-  src --> p2
-  p1 --> s1
-  p2 --> s1
-  s1 --> s2 --> s3 --> s4 --> v1
-  v1 --> v3
-  v2 --- v1
-  v1 -- "ask" --> h1
-  h1 --> h2
-  h2 -- "approve" --> v3
-  n1 -.- s1
-  n2 -.- s1
-  n3 -.- v1
+  classDef good fill:#ecfdf5,stroke:#10b981,color:#064e3b
+  classDef bad fill:#fef2f2,stroke:#ef4444,color:#7f1d1d
+  class ok good
+  class no,reader bad
 ```
 
 Every layer can only make a spend harder, and none can loosen the vault. Holds and the anomaly baseline can turn a "pay" into an "ask" but never the reverse. The watchdog refuses new spends and also refuses to settle an approval on-chain while the Stream is stale (denials always go through). The agent key cannot change limits, add payees, approve, or unfreeze: those functions do not accept it. The "Try to trick it" box shows the stated bound on a hijacked agent: a phone call the owner can refuse, or at worst one capped transfer to an allowlisted payee.
