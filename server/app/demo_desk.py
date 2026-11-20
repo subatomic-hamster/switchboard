@@ -326,14 +326,14 @@ def _contract_for(event: dict[str, Any], outcome: str) -> dict[str, Any] | None:
 
 
 def find_similar(
-    title: str, events: list[dict[str, Any]], outcome: str = ""
+    title: str, events: list[dict[str, Any]], outcome: str = "", ends: datetime | None = None
 ) -> DemoAdjacent | None:
     """The Gemini event sharing the most distinctive words with a title (two at least),
     preferring the same kind (winner, spread, total). It is a neighbour, not the same bet:
     nothing here claims the five fields match."""
     mine = _words(title)
     kind = _kind(title)
-    best: tuple[int, dict[str, Any]] | None = None
+    best: tuple[float, dict[str, Any]] | None = None
     for event in events:
         their_kind = _kind(str(event.get("title", "")))
         if not event.get("contracts") or (their_kind == "props" and kind != "props"):
@@ -348,8 +348,23 @@ def find_similar(
             )
         )
         shared = len(mine & theirs)
-        score = 2 * shared + (their_kind == kind)
-        if shared >= 2 and (best is None or score > best[0]):
+        # A spread names one team ("Spread: Thunder (-11.5)"): the held team counts on its own.
+        names = [str(p.get("name", "")).lower() for p in event.get("participants") or []]
+        held = outcome.strip().lower()
+        team = len(held) >= 4 and any(held in name for name in names)
+        if shared < 2 and not team:
+            continue
+        score = float(2 * shared + 2 * team + (their_kind == kind))
+        if ends is not None:
+            # Same team, several games listed: prefer the one nearest the position's end date.
+            try:
+                expiry = datetime.fromisoformat(
+                    str(event.get("expiryDate", "")).replace("Z", "+00:00")
+                )
+                score -= min(abs((expiry - ends).total_seconds()) / 86400, 30) / 31
+            except ValueError:
+                pass
+        if best is None or score > best[0]:
             best = (score, event)
     if best is None:
         return None
@@ -513,11 +528,11 @@ class DemoDesk:
         self._events_at = time.monotonic()  # one attempt per TTL, even when it fails
         linked = self._linked.positions if self._linked else []
         queries = sorted({q for p in linked for q in search_terms(p.title, p.side)})
-        found = await asyncio.gather(*(self._search(q) for q in queries))
+        found = [await self._search(q) for q in queries]  # one at a time: Gemini rate-limits
         events = {str(e.get("ticker")): e for rows in found for e in rows}
         self._events = list(events.values())
         for p in linked:
-            p.adjacent = find_similar(p.title, self._events, p.side)
+            p.adjacent = find_similar(p.title, self._events, p.side, p.ends_at)
 
     async def warm(self) -> None:
         """Do the slow loads at startup so the first request does not wait for them."""
@@ -604,7 +619,7 @@ class DemoDesk:
             _dec(p.get("current_price")),
             f"https://polymarket.com/event/{p.get('event_slug') or p.get('slug', '')}",
             ends_at=end,
-            adjacent=find_similar(title, events, str(p.get("outcome", ""))),
+            adjacent=find_similar(title, events, str(p.get("outcome", "")), end),
             value=_dec(p.get("current_value")),
             pnl=_dec(pnl),
         )

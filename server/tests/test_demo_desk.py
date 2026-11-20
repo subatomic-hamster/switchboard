@@ -337,8 +337,14 @@ def test_similar_market_picks_the_same_kind_of_event_and_the_team_held() -> None
     assert pick("Raptors vs. Pistons", "Pistons") == "DET"
     assert pick("Spread: Raptors Pistons (-4.5)") == "SPR"
     assert pick("Raptors vs. Pistons: O/U 220.5", "Over") == "TOT"
-    # Without a spread event, a spread position falls back to the winner market for its team.
-    assert find_similar("Spread: Raptors (-4.5) Pistons", events[2:], "Raptors") is not None
+    # Without a spread event, a spread position falls back to the winner market for its team,
+    # even though a spread title names one team only; the nearest game wins.
+    later = {**events[2], "title": "Toronto vs Miami", "expiryDate": "2026-11-25T03:00:00.000Z"}
+    soon = {**events[2], "expiryDate": "2026-11-21T03:00:00.000Z"}
+    hit = find_similar(
+        "Spread: Raptors (-4.5)", [later, soon], "Raptors", datetime(2026, 11, 21, tzinfo=UTC)
+    )
+    assert hit is not None and hit.title == "Toronto vs Detroit: Toronto"
     # A side that cannot be told apart names the event and gives no price.
     unclear = find_similar("Raptors vs. Pistons", events, "Yes")
     assert unclear is not None and unclear.symbol == "" and unclear.price is None
