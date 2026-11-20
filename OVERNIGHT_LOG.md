@@ -113,7 +113,12 @@ In order. Items 1 to 8 are what stands between this branch and a real phone call
    `AGENTPHONE_WEBHOOK_SECRET`. A quick tunnel gets a new address each time it starts, so
    repeat this step whenever the address changes. Then run
    `uv run python -m scripts.agentphone_setup` with no flags: it lists what is still missing.
-8. **Place the first call and listen.** Set `CALLS_ENABLED=true`, restart the server, and
+8. **Place the first call and listen.** `CALLS_ENABLED=true` was set on 20 November, on your
+   say, and the server restarted: it reports calls live through AgentPhone. I have placed no
+   call. The next approval request rings your phone, once the daily limit allows: the five
+   dry-run calls of 19 November count against it until they are 24 hours old (the first
+   three by 07:49 UTC on 20 November, the last at 17:03 UTC). To place the first call,
+   keep the server and the tunnel running and
    either run `uv run python -m scripts.phase0_call --place-real-call` (one test call that can
    approve nothing) or send "Send 250 from my Arc wallet to Sam's Arc wallet" from the
    dashboard and answer. Things I could not check without a real call:
